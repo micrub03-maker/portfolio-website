@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useMediaQuery } from "react-responsive";
-import emailjs from "@emailjs/browser";
 import { useBackground } from "../contexts/BackgroundContext";
 import TableOfContents from "../components/TableOfContents";
 import WorldClock from "../components/WorldClock";
@@ -52,44 +51,17 @@ const scrabbleScreenshot = "/images/scrabbless.png";
 const blackjackScreenshot = "/images/blackjackss.png";
 const tuinetScreenshot = "/images/tuinet.jpg";
 const kiteScreenshot = "/images/askkite.png";
-const berkeley = "/images/berkeley.png";
+const berkeley = "/images/ucberkeley.png";
+const kite = "/images/kite.png";
+const opendr = "/images/opendr.jpg";
+const unity = "/images/unity.png";
+const cal = "/images/cal.png";
+const roc_new = "/images/rochester_new.png";
 
 export default function About() {
   const isDesktop = useMediaQuery({ query: "(min-width: 768px)" });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
   const { setAboutContentLoaded } = useBackground();
-  
-  const VITE_PUBLIC_KEY = "dMEvhwxawdetQkE0U";
-  const VITE_TEMPLATE_ID = "template_9rosqi6";
-  const VITE_SERVICE_ID = "service_43su9pt";
-
-  const form = useRef();
-
-  const sendEmail = (e) => {
-    e.preventDefault();
-    console.log("Sending email with public key:", VITE_PUBLIC_KEY);
-    
-    emailjs
-      .sendForm(
-        VITE_SERVICE_ID,
-        VITE_TEMPLATE_ID,
-        form.current,
-        {
-          publicKey: VITE_PUBLIC_KEY,
-        }
-      )
-      .then(
-        () => {
-          console.log("SUCCESS!");
-          alert("Message sent successfully!");
-          form.current.reset();
-        },
-        (error) => {
-          console.log("FAILED...", error);
-          alert("Failed to send message. Please try again or email directly.");
-        }
-      );
-  };
 
   const [fadeIn, setFadeIn] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
@@ -172,14 +144,6 @@ export default function About() {
 
   return (
     <main className="h-auto top-0 left-0">
-      {/* Logo in top left */}
-      <div className="hidden md:block fixed top-2 left-2 z-30">
-        <img 
-          src="/lkmlogo-white.png" 
-          alt="LKM Logo" 
-          className="w-10 h-10 object-contain opacity-90 hover:opacity-100 transition-opacity duration-300"
-        />
-      </div>
       <TableOfContents />
       <div
         className={`flex flex-col items-center mx-4 md:mx-10 transition-opacity duration-1000 ${
@@ -190,14 +154,6 @@ export default function About() {
           id="home"
           className="w-screen min-h-screen md:h-screen flex flex-col bg-banner bg-cover bg-center relative overflow-hidden"
         >
-          {/* Location Badge */}
-          <div className="hidden md:flex absolute top-4 right-4 items-center bg-black/20 backdrop-blur-sm rounded-full px-2 py-0.5 z-10">
-            <svg className="w-2.5 h-2.5 mr-0.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-            </svg>
-            <p className="text-white text-xs font-medium">Wellington, NZ</p>
-          </div>
-
           {/* Hero Dashboard - Redesigned */}
           <div className="w-full h-full flex items-center justify-center px-4 md:px-8 py-4 md:py-6">
             <div className="w-full max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3">
@@ -290,7 +246,7 @@ export default function About() {
           <div className="border p-4 md:p-6 rounded-md bg-slate-50 mb-4 md:mb-6 hover:scale-105 transition-transform">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
               <div className="flex items-center gap-3">
-                <img className="w-12 h-12 object-contain" src={berkeley} alt="UC Berkeley" />
+                <img className="w-12 h-12 object-contain" src={cal} alt="UC Berkeley" />
                 <div>
                   <h2 className="font-bold text-lg">University of California, Berkeley</h2>
                   <p className="font-sm text-gray-600">MEng, Electrical Engineering and Computer Science</p>
@@ -302,8 +258,10 @@ export default function About() {
               </div>
             </div>
             <div className="pl-15">
+              <p className="text-sm mb-2">• May 2026 Expected Graduation</p>
               <p className="text-sm mb-2">• Fung Excellence Scholarship</p>
               <p className="text-sm mb-2">• Concentration in Visual Computing and Computer Graphics</p>
+              <p className="text-sm mb-2">• UC Berkeley Solar Vehicle Team (CalSol), Fung Excellence Scholar</p>
             </div>
           </div>
 
@@ -323,19 +281,59 @@ export default function About() {
               </div>
             </div>
             <div className="pl-15">
-              <p className="text-sm mb-2">• GPA 3.94</p>
-               <p className="text-sm mb-2">• Phi Kappa Beta</p>
-              <p className="text-sm mb-2">• Dean's Scholar, Provost's Circle Scholar</p>
-              <p className="text-sm mb-2">• NCAA Varsity Athlete (Men's Soccer)</p>
-              <p className="text-sm mb-2">• UAA All-Academic Recognition</p>
-              <p className="text-sm mb-2">• Dean's List in every semester</p>
+              <p className="text-sm mb-2">• GPA: 3.94/4.00 - Magna Cum Laude</p>
+              <p className="text-sm mb-2">• Phi Beta Kappa, Dean's Scholar, Provost's Circle Scholar</p>
+              <p className="text-sm mb-2">• NCAA Varsity Athlete (Men's Soccer), UAA All-Academic Recognition</p>
             </div>
           </div>
         </div>
         <div id="experience" className="flex flex-col justify-center h-max w-full md:w-4/5 lg:w-3/5 px-6 md:px-0">
           <h1 className="text-center m-4 md:m-6 text-2xl md:text-3xl font-bold">Experience</h1>
-          
-          {/* Electronics Engineer Intern */}
+
+          {/* Research Engineer */}
+          <div className="border p-4 md:p-6 rounded-md bg-slate-50 mb-4 md:mb-6 hover:scale-105 transition-transform">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
+              <div className="flex items-center gap-3">
+                <img className="w-12 h-12 object-contain" src={berkeley} alt="AI Racing Tech" />
+                <div>
+                  <h2 className="font-bold text-lg">Research Engineer</h2>
+                  <h3 className="font-semibold text-gray-700">AI Racing Tech (UC Berkeley Capstone)</h3>
+                </div>
+              </div>
+              <div className="text-left md:text-right">
+                <p className="text-sm text-gray-600">Sep 2025 – Present</p>
+                <p className="text-sm text-gray-500">Berkeley, California</p>
+              </div>
+            </div>
+            <div className="pl-15">
+              <p className="text-sm mb-2">• Developing LiDAR-based perception and localization modules in C++, Python, and ROS 2 for the ROAR autonomous racing platform.</p>
+              <p className="text-sm mb-2">• Implementing real-time pose estimation and sensor fusion pipelines integrating DLIO and SLAM visualization tools to achieve 100% localization uptime.</p>
+            </div>
+          </div>
+
+          {/* Founding Engineer */}
+          <div className="border p-4 md:p-6 rounded-md bg-slate-50 mb-4 md:mb-6 hover:scale-105 transition-transform">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
+              <div className="flex items-center gap-3">
+                <img className="w-12 h-12 object-contain" src={kite} alt="Kite" />
+                <div>
+                  <h2 className="font-bold text-lg">Founding Engineer</h2>
+                  <h3 className="font-semibold text-gray-700">Kite (usekite.app)</h3>
+                </div>
+              </div>
+              <div className="text-left md:text-right">
+                <p className="text-sm text-gray-600">May 2025 – Present</p>
+                <p className="text-sm text-gray-500">Berkeley, CA / Wellington, NZ</p>
+              </div>
+            </div>
+            <div className="pl-15">
+              <p className="text-sm mb-2">• Built an AI-powered Gmail extension with a JavaScript frontend and Flask backend deployed on OVHCloud for intelligent semantic search, summarization, and labeling.</p>
+              <p className="text-sm mb-2">• Integrated large language model APIs with Turbopuffer vector search to provide personalized, context-aware email insights.</p>
+              <p className="text-sm mb-2">• Gained paying customers, engaged with tier-1 venture capital firms, and placed in the top 10 percent of Y Combinator applicants for Summer 2025.</p>
+            </div>
+          </div>
+
+          {/* Additional Experience */}
           <div className="border p-4 md:p-6 rounded-md bg-slate-50 mb-4 md:mb-6 hover:scale-105 transition-transform">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
               <div className="flex items-center gap-3">
@@ -346,30 +344,34 @@ export default function About() {
                 </div>
               </div>
               <div className="text-left md:text-right">
-                <p className="text-sm text-gray-600">June 2025 – Present</p>
-                <p className="text-sm text-gray-500">Rochester, New York</p>
+                <p className="text-sm text-gray-600">Jun 2025 – Aug 2025</p>
+                <p className="text-sm text-gray-500">Remote (New York, NY / Wellington, NZ)</p>
               </div>
             </div>
             <div className="pl-15">
-              <p className="text-sm mb-2">• Beginning in June developing new electronics firmware for DuckLinks, and contribute to the ClusterDuck Protocol open source firmware</p>
+              <p className="text-sm mb-2">• Prototyped ESP32-based TTGO T-Beam systems integrating GPS, LoRa mesh networking, and low-power operation for remote wildlife monitoring.</p>
+              <p className="text-sm mb-2">• Developed firmware and data pipelines for ML-based audio classification and long-range telemetry transmission.</p>
             </div>
           </div>
 
-          {/* Release Software Engineer */}
+          {/* Software Engineering Intern */}
           <div className="border p-4 md:p-6 rounded-md bg-slate-50 mb-4 md:mb-6 hover:scale-105 transition-transform">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
-              <div>
-                <h2 className="font-bold text-lg">Release Software Engineer/Head of Testing</h2>
-                <h3 className="font-semibold text-gray-700">CyberDyne Ventures/Independent Research</h3>
+              <div className="flex items-center gap-3">
+                <img className="w-12 h-12 object-contain" src={opendr} alt="OpenDR" />
+                <div>
+                  <h2 className="font-bold text-lg">Software Engineering Intern</h2>
+                  <h3 className="font-semibold text-gray-700">OpenDR</h3>
+                </div>
               </div>
               <div className="text-left md:text-right">
-                <p className="text-sm text-gray-600">July 2024 – Present</p>
-                <p className="text-sm text-gray-500">US/Remote</p>
+                <p className="text-sm text-gray-600">Jul 2024 – Feb 2025</p>
+                <p className="text-sm text-gray-500">Remote (US)</p>
               </div>
             </div>
-            <div>
-              <p className="text-sm mb-2">• Collaborated with security researcher Craig Chamberlain (previously Principal Security Researcher at Elastic) to release the Skynet project at DEF CON 2024</p>
-              <p className="text-sm mb-2">• Contributed to the backend using Go and Neo4j, and a React frontend integrated with Docker for demonstration</p>
+            <div className="pl-15">
+              <p className="text-sm mb-2">• Developed a full-stack demo with a Go and Neo4j backend and React frontend, containerized with Docker for deployment at DEF CON 2024.</p>
+              <p className="text-sm mb-2">• Collaborated on API design, database optimization, and release preparation for the Skynet project, later developed into OpenDR.</p>
             </div>
           </div>
 
@@ -377,21 +379,21 @@ export default function About() {
           <div className="border p-4 md:p-6 rounded-md bg-slate-50 mb-4 md:mb-6 hover:scale-105 transition-transform">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-3 md:gap-0">
               <div className="flex items-center gap-3">
-                <img className="w-12 h-12 object-contain" src={r} alt="University of Rochester" />
+                <img className="w-12 h-12 object-contain" src={roc_new} alt="University of Rochester Medical Center" />
                 <div>
                   <h2 className="font-bold text-lg">Research Assistant</h2>
-                  <h3 className="font-semibold text-gray-700">University of Rochester Medical Centre</h3>
+                  <h3 className="font-semibold text-gray-700">University of Rochester Medical Center</h3>
                   <p className="text-sm text-gray-600">Department of Neurosurgery</p>
                 </div>
               </div>
               <div className="text-left md:text-right">
-                <p className="text-sm text-gray-600">March 2024 – October 2024</p>
+                <p className="text-sm text-gray-600">Mar 2024 – Oct 2024</p>
                 <p className="text-sm text-gray-500">Rochester, New York</p>
               </div>
             </div>
             <div className="pl-15">
-              <p className="text-sm mb-2">• Collaborated with residents and PhD candidates in Dr. Jonathan J. Stone's lab to support neurosurgery research, enhancing team efficiency and contributing to successful project outcomes</p>
-              <p className="text-sm mb-2">• Utilized computer science skills in data analysis, machine learning, and visualization using tools like PyTorch and scikit-learn to support scientific research, leading to improved data insights and successful funding applications</p>
+              <p className="text-sm mb-2">• Prepared, structured, and analyzed clinical datasets covering 114,892 patients to support development of a machine learning predictor of neurosurgical outcomes.</p>
+              <p className="text-sm mb-2">• Delivered models that achieved higher accuracy than standard logistic regression approaches used for outcome forecasting.</p>
             </div>
           </div>
         </div>
@@ -764,6 +766,10 @@ export default function About() {
                 <img src={pytorch} alt="pytorch" />
                 <p>PyTorch</p>
               </div>
+              <div className="skill">
+                <img src={unity} alt="unity" />
+                <p>Unity</p>
+              </div>
             </div>
           </div>
 
@@ -804,58 +810,16 @@ export default function About() {
         <h1 className="text-center mb-4 md:mb-8 text-2xl md:text-3xl font-bold px-4 md:px-0">Get in Touch</h1>
         <div className="mx-2 md:mx-auto md:max-w-2xl md:bg-slate-50 md:border md:rounded-xl p-4 md:p-8">
           <p className="mb-6 text-center text-gray-700">
-            Email{" "}
-            <a href="mailto:logan8@gmail.com" className="text-blue-600 hover:underline font-medium">
-              logankm8@gmail.com
+            Feel free to email me at{" "}
+            <a href="mailto:logankm@berkeley.edu" className="text-blue-600 hover:underline font-medium">
+              logankm@berkeley.edu
             </a>{" "}
-            or use this form to send me a message. I'd love to hear from you!
+            or connect with me on{" "}
+            <a href="https://www.linkedin.com/in/logan-kinajil-moran/" className="text-blue-600 hover:underline font-medium">
+              LinkedIn
+            </a>
+            . Looking forward to hearing from you!
           </p>
-          <form ref={form} onSubmit={sendEmail} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Name
-              </label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                rows="5"
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-              ></textarea>
-            </div>
-            <div className="text-center">
-              <button
-                type="submit"
-                className="px-8 py-3 bg-slate-700 text-white font-medium rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all hover:shadow-lg"
-              >
-                Send Message
-              </button>
-            </div>
-          </form>
         </div>
       </div>
     </main>
