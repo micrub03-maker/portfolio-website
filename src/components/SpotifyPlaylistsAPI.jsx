@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 
 export default function SpotifyPlaylistsAPI() {
     const [playlists, setPlaylists] = useState([]);
@@ -16,8 +15,8 @@ export default function SpotifyPlaylistsAPI() {
 
     // Get Spotify access token
     const getSpotifyToken = async () => {
-        const clientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
-        const clientSecret = process.env.REACT_APP_SPOTIFY_CLIENT_SECRET;
+        const clientId = import.meta.env?.VITE_SPOTIFY_CLIENT_ID || (typeof process !== "undefined" ? process.env?.REACT_APP_SPOTIFY_CLIENT_ID : undefined);
+        const clientSecret = import.meta.env?.VITE_SPOTIFY_CLIENT_SECRET || (typeof process !== "undefined" ? process.env?.REACT_APP_SPOTIFY_CLIENT_SECRET : undefined);
 
         if (!clientId || !clientSecret) {
             throw new Error('Spotify credentials not found');

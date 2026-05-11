@@ -4,15 +4,15 @@
 
 @layer components {
     .skill {
-        @apply flex flex-col justify-center items-center my-3 md:my-5 h-20 md:h-24 w-16 md:w-20 hover:scale-110 transition-transform text-center
+        @apply flex flex-col justify-center items-center h-16 w-16 hover:scale-110 transition-transform text-center
     }
 
     .skill img {
-        @apply w-14 md:w-20 h-auto mb-1 md:mb-2
+        @apply w-12 h-12 object-contain mb-1
     }
 
     .skill p {
-        @apply text-center text-xs md:text-sm font-medium
+        @apply text-center text-[12px] font-medium leading-tight
     }
 
     .project {
@@ -31,4 +31,37 @@
     50% {
         transform: translateY(-8px);
     }
+}
+
+@keyframes widgetGradientFlow {
+    0% {
+        transform: translate3d(-20%, -20%, 0) scale(1);
+    }
+    50% {
+        transform: translate3d(20%, 10%, 0) scale(1.1);
+    }
+    100% {
+        transform: translate3d(-20%, -20%, 0) scale(1);
+    }
+}
+
+.widget-gradient {
+    position: absolute;
+    inset: -25% -35% auto auto;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 70%);
+    opacity: 0.35;
+    animation: widgetGradientFlow 12s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.widget-gradient::after {
+    content: "";
+    position: absolute;
+    inset: 15% 0 0 15%;
+    width: 80%;
+    height: 80%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+    animation: widgetGradientFlow 10s ease-in-out infinite reverse;
 }

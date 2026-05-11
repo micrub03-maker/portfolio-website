@@ -17,7 +17,9 @@ export const BackgroundProvider = ({ children }) => {
 
   const getBackgroundClass = () => {
     if (currentRoute === '/about') {
-      return aboutContentLoaded ? 'bg-white' : 'bg-transparent';
+      return aboutContentLoaded
+        ? 'bg-gradient-to-br from-slate-100 via-blue-50/30 to-slate-50'
+        : 'bg-gray-900';
     }
     return homeLoaded ? 'bg-gradient-to-b from-sunset to-transparent bg-cover' : 'bg-transparent';
   };
