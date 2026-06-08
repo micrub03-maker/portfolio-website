@@ -5,31 +5,34 @@ const RecentReads = () => {
   const [recentBooks, setRecentBooks] = useState([]);
 
   useEffect(() => {
-    // Logan's recent reads - classic and sci-fi literature
     const recentReads = [
       {
         id: 1,
-        title: "Letters from a Stoic",
-        author: "Seneca",
-        cover: "/images/seneca.jpg"
+        title: "Apeirogon",
+        author: "Colum McCann",
+        cover: "/images/Apereigon.jpg",
+        status: "current"
       },
       {
         id: 2,
-        title: "The Odyssey",
-        author: "Homer",
-        cover: "/images/odyssey.jpg"
+        title: "The Ministry of Time",
+        author: "Kaliane Bradley",
+        cover: "/images/ministryoftime.jpg",
+        status: "recent"
       },
       {
         id: 3,
-        title: "Dune Messiah",
-        author: "Frank Herbert",
-        cover: "/images/dune-messiah.jpeg"
+        title: "Island of the Missing Trees",
+        author: "Elif Shafak",
+        cover: "/images/theislandofmissingtrees.jpg",
+        status: "recent"
       },
       {
         id: 4,
-        title: "Dune",
-        author: "Frank Herbert",
-        cover: "/images/dune.jpg"
+        title: "The Poppy War",
+        author: "R.F. Kuang",
+        cover: "/images/poppywar.jpg",
+        status: "recent"
       }
     ];
 
@@ -47,18 +50,18 @@ const RecentReads = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <p className="text-white font-semibold text-xs uppercase tracking-wide">Current Reads</p>
+          <p className="text-white font-semibold text-xs uppercase tracking-wide">a book a month keeps the doctor away (or something like that)</p>
         </div>
-        <span className="text-white/60 text-[11px] uppercase tracking-wide">4 most recent</span>
+        <span className="text-white/60 text-[11px] uppercase tracking-wide">recent reads</span>
       </div>
 
       <div className="grid grid-cols-2 gap-2 flex-1 min-h-0">
         {recentBooks.map((book, index) => (
           <div
             key={book.id}
-            className="group border border-white/10 rounded-xl overflow-hidden bg-white/5 flex flex-col"
+            className="group border border-white/10 rounded-xl overflow-hidden bg-white/20 flex flex-col"
           >
-            <div className="relative h-32 overflow-hidden bg-black">
+            <div className="relative h-32 overflow-hidden bg-white/20">
               {book.cover ? (
                 <>
                   <img
@@ -72,9 +75,7 @@ const RecentReads = () => {
                       }
                     }}
                   />
-                  <div
-                    className="absolute inset-0 hidden items-center justify-center bg-white/10"
-                  >
+                  <div className="absolute inset-0 hidden items-center justify-center bg-white/10">
                     <svg className="w-6 h-6 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
@@ -87,26 +88,21 @@ const RecentReads = () => {
                   </svg>
                 </div>
               )}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5">
+            </div>
+
+            <div className="px-2 py-1.5 bg-white/25">
+              <div className="flex items-center gap-1">
+                {book.status === "current" && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse flex-shrink-0"></span>
+                )}
                 <p className="text-white text-xs font-semibold leading-tight line-clamp-1">
                   {book.title}
                 </p>
-                <p className="text-white/70 text-[11px] leading-tight">
-                  {book.author}
-                </p>
               </div>
+              <p className="text-white/60 text-[11px] leading-tight">
+                {book.author}
+              </p>
             </div>
-
-            {index < 2 ? (
-              <div className="px-3 py-2 text-[11px] uppercase tracking-wide text-emerald-300 flex items-center gap-1">
-                <span className="w-1 h-1 rounded-full bg-emerald-300 animate-pulse"></span>
-                Now reading
-              </div>
-            ) : (
-              <div className="px-3 py-2 text-[11px] text-white/50">
-                #{book.id}
-              </div>
-            )}
           </div>
         ))}
       </div>

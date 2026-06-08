@@ -16,14 +16,15 @@ export default function Home() {
 
     return (
          <section className='w-full h-screen relative'>
+            {!homeLoaded && <Loader setIsLoaded={setHomeLoaded} />}
             {homeLoaded && !isZooming && (
                 <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 w-[95%] max-w-[1000px] px-4 transition-opacity duration-500">
                     <HomeText />
                 </div>
             )}
             <Canvas className="w-full h-screen bg-transparent z-0" camera={{ near: 0.1, far: 1000 }}>
-                <Suspense fallback={<Loader setIsLoaded={setHomeLoaded} />}>
-                    {/* <OrbitControls 
+                <Suspense fallback={null}>
+                    {/* <OrbitControls
                         enablePan={true}
                         enableZoom={true}
                         enableRotate={true}
@@ -32,7 +33,7 @@ export default function Home() {
                         maxDistance={10}
                         target={[0, -1, 2]}
                     /> */}
-                    <Soccer 
+                    <Soccer
                         position={[0, -0.9, 5]}
                         rotation={[0, 0, 0]}
                         onZoomStart={handleZoomStart}

@@ -16,6 +16,9 @@ export const BackgroundProvider = ({ children }) => {
   const [currentRoute, setCurrentRoute] = useState('/');
 
   const getBackgroundClass = () => {
+    if (currentRoute === '/home') {
+      return 'bg-gray-800';
+    }
     if (currentRoute === '/about') {
       return aboutContentLoaded
         ? 'bg-gradient-to-br from-slate-100 via-blue-50/30 to-slate-50'

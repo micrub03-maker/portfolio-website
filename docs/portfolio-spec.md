@@ -126,6 +126,8 @@ Project 3:
 - F) Interests
 - G) Get in Touch
 
+Include these by adapting the file TableOfContents.jsx
+
 ## B) EDUCATION
 
 - Picture: "logo UC Berkeley"

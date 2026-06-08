@@ -15,7 +15,8 @@ const TableOfContents = ({ isWidget = false }) => {
     { id: 'experience', label: 'Experience' },
     { id: 'projects', label: 'Projects' },
     { id: 'skills', label: 'Skills' },
-    { id: 'getInTouch', label: 'Contact' }
+    { id: 'interests', label: 'Interests' },
+    { id: 'getInTouch', label: 'Contact' },
   ];
 
   useEffect(() => {

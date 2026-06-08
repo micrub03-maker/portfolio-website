@@ -5,42 +5,24 @@ const WorldClock = () => {
   const [weather, setWeather] = useState({});
 
   const locations = [
-    { 
-      id: 'berkeley', 
-      name: 'Berkeley, California', 
-      timezone: 'America/Los_Angeles', 
-      color: 'bg-blue-500', // UC Berkeley blue
+    {
+      id: 'berkeley',
+      name: 'Berkeley, California',
+      timezone: 'America/Los_Angeles',
+      color: 'bg-blue-500',
       unit: '°F',
       lat: 37.8715,
-      lon: -122.2730
+      lon: -122.2730,
     },
-    { 
-      id: 'wellington', 
-      name: 'Wellington, New Zealand', 
-      timezone: 'Pacific/Auckland', 
-      color: 'bg-black', // New Zealand All Blacks
+    {
+      id: 'antwerp',
+      name: 'Antwerp, Belgium',
+      timezone: 'Europe/Brussels',
+      color: 'bg-red-500',
       unit: '°C',
-      lat: -41.2924,
-      lon: 174.7787
+      lat: 51.2194,
+      lon: 4.4025,
     },
-    { 
-      id: 'rochester', 
-      name: 'Rochester, New York', 
-      timezone: 'America/New_York', 
-      color: 'bg-yellow-500', // University of Rochester yellow
-      unit: '°F',
-      lat: 43.1566,
-      lon: -77.6088
-    },
-    { 
-      id: 'sydney', 
-      name: 'Sydney, Australia', 
-      timezone: 'Australia/Sydney', 
-      color: 'bg-orange-500', // Sydney Harbour Bridge orange/rust
-      unit: '°C',
-      lat: -33.8688,
-      lon: 151.2093
-    }
   ];
 
   // Update times every second
@@ -74,9 +56,7 @@ const WorldClock = () => {
       // To enable real weather, uncomment the API code below and add your API key
       const mockTemps = {
         berkeley: 68,
-        wellington: 16,
-        sydney: 22,
-        rochester: 38
+        antwerp: 20,
       };
       
       for (const location of locations) {
@@ -128,7 +108,7 @@ const WorldClock = () => {
       </div>
       <div className="text-white/90 flex-1 flex flex-col gap-2 justify-between">
         {locations.map(location => (
-          <div key={location.id} className="border border-white/10 rounded-xl px-3 py-2 flex flex-1 items-center justify-between bg-white/5">
+          <div key={location.id} className="border border-white/10 rounded-xl px-3 py-2 flex flex-1 items-center justify-between bg-white/20">
             <div>
               <div className="flex items-center gap-2">
                 <div className={`w-1.5 h-1.5 ${location.color} rounded-full`}></div>
