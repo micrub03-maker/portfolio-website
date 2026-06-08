@@ -1,11 +1,17 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 // TODO: once "background picture" is provided, add bg-[url('/images/background-picture.jpg')]
 //       to the outer div and remove the TEMP placeholder below.
 
 export default function IntroductionPage() {
+  const navigate = useNavigate();
+
   return (
-    <div className="relative w-full h-screen bg-gray-800 bg-cover bg-center flex items-center justify-center">
+    <div
+      className="relative w-full h-screen bg-gray-800 bg-cover bg-center flex items-center justify-center cursor-pointer"
+      onClick={() => navigate("/home")}
+    >
 
       {/* TODO: TEMP placeholder for "background picture" */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
