@@ -66,7 +66,7 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, children }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             style={{ overflow: 'hidden' }}
           >
-            <div className="px-4 pb-5 pt-1 border-t border-gray-100 space-y-3">
+            <div className="px-4 pb-5 pt-1 border-t border-gray-100 space-y-3 cursor-pointer" onClick={toggle}>
               {children}
             </div>
           </motion.div>

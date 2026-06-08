@@ -5,6 +5,7 @@ import links from "../config/links";
 import TableOfContents from "../components/TableOfContents";
 import WorldClock from "../components/WorldClock";
 import ProjectOverview from "../components/ProjectOverview";
+import AboutMe from "../components/AboutMe";
 import Education from "../components/Education";
 import Experience from "../components/Experience";
 import ProjectPortfolio from "../components/ProjectPortfolio";
@@ -254,7 +255,10 @@ export default function About() {
             </a>
           </div>
         </div>
-        <div id="about" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
+        <div className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
+          <AboutMe />
+        </div>
+        <div id="education" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <Education />
         </div>
         <div id="experience" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
