@@ -11,6 +11,7 @@ import Experience from "../components/Experience";
 import ProjectPortfolio from "../components/ProjectPortfolio";
 import RecentReads from "../components/RecentReads";
 import Skills from "../components/Skills";
+import InterestsCarousel from "../components/InterestsCarousel";
 // Using public directory paths directly for Vite
 const profile = "/images/profile.png";
 const github = "/images/github.png";
@@ -271,7 +272,7 @@ export default function About() {
           <Skills />
         </div>
         <div id="interests" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Interests</h2>
+          <InterestsCarousel />
         </div>
         <div id="getInTouch" className="flex flex-col items-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Contact</h2>

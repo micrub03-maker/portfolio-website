@@ -46,7 +46,9 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, children }) {
       >
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm">{summaryTitle}</p>
-          <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{summarySubtitle}</p>
+          {summarySubtitle && (
+            <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{summarySubtitle}</p>
+          )}
         </div>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
@@ -354,75 +356,22 @@ const honourItems = [
   },
 ];
 
-function HonoursSlide() {
-  const [subIdx, setSubIdx] = useState(0);
-  const [isSubPaused, setIsSubPaused] = useState(false);
-
-  useEffect(() => {
-    if (isSubPaused) return;
-    const t = setInterval(() => {
-      setSubIdx((prev) => (prev + 1) % honourItems.length);
-    }, 5000);
-    return () => clearInterval(t);
-  }, [isSubPaused, subIdx]);
-
-  const active = honourItems[subIdx];
-
-  const subPrev = () => setSubIdx((prev) => (prev - 1 + honourItems.length) % honourItems.length);
-  const subNext = () => setSubIdx((prev) => (prev + 1) % honourItems.length);
-
+function HonoursSlide({ onDd }) {
   return (
     <div className="p-6 md:p-8">
-      <p className="text-lg font-bold text-gray-800 mb-4">Honorable mentions:</p>
-
-      <div
-        className="rounded-xl border border-gray-200 bg-white/50 overflow-hidden"
-        onMouseEnter={() => setIsSubPaused(true)}
-        onMouseLeave={() => setIsSubPaused(false)}
-      >
-        {/* Sub-slider nav bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-          <button
-            onClick={subPrev}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-sm leading-none"
-          >
-            ‹
-          </button>
-          <div className="flex gap-1.5 items-center">
-            {honourItems.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setSubIdx(i)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === subIdx ? 'w-4 bg-gray-500' : 'w-1.5 bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
-          </div>
-          <button
-            onClick={subNext}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-sm leading-none"
-          >
-            ›
-          </button>
-        </div>
-
-        {/* Sub-slide content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active.id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="p-4"
-          >
-            <p className="font-semibold text-gray-800 text-sm mb-2">{active.title}</p>
-            {active.media.map((m) => (
-              <MediaPlaceholder key={m} label={m} />
-            ))}
-            <div className="flex justify-end gap-2 mt-3 flex-wrap">
-              {active.links.map((l) => (
+      <p className="text-lg font-bold text-gray-800 mb-2">Honorable mentions:</p>
+      {honourItems.map((item) => (
+        <Dropdown
+          key={item.id}
+          summaryTitle={item.title}
+          onOpenChange={onDd}
+        >
+          {item.media.map((m) => (
+            <MediaPlaceholder key={m} label={m} />
+          ))}
+          {item.links.length > 0 && (
+            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+              {item.links.map((l) => (
                 <a
                   key={l.label}
                   href={l.href}
@@ -433,9 +382,9 @@ function HonoursSlide() {
                 </a>
               ))}
             </div>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+          )}
+        </Dropdown>
+      ))}
     </div>
   );
 }
@@ -533,17 +482,17 @@ export default function ProjectPortfolio({ initialSlideId }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={slideId}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
           >
             {slideId === 'intro' && <IntroSlide />}
             {slideId === 'luci' && <LuciSlide onDd={handleDd} />}
             {slideId === 'calsol' && <CalsolSlide onDd={handleDd} />}
             {slideId === 'axiris' && <AxirisSlide onDd={handleDd} />}
             {slideId === 'suctionCup' && <SuctionCupSlide onDd={handleDd} />}
-            {slideId === 'honours' && <HonoursSlide />}
+            {slideId === 'honours' && <HonoursSlide onDd={handleDd} />}
           </motion.div>
         </AnimatePresence>
       </div>
