@@ -3,7 +3,7 @@ import { useMediaQuery } from "react-responsive";
 import { useBackground } from "../contexts/BackgroundContext";
 import links from "../config/links";
 import TableOfContents from "../components/TableOfContents";
-import WorldClock from "../components/WorldClock";
+import TravelMap from "../components/TravelMap";
 import ProjectOverview from "../components/ProjectOverview";
 import AboutMe from "../components/AboutMe";
 import Education from "../components/Education";
@@ -222,9 +222,9 @@ export default function About() {
                 </div>
               </div>
 
-              {/* World Clock - Top left widget */}
+              {/* Travel Map widget */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                <WorldClock />
+                <TravelMap />
               </div>
 
               {/* A.3 Project Overview */}

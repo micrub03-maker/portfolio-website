@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Board center sits at y=-8.5 in skater-local coords (midpoint of wheel+board stack)
 const BOARD_CENTER_Y = -8.5;
@@ -10,34 +10,34 @@ function getKickflipTransforms(t) {
   const POP = 0.12; // end of tail-pop phase
   const AIR = 0.75; // end of air/flip phase
 
-  // ── Tail pop tilt (0 → POP): board briefly tilts as tail taps ──
+  // Tail pop tilt (0 → POP): board briefly tilts as tail taps
   const boardTilt = t < POP ? 12 * Math.sin(Math.PI * (t / POP)) : 0;
 
-  // ── Board arc + kickflip rotation (POP → AIR) ──
+  // Board arc + kickflip rotation (POP → AIR)
   let boardDy = 0;
   let boardFlipAngle = 0;
   if (t >= POP && t < AIR) {
     const p = (t - POP) / (AIR - POP);
-    boardDy = -28 * Math.sin(Math.PI * p);   // reduced arc height
-    boardFlipAngle = 360 * p;                 // full rotation — wheels orbit with board
+    boardDy = -28 * Math.sin(Math.PI * p); // reduced arc height
+    boardFlipAngle = 360 * p;              // full rotation — wheels orbit with board
   }
 
-  // ── Body: quick crouch → jump arc → land compression ──
+  // Body: quick crouch → jump arc → land compression
   let bodyDy;
   if (t < 0.08) {
-    bodyDy = 4 * (t / 0.08);                                        // crouch down
+    bodyDy = 4 * (t / 0.08);                          // crouch down
   } else if (t < POP) {
-    bodyDy = 4 * (1 - (t - 0.08) / (POP - 0.08));                  // pop up from crouch
+    bodyDy = 4 * (1 - (t - 0.08) / (POP - 0.08));     // pop up from crouch
   } else if (t < AIR) {
-    bodyDy = -28 * Math.sin(Math.PI * (t - POP) / (AIR - POP));    // jump arc
+    bodyDy = -28 * Math.sin(Math.PI * (t - POP) / (AIR - POP)); // jump arc
   } else {
-    bodyDy = 5 * Math.sin(Math.PI * (t - AIR) / (1 - AIR));        // land compression
+    bodyDy = 5 * Math.sin(Math.PI * (t - AIR) / (1 - AIR));     // land compression
   }
 
   return { boardDy, boardFlipAngle, boardTilt, bodyDy };
 }
 
-export const Loader = ({ setIsLoaded }) => {
+export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
   const navigate = useNavigate();
   const rampRef = useRef(null);
   const svgRef = useRef(null);
@@ -68,19 +68,26 @@ export const Loader = ({ setIsLoaded }) => {
       const len = t * totalLen;
       const pt = path.getPointAtLength(len);
       const pt2 = path.getPointAtLength(Math.min(len + 2, totalLen));
-      const angle = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * (180 / Math.PI);
+      const angle = (Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180) / Math.PI;
 
       updateSkater({ x: pt.x, y: pt.y, angle });
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
   const handleClick = () => {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
+
+    // start fade out
     setIsExiting(true); // fade starts immediately, same moment as the kickflip
+
+    // tell parent to start fading Home in underneath
+    if (onBeginEnter) {
+      onBeginEnter();
+    }
 
     const flipDuration = 1100;
     const start = performance.now();
@@ -94,8 +101,15 @@ export const Loader = ({ setIsLoaded }) => {
     requestAnimationFrame(animateFlip);
 
     setTimeout(() => {
-      if (setIsLoaded) setIsLoaded(true);
-      else navigate('/home');
+      if (setIsLoaded) {
+        setIsLoaded(true);
+      } else if (onEnterComplete) {
+        // let parent unmount Loader
+        onEnterComplete();
+      } else {
+        // fallback: old behavior
+        navigate("/home");
+      }
     }, 1300);
   };
 
@@ -106,8 +120,8 @@ export const Loader = ({ setIsLoaded }) => {
       className="fixed inset-0 z-50 bg-gray-800 bg-cover bg-center flex items-start justify-center cursor-pointer"
       style={{
         opacity: isExiting ? 0 : 1,
-        transition: isExiting ? 'opacity 1.3s ease-in-out' : 'none',
-        pointerEvents: isExiting ? 'none' : 'auto',
+        transition: "opacity 1.3s ease-in-out",
+        pointerEvents: isExiting ? "none" : "auto",
       }}
       onClick={handleClick}
     >
@@ -119,13 +133,13 @@ export const Loader = ({ setIsLoaded }) => {
 
       <div className="relative z-10 flex flex-col items-center text-center text-white px-6 max-w-2xl md:max-w-4xl mx-auto gap-3 pt-12 md:pt-16">
         <h1 className="text-4xl md:text-6xl font-light tracking-wide">
-          Hey there! I'm Michael
+          Hey there! I&apos;m Michael
         </h1>
         <p className="text-lg md:text-2xl font-light tracking-wide text-white/90">
           Mechanical/Controls Engineer @ MPC lab Berkeley
         </p>
         <p className="text-base md:text-lg font-light tracking-wide text-white/70">
-          UC Berkeley MEng Mechanical Engineering '26 · TU Delft BSc Mechanical Engineering '24
+          UC Berkeley MEng Mechanical Engineering &apos;26 · TU Delft BSc Mechanical Engineering &apos;24
         </p>
         <p className="text-sm md:text-base font-light text-white/60 leading-relaxed max-w-xl mx-auto mt-2">
           Welcome to my portfolio website, glad you stopped by :)<br />
@@ -162,23 +176,41 @@ export const Loader = ({ setIsLoaded }) => {
 
           {/* Base group: follows mouse along ramp */}
           <g transform={`translate(${skater.x},${skater.y}) rotate(${skater.angle})`}>
-
             {/* Board + Wheels: travel together, rotate together around board center.
                 Pop tilt and kickflip spin are combined into one rotation. */}
             <g transform={`translate(0,${kf.boardDy})`}>
-              <g transform={`translate(0,${BOARD_CENTER_Y}) rotate(${kf.boardTilt + kf.boardFlipAngle}) translate(0,${-BOARD_CENTER_Y})`}>
+              <g
+                transform={`translate(0,${BOARD_CENTER_Y}) rotate(${
+                  kf.boardTilt + kf.boardFlipAngle
+                }) translate(0,${-BOARD_CENTER_Y})`}
+              >
                 <circle cx="-9" cy="-3" r="3" fill="white" opacity="0.85" />
                 <circle cx="9" cy="-3" r="3" fill="white" opacity="0.85" />
-                <rect x="-18" y="-11" width="36" height="5" rx="2" fill="white" opacity="0.85" />
+                <rect
+                  x="-18"
+                  y="-11"
+                  width="36"
+                  height="5"
+                  rx="2"
+                  fill="white"
+                  opacity="0.85"
+                />
               </g>
             </g>
 
             {/* Body + Head: jump independently of board */}
             <g transform={`translate(0,${kf.bodyDy})`}>
-              <rect x="-6" y="-31" width="12" height="20" rx="2" fill="white" opacity="0.85" />
+              <rect
+                x="-6"
+                y="-31"
+                width="12"
+                height="20"
+                rx="2"
+                fill="white"
+                opacity="0.85"
+              />
               <circle cx="0" cy="-39" r="7" fill="white" opacity="0.85" />
             </g>
-
           </g>
         </svg>
 
@@ -187,6 +219,5 @@ export const Loader = ({ setIsLoaded }) => {
         </p>
       </div>
     </div>
-
   );
 };
