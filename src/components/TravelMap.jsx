@@ -1,9 +1,8 @@
-// NOTE: This widget fetches from a local Polarsteps backend that uses the
-// unofficial polarsteps-api library. It only works when the backend server
-// is running at BACKEND_URL. In production (GitHub Pages) it degrades
-// gracefully to an "offline" message.
+// TravelMap — world map (JSVectorMap) + showcase cards cloned from meetAndy/slices-of-life sol1
+// The Polarsteps stats strip is preserved and degrades gracefully when the backend is offline.
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import travelData from '../data/travel.json';
 
 const BACKEND_URL = 'http://localhost:8000/api/polarsteps';
 
@@ -19,7 +18,7 @@ const GlobeIcon = ({ className }) => (
 const RoadIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      d="M9 201-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
   </svg>
 );
 
@@ -34,40 +33,131 @@ const SuitcaseIcon = ({ className }) => (
 
 const StatItem = ({ icon: Icon, label, value }) => (
   <div className="flex flex-col items-center gap-0.5 flex-1">
-    <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-      <Icon className="w-3 h-3 text-white" />
-    </div>
-    <span className="text-white font-bold text-sm leading-none">{value}</span>
-    <span className="text-white/60 text-[10px] uppercase tracking-wide leading-none">{label}</span>
+    <Icon className="w-4 h-4 text-gray-400" />
+    <span className="text-sm font-semibold text-gray-800">{value}</span>
+    <span className="text-xs text-gray-400">{label}</span>
   </div>
 );
 
-const CountryMarker = ({ country }) => {
-  const display = country.flag_emoji || (country.code ? country.code.slice(0, 2) : '?');
+const SkeletonBlock = ({ className }) => (
+  <div className={`animate-pulse bg-gray-100 rounded ${className}`} />
+);
+
+// --- World Map via JSVectorMap ---
+
+const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
+
+function WorldMap() {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+
+  useEffect(() => {
+    let map;
+    const initMap = async () => {
+      try {
+        // Dynamically import jsvectormap so bundle doesn't break if not installed
+        const [{ default: JsVectorMap }, worldMapModule] = await Promise.all([
+          import('jsvectormap'),
+          import('jsvectormap/dist/maps/world.js'),
+        ]);
+
+        if (!containerRef.current) return;
+
+        const regionValues = {};
+        VISITED_COUNTRY_CODES.forEach(code => {
+          regionValues[code] = 'visited';
+        });
+
+        map = new JsVectorMap({
+          selector: containerRef.current,
+          map: 'world',
+          regionsSelectable: false,
+          series: {
+            regions: [{
+              values: regionValues,
+              attribute: 'fill',
+              scale: { visited: '#558071' },
+            }],
+          },
+          style: {
+            initial: {
+              fill: 'rgba(200, 200, 200, 0.25)',
+              stroke: 'rgba(150, 150, 150, 0.2)',
+              strokeWidth: 0.5,
+            },
+            hover: { fillOpacity: 0.8, fill: '#78ab9a' },
+          },
+        });
+        mapRef.current = map;
+      } catch {
+        // jsvectormap not installed — map stays hidden
+      }
+    };
+    initMap();
+    return () => {
+      try { mapRef.current?.destroy?.(); } catch {}
+    };
+  }, []);
+
   return (
-    <div className="relative group flex-shrink-0">
-      <div
-        className="w-7 h-7 rounded-full bg-white/20 border border-white/30 flex items-center justify-center
-                   text-sm cursor-default hover:bg-white/30 hover:scale-110 transition-all"
-        title={country.name}
-      >
-        {display}
-      </div>
-      {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1
-                      bg-gray-900/90 text-white text-[10px] rounded-lg whitespace-nowrap
-                      opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none
-                      z-20 border border-white/10 shadow-xl">
-        {country.name}
-        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900/90" />
-      </div>
+    <div
+      ref={containerRef}
+      className="w-full h-40 rounded-lg overflow-hidden"
+      style={{ background: 'rgba(240,244,242,0.5)' }}
+    />
+  );
+}
+
+// --- Showcase cards cloned from meetAndy slices-of-life sol1 ---
+
+const showcaseItems = [
+  {
+    id: 'next',
+    tag: 'Next',
+    tagColor: 'bg-blue-100 text-blue-700',
+    title: 'Sevilla to Porto',
+    description: 'Planning a trip to south Spain and a bit of Portugal!',
+    emoji: '\uD83C\uDDEA\uD83C\uDDF8',
+  },
+  {
+    id: 'latest',
+    tag: 'Latest',
+    tagColor: 'bg-green-100 text-green-700',
+    title: 'Oahu, Hawai\u02BBi',
+    description: 'Our family is big on all things Disney — spent time at Aulani.',
+    emoji: '\uD83C\uDDFA\uD83C\uDDF8',
+  },
+  {
+    id: 'favorite',
+    tag: 'Favorite',
+    tagColor: 'bg-amber-100 text-amber-700',
+    title: 'Florence Study Abroad',
+    description: 'Three awesome months in Florence for my last semester. La Dolce Vita.',
+    emoji: '\uD83C\uDDEE\uD83C\uDDF9',
+  },
+];
+
+function ShowcaseCards() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
+      {showcaseItems.map(item => (
+        <div
+          key={item.id}
+          className="flex flex-col gap-1 rounded-xl border border-gray-100 bg-white/70 px-3 py-2.5 shadow-sm"
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{item.emoji}</span>
+            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${item.tagColor}`}>
+              {item.tag}
+            </span>
+          </div>
+          <p className="text-sm font-semibold text-gray-800 leading-snug">{item.title}</p>
+          <p className="text-xs text-gray-500 leading-snug">{item.description}</p>
+        </div>
+      ))}
     </div>
   );
-};
-
-const SkeletonBlock = ({ className }) => (
-  <div className={`bg-white/10 rounded animate-pulse ${className}`} />
-);
+}
 
 // --- Main Component ---
 
@@ -95,115 +185,74 @@ const TravelMap = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // --- Loading skeleton ---
-  if (loading) {
-    return (
-      <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 h-full overflow-hidden">
-        <div className="widget-gradient" />
-        <div className="relative z-10 h-full flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <SkeletonBlock className="w-5 h-5 rounded-full" />
-            <SkeletonBlock className="w-28 h-3 rounded" />
-          </div>
-          <div className="flex gap-2">
-            <SkeletonBlock className="flex-1 h-10 rounded-xl" />
-            <SkeletonBlock className="flex-1 h-10 rounded-xl" />
-            <SkeletonBlock className="flex-1 h-10 rounded-xl" />
-          </div>
-          <SkeletonBlock className="flex-1 rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
-  // --- Error state ---
-  if (error) {
-    const isOffline = error.includes('fetch') || error.includes('Failed') || error.includes('NetworkError');
-    return (
-      <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 h-full overflow-hidden flex flex-col justify-between">
-        <div className="widget-gradient" />
-        <div className="relative z-10 flex flex-col h-full justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-              <GlobeIcon className="w-3 h-3 text-white" />
-            </div>
-            <p className="text-white font-semibold text-xs uppercase tracking-wide">Travel map & stats</p>
-          </div>
-          <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center px-2">
-            <span className="text-2xl">✈️</span>
-            <p className="text-white/70 text-xs leading-relaxed">
-              {isOffline
-                ? 'Backend offline. Run the Polarsteps server locally to see travel data.'
-                : "Couldn't load travel stats from Polarsteps."}
-            </p>
-            {!isOffline && (
-              <button
-                onClick={fetchData}
-                className="mt-1 text-[11px] text-white/80 bg-white/10 hover:bg-white/20 border border-white/20
-                           rounded-lg px-3 py-1 transition-all hover:scale-105"
-              >
-                Try again
-              </button>
-            )}
-          </div>
-          {isOffline && (
-            <p className="text-white/30 text-[10px] text-center mt-2">
-              Local-only integration
-            </p>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // --- Data ready ---
-  const kmFormatted = Number(data.km_count || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
-  const countries = data.countries || [];
-  const tripCount = data.trip_count ?? (data.trips?.length ?? 0);
+  const isOffline = error && (error.includes('fetch') || error.includes('Failed') || error.includes('NetworkError'));
 
   return (
-    <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 hover:scale-105 transition-all h-full overflow-hidden">
-      <div className="widget-gradient" />
-      <div className="relative z-10 h-full flex flex-col gap-2">
-
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-              <GlobeIcon className="w-3 h-3 text-white" />
-            </div>
-            <p className="text-white font-semibold text-xs uppercase tracking-wide">Travel map & stats</p>
-          </div>
-          <span className="text-white/50 text-[10px] font-medium tracking-wide">Polarsteps</span>
+    <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <GlobeIcon className="w-4 h-4 text-gray-500" />
+          <span className="text-sm font-semibold text-gray-700">Travel map &amp; stats</span>
         </div>
+        {!error && !loading && (
+          <a
+            href="https://www.polarsteps.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Polarsteps
+          </a>
+        )}
+      </div>
 
-        {/* Stats strip */}
-        <div className="flex items-center justify-around border border-white/10 rounded-xl px-2 py-2 bg-white/10">
-          <StatItem icon={GlobeIcon} label="Countries" value={data.country_count ?? countries.length} />
-          <div className="w-px h-8 bg-white/10" />
-          <StatItem icon={RoadIcon} label="Km" value={`${kmFormatted}`} />
-          <div className="w-px h-8 bg-white/10" />
-          <StatItem icon={SuitcaseIcon} label="Trips" value={tripCount} />
+      {/* Stats strip — shows skeleton while loading, values when ready, hidden on offline */}
+      {loading ? (
+        <div className="flex gap-3">
+          <SkeletonBlock className="h-10 flex-1" />
+          <SkeletonBlock className="h-10 flex-1" />
+          <SkeletonBlock className="h-10 flex-1" />
         </div>
-
-        {/* Map area */}
-        <div className="flex-1 rounded-xl bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-white/10 p-2 overflow-hidden flex flex-col gap-1.5">
-          <p className="text-white/40 text-[10px] uppercase tracking-wider">Places I've visited</p>
-          {countries.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center text-white/30 text-xs">
-              No country data available
-            </div>
-          ) : (
-            <div className="flex flex-wrap gap-1.5 overflow-y-auto content-start flex-1
-                            scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-              {countries.map((country, i) => (
-                <CountryMarker key={country.code || i} country={country} />
-              ))}
+      ) : !error && data ? (
+        <div className="flex divide-x divide-gray-100">
+          <StatItem
+            icon={GlobeIcon}
+            label="countries"
+            value={(data.countries?.length ?? travelData.visited_countries.length)}
+          />
+          <StatItem
+            icon={RoadIcon}
+            label="km travelled"
+            value={Number(data.km_count || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+          />
+          <StatItem
+            icon={SuitcaseIcon}
+            label="trips"
+            value={data.trip_count ?? (data.trips?.length ?? travelData.trips.length)}
+          />
+        </div>
+      ) : (
+        // Offline / error — show static country count from travel.json
+        <div className="flex divide-x divide-gray-100">
+          <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+          <StatItem icon={SuitcaseIcon} label="trips" value={travelData.trips.length} />
+          {isOffline && (
+            <div className="flex-1 flex items-center justify-center">
+              <span className="text-xs text-gray-400 italic">backend offline</span>
             </div>
           )}
         </div>
+      )}
 
+      {/* World map */}
+      <div>
+        <p className="text-xs text-gray-400 mb-1">Places I&apos;ve visited</p>
+        <WorldMap />
       </div>
+
+      {/* Showcase cards — cloned from meetAndy slices-of-life travel section */}
+      <ShowcaseCards />
     </div>
   );
 };
