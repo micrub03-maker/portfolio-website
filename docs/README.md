@@ -1,1 +1,1 @@
-This is my personal website, which includes my portfolio and other interests! I got this template from my talented CS roommate Logan, go check him out at logankm.com
+This is my personal website, which includes my portfolio and other interests! I built this from a template made by my talented CS roommate Logan, go check him out at logankm.com. The interactive travel map (super awesome) comes from Andy, check him out at https://meet-andy.me/index.html. 
