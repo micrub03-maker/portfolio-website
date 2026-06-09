@@ -1,62 +1,192 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+
+// Board center sits at y=-8.5 in skater-local coords (midpoint of wheel+board stack)
+const BOARD_CENTER_Y = -8.5;
+
+function getKickflipTransforms(t) {
+  if (t === null) return { boardDy: 0, boardFlipAngle: 0, boardTilt: 0, bodyDy: 0 };
+
+  const POP = 0.12; // end of tail-pop phase
+  const AIR = 0.75; // end of air/flip phase
+
+  // ── Tail pop tilt (0 → POP): board briefly tilts as tail taps ──
+  const boardTilt = t < POP ? 12 * Math.sin(Math.PI * (t / POP)) : 0;
+
+  // ── Board arc + kickflip rotation (POP → AIR) ──
+  let boardDy = 0;
+  let boardFlipAngle = 0;
+  if (t >= POP && t < AIR) {
+    const p = (t - POP) / (AIR - POP);
+    boardDy = -28 * Math.sin(Math.PI * p);   // reduced arc height
+    boardFlipAngle = 360 * p;                 // full rotation — wheels orbit with board
+  }
+
+  // ── Body: quick crouch → jump arc → land compression ──
+  let bodyDy;
+  if (t < 0.08) {
+    bodyDy = 4 * (t / 0.08);                                        // crouch down
+  } else if (t < POP) {
+    bodyDy = 4 * (1 - (t - 0.08) / (POP - 0.08));                  // pop up from crouch
+  } else if (t < AIR) {
+    bodyDy = -28 * Math.sin(Math.PI * (t - POP) / (AIR - POP));    // jump arc
+  } else {
+    bodyDy = 5 * Math.sin(Math.PI * (t - AIR) / (1 - AIR));        // land compression
+  }
+
+  return { boardDy, boardFlipAngle, boardTilt, bodyDy };
+}
 
 export const Loader = ({ setIsLoaded }) => {
   const navigate = useNavigate();
+  const rampRef = useRef(null);
+  const svgRef = useRef(null);
+  const isExitingRef = useRef(false);
+  const skaterRef = useRef({ x: 140, y: 78, angle: 0 });
+  const [isExiting, setIsExiting] = useState(false);
+  const [skater, setSkater] = useState({ x: 140, y: 78, angle: 0 });
+  const [kickflipT, setKickflipT] = useState(null);
+
+  const updateSkater = (val) => {
+    skaterRef.current = val;
+    setSkater(val);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isExitingRef.current) return;
+      const path = rampRef.current;
+      const svg = svgRef.current;
+      if (!path || !svg) return;
+
+      const rect = svg.getBoundingClientRect();
+      const vbX = (e.clientX - rect.left) * (280 / rect.width);
+      const clamped = Math.max(12, Math.min(268, vbX));
+      const t = (clamped - 10) / 260;
+
+      const totalLen = path.getTotalLength();
+      const len = t * totalLen;
+      const pt = path.getPointAtLength(len);
+      const pt2 = path.getPointAtLength(Math.min(len + 2, totalLen));
+      const angle = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * (180 / Math.PI);
+
+      updateSkater({ x: pt.x, y: pt.y, angle });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleClick = () => {
-    if (setIsLoaded) {
-      setIsLoaded(true);
-    } else {
-      navigate('/home');
-    }
+    if (isExitingRef.current) return;
+    isExitingRef.current = true;
+    setIsExiting(true); // fade starts immediately, same moment as the kickflip
+
+    const flipDuration = 1100;
+    const start = performance.now();
+
+    const animateFlip = (now) => {
+      const t = Math.min((now - start) / flipDuration, 1);
+      setKickflipT(t);
+      if (t < 1) requestAnimationFrame(animateFlip);
+    };
+
+    requestAnimationFrame(animateFlip);
+
+    setTimeout(() => {
+      if (setIsLoaded) setIsLoaded(true);
+      else navigate('/home');
+    }, 1300);
   };
+
+  const kf = getKickflipTransforms(kickflipT);
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-gray-800 bg-cover bg-center flex items-center justify-center cursor-pointer"
+      className="fixed inset-0 z-50 bg-gray-800 bg-cover bg-center flex items-start justify-center cursor-pointer"
+      style={{
+        opacity: isExiting ? 0 : 1,
+        transition: isExiting ? 'opacity 1.3s ease-in-out' : 'none',
+        pointerEvents: isExiting ? 'none' : 'auto',
+      }}
       onClick={handleClick}
     >
       {/* TODO: replace bg-gray-800 with bg-[url('/images/background-picture.jpg')] once the asset is provided */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
         <span className="text-white/20 text-sm font-mono">TEMP: background-picture</span>
       </div>
-
       <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col items-center text-center text-white px-6 max-w-2xl md:max-w-6xl mx-auto gap-4">
-        <h1 className="text-5xl md:text-8xl font-bold md:whitespace-nowrap">
+      <div className="relative z-10 flex flex-col items-center text-center text-white px-6 max-w-2xl md:max-w-4xl mx-auto gap-3 pt-12 md:pt-16">
+        <h1 className="text-4xl md:text-6xl font-light tracking-wide">
           Hey there! I'm Michael
         </h1>
-
-        <p className="text-xl md:text-3xl font-medium md:whitespace-nowrap">
+        <p className="text-lg md:text-2xl font-light tracking-wide text-white/90">
           Mechanical/Controls Engineer @ MPC lab Berkeley
         </p>
-
-        <p className="text-lg md:text-2xl text-white/80 md:whitespace-nowrap">
-          UC Berkeley MEng Mechanical Engineering '26, TU Delft BSc Mechanical Engineering '24
+        <p className="text-base md:text-lg font-light tracking-wide text-white/70">
+          UC Berkeley MEng Mechanical Engineering '26 · TU Delft BSc Mechanical Engineering '24
         </p>
-
-        <p className="text-sm md:text-base text-white/70 leading-relaxed max-w-2xl mx-auto">
-          <br />
-          <br />
-          Welcome to my portfolio website, glad you stopped by :)
-          <br />
-          My goal is to give you a clear sense of what drives me, how I learn and solve problems, and the kind of
-          energy I bring to a team. 
+        <p className="text-sm md:text-base font-light text-white/60 leading-relaxed max-w-xl mx-auto mt-2">
+          Welcome to my portfolio website, glad you stopped by :)<br />
+          My goal is to give you a clear sense of what drives me, how I learn and solve problems, and the kind of energy I bring to a team.
         </p>
-        
-        <p className="text-sm md:text-base text-white/70 leading-relaxed max-w-2xl mx-auto">
+        <p className="text-sm md:text-base font-light text-white/60 leading-relaxed">
           Have fun browsing!
         </p>
+      </div>
 
-        <p className="text-sm text-white/50 mt-4 tracking-widest uppercase animate-pulse">
-          <br />
-          <br />
-          <br />
+      {/* Mini-ramp + click prompt — pinned at 1/3 from the bottom */}
+      <div className="absolute left-1/2 bottom-1/3 -translate-x-1/2 flex flex-col items-center gap-3">
+        <svg
+          ref={svgRef}
+          width="140"
+          height="70"
+          viewBox="0 -50 280 140"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Subtle ramp surface fill */}
+          <path
+            d="M 10,10 L 50,10 Q 50,78 90,78 L 190,78 Q 230,78 230,10 L 270,10 L 270,90 L 10,90 Z"
+            fill="rgba(255,255,255,0.04)"
+          />
+          {/* Ramp outline */}
+          <path
+            ref={rampRef}
+            d="M 10,10 L 50,10 Q 50,78 90,78 L 190,78 Q 230,78 230,10 L 270,10"
+            stroke="rgba(255,255,255,0.55)"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+          />
+
+          {/* Base group: follows mouse along ramp */}
+          <g transform={`translate(${skater.x},${skater.y}) rotate(${skater.angle})`}>
+
+            {/* Board + Wheels: travel together, rotate together around board center.
+                Pop tilt and kickflip spin are combined into one rotation. */}
+            <g transform={`translate(0,${kf.boardDy})`}>
+              <g transform={`translate(0,${BOARD_CENTER_Y}) rotate(${kf.boardTilt + kf.boardFlipAngle}) translate(0,${-BOARD_CENTER_Y})`}>
+                <circle cx="-9" cy="-3" r="3" fill="white" opacity="0.85" />
+                <circle cx="9" cy="-3" r="3" fill="white" opacity="0.85" />
+                <rect x="-18" y="-11" width="36" height="5" rx="2" fill="white" opacity="0.85" />
+              </g>
+            </g>
+
+            {/* Body + Head: jump independently of board */}
+            <g transform={`translate(0,${kf.bodyDy})`}>
+              <rect x="-6" y="-31" width="12" height="20" rx="2" fill="white" opacity="0.85" />
+              <circle cx="0" cy="-39" r="7" fill="white" opacity="0.85" />
+            </g>
+
+          </g>
+        </svg>
+
+        <p className="text-sm md:text-base text-white/60 tracking-widest uppercase animate-pulse">
           Click anywhere to continue
         </p>
       </div>
     </div>
+
   );
 };

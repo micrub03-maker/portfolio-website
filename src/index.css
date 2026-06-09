@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  background-color: #f3f4f6;
+}
+
 @layer components {
     .skill {
         @apply flex flex-col justify-center items-center h-16 w-16 hover:scale-110 transition-transform text-center

@@ -165,7 +165,7 @@ export default function About() {
       <TableOfContents />
 
       <div
-        className={`flex flex-col items-center mx-4 md:mx-10 transition-opacity duration-1000 ${
+        className={`flex flex-col items-center mx-4 md:mx-10 transition-opacity duration-300 ${
           fadeIn ? "opacity-100" : "opacity-0"
         }`}
       >
