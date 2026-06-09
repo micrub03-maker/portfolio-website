@@ -43,7 +43,7 @@ cd ..
 ## 3 — Install backend dependencies
 
 ```bash
-cd "polarsteps-backend"
+cd "C:\Users\micru\portfolio website\portfolio-website\polarsteps-backend"
 pip install -r requirements.txt
 ```
 
