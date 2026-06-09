@@ -5,7 +5,7 @@ const slides = [
   {
     title: "Mechanical/Controls Engineer @ MPC Lab",
     description:
-      "Contracted with UC Berkeley's MPC Lab as a mechanical/control intern to support on the development of an all-terrain autonomous surveillance rover for NIWC Pacific.",
+      "Contracted with UC Berkeley's MPC Lab as a mechanical/control engineer developing an all-terrain autonomous surveillance rover for NIWC Pacific",
     mediaType: "video",
     mediaLabel: "ONR Luci intro",
     projectKey: "luci",
@@ -16,8 +16,7 @@ const slides = [
     title: "Driver Safety Lead @ CALSOL",
     description:
       "Designing, manufacturing and testing chassis parts for our gen XI solar car competing in the American Solar Challenge race this summer",
-    mediaType: "image",
-    mediaLabel: "CALSOL car",
+    image: "/images/calsolcar.png",
     projectKey: "calsol",
     link: "https://calsol.berkeley.edu/",
     cta: "Visit Team Site",
@@ -26,8 +25,7 @@ const slides = [
     title: "Optics lead @ Axiris autorefractor project",
     description:
       "Enabling Accessible Vision Screening Through Low-Cost Handheld Autorefraction for Resource-Constrained Settings",
-    mediaType: "image",
-    mediaLabel: "Axiris logo",
+    image: "/images/Axiris-logo.png",
     projectKey: "axiris",
   },
 ];
@@ -70,7 +68,7 @@ export default function ProjectOverview({ onProjectClick }) {
             </svg>
           </div>
           <h3 className="text-white font-semibold text-xs uppercase tracking-wide">
-            Project overview
+            Project Spotlight
           </h3>
         </div>
 
@@ -103,10 +101,17 @@ export default function ProjectOverview({ onProjectClick }) {
             transition={{ duration: 0.3 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            {/* TODO: replace with real media once assets are provided */}
-            <span className="text-white/30 text-xs font-mono text-center px-4">
-              TEMP: {active.mediaLabel}
-            </span>
+            {active.image ? (
+              <img
+                src={active.image}
+                alt={active.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-white/30 text-xs font-mono text-center px-4">
+                {active.mediaLabel}
+              </span>
+            )}
           </motion.div>
         </AnimatePresence>
 

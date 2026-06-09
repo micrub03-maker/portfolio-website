@@ -80,9 +80,6 @@ const TableOfContents = ({ isWidget = false }) => {
               </div>
               <p className="text-white font-semibold text-xs uppercase tracking-wide">Navigation</p>
             </div>
-            <span className="text-white/60 text-[11px] uppercase tracking-wide">
-              {sections.find((section) => section.id === activeSection)?.label || "Home"}
-            </span>
           </div>
           <nav className="space-y-1.5 flex-1 flex flex-col justify-between">
             {sections.map((section) => (

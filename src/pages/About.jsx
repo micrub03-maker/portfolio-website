@@ -180,7 +180,7 @@ export default function About() {
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center">
                 {/* TODO: TEMP placeholder for "profile-picture" */}
-                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden border border-white/20 mb-2 md:mb-4 flex-shrink-0">
+                <div className="w-44 h-44 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/20 mb-2 md:mb-4 flex-shrink-0">
                   <img
                     src={profile}
                     alt="Portrait of Michael Rubin"
@@ -189,7 +189,10 @@ export default function About() {
                 </div>
                 <h1 className="text-xl md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
                 <p className="text-white/80 text-sm md:text-lg mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
-                <p className="text-white/80 text-xs md:text-sm mb-1">UC Berkeley MEng '26 · TU Delft BSc '24</p>
+                <div className="flex items-center gap-3 mb-1">
+                  <img src="/images/berkeley-logo.png" alt="UC Berkeley" className="h-6 md:h-8 w-auto opacity-80" />
+                  <img src="/images/tudelft-logo.png" alt="TU Delft" className="h-6 md:h-8 w-auto opacity-80" />
+                </div>
                 <p className="text-white/70 text-xs md:text-sm mb-2 md:mb-4 leading-relaxed">
                   From Antwerp, Belgium
                 </p>

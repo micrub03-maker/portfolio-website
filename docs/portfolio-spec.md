@@ -32,6 +32,8 @@ Output expectations:
 
 # Website Portfolio Outline
 
+This was the original version on 07 June, 2026. changes and updates to the structure have been made
+
 ## INTRODUCTION PAGE
 
 - Layout: A background picture covering the full page, With text centralized"

@@ -11,17 +11,22 @@ const cards = [
     ],
   },
   {
-    key: 'mfg-software',
+    key: 'software',
     lines: [
-      {
-        label: 'Manufacturing:',
-        rest: ' CNC, Additive (FFF, DLP, Cura), Injection Molding, Sheet metal fabrication, Bench Tests, Machine Shop Trained',
-      },
       {
         label: 'Software:',
         rest: ' FEA (Abaqus, Ansys, COMSOL), Programming (Python, MATLAB, C++, G-Code),Tools & Platforms (VSCode, Linux, Git, Ros2, Docker, Raspberry Pi), Microsoft Office (VBA, PivotTables)',
       },
     ],
+  },
+  {
+    key: 'manufacturing',
+    lines: [
+      {
+        label: 'Manufacturing:',
+        rest: ' CNC, Additive (FFF, DLP, Cura), Injection Molding, Sheet metal fabrication, Bench Tests, Machine Shop Trained',
+      },
+    ]
   },
   {
     key: 'languages',

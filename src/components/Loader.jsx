@@ -60,7 +60,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
       if (!path || !svg) return;
 
       const rect = svg.getBoundingClientRect();
-      const vbX = (e.clientX - rect.left) * (280 / rect.width);
+      const vbX = ((e.clientX - rect.left) * 280) / rect.width;
       const clamped = Math.max(12, Math.min(268, vbX));
       const t = (clamped - 10) / 260;
 
@@ -84,7 +84,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
     // start fade out
     setIsExiting(true); // fade starts immediately, same moment as the kickflip
 
-    // tell parent to start fading Home in underneath
+    // tell parent to start fading the About "home" page in underneath
     if (onBeginEnter) {
       onBeginEnter();
     }
@@ -107,7 +107,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
         // let parent unmount Loader
         onEnterComplete();
       } else {
-        // fallback: old behavior
+        // fallback: navigate to new home = About at /home
         navigate("/home");
       }
     }, 1300);
@@ -138,8 +138,8 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
         <p className="text-lg md:text-2xl font-light tracking-wide text-white/90">
           Mechanical/Controls Engineer @ MPC lab Berkeley
         </p>
-        <p className="text-base md:text-lg font-light tracking-wide text-white/70">
-          UC Berkeley MEng Mechanical Engineering &apos;26 · TU Delft BSc Mechanical Engineering &apos;24
+        <p className="text-base md:text-lg font-light text-white/80 tracking-wide">
+          UC Berkeley MEng &apos;26 · TU Delft BSc &apos;24
         </p>
         <p className="text-sm md:text-base font-light text-white/60 leading-relaxed max-w-xl mx-auto mt-2">
           Welcome to my portfolio website, glad you stopped by :)<br />
@@ -176,8 +176,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
 
           {/* Base group: follows mouse along ramp */}
           <g transform={`translate(${skater.x},${skater.y}) rotate(${skater.angle})`}>
-            {/* Board + Wheels: travel together, rotate together around board center.
-                Pop tilt and kickflip spin are combined into one rotation. */}
+            {/* Board + Wheels */}
             <g transform={`translate(0,${kf.boardDy})`}>
               <g
                 transform={`translate(0,${BOARD_CENTER_Y}) rotate(${
@@ -198,7 +197,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
               </g>
             </g>
 
-            {/* Body + Head: jump independently of board */}
+            {/* Body + Head */}
             <g transform={`translate(0,${kf.bodyDy})`}>
               <rect
                 x="-6"
