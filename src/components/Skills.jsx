@@ -44,8 +44,26 @@ export default function Skills() {
     <div>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Skills</h3>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {cards.map((card) => (
+      {/* Row 1: Mechanical + Manufacturing */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {cards.filter(c => ['mechanical', 'manufacturing'].includes(c.key)).map((card) => (
+          <div
+            key={card.key}
+            className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 space-y-3"
+          >
+            {card.lines.map((line) => (
+              <p key={line.label} className="text-sm text-gray-700 leading-relaxed">
+                <span className="font-semibold text-gray-800">{line.label}</span>
+                {line.rest}
+              </p>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      {/* Row 2: Software + Languages & Soft Skills */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {cards.filter(c => ['software', 'languages'].includes(c.key)).map((card) => (
           <div
             key={card.key}
             className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 space-y-3"

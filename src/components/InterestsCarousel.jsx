@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const slides = [
@@ -58,9 +58,19 @@ export default function InterestsCarousel() {
     return () => clearInterval(t);
   }, [isHovered, currentIndex]);
 
+  const touchStartX = useRef(null);
+
   const goTo = (i) => setCurrentIndex(i);
   const goNext = () => goTo((currentIndex + 1) % slides.length);
   const goPrev = () => goTo((currentIndex - 1 + slides.length) % slides.length);
+
+  const handleTouchStart = (e) => { touchStartX.current = e.targetTouches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
+    touchStartX.current = null;
+  };
 
   const active = slides[currentIndex];
 
@@ -72,6 +82,8 @@ export default function InterestsCarousel() {
         className="max-w-3xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Nav bar — arrows + dots */}
         <div className="flex items-center justify-between px-4 py-2">

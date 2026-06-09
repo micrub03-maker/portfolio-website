@@ -33,6 +33,7 @@ const slides = [
 export default function ProjectOverview({ onProjectClick }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const touchStartX = useRef(null);
 
   useEffect(() => {
     if (isHovered) return;
@@ -43,6 +44,17 @@ export default function ProjectOverview({ onProjectClick }) {
   }, [isHovered]);
 
   const goTo = (idx) => setActiveIndex(idx);
+  const handleNext = () => goTo((activeIndex + 1) % slides.length);
+  const handlePrev = () => goTo((activeIndex - 1 + slides.length) % slides.length);
+
+  const handleTouchStart = (e) => { touchStartX.current = e.targetTouches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? handleNext() : handlePrev();
+    touchStartX.current = null;
+  };
+
   const active = slides[activeIndex];
 
   return (
@@ -50,6 +62,8 @@ export default function ProjectOverview({ onProjectClick }) {
       className="relative bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 hover:scale-105 transition-all w-full h-full overflow-hidden flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="widget-gradient" />
 
@@ -89,7 +103,7 @@ export default function ProjectOverview({ onProjectClick }) {
 
       {/* Media block */}
       <div
-        className="relative z-10 mx-3 rounded-xl overflow-hidden flex-1 min-h-0 cursor-pointer select-none bg-white/5 border border-white/10"
+        className="relative z-10 mx-3 rounded-xl overflow-hidden flex-1 min-h-0 select-none bg-white/5 border border-white/10"
         onClick={() => onProjectClick?.(active.projectKey)}
       >
         <AnimatePresence mode="wait">
@@ -114,6 +128,28 @@ export default function ProjectOverview({ onProjectClick }) {
             )}
           </motion.div>
         </AnimatePresence>
+
+        {/* Left click zone */}
+        <button
+          className="absolute left-0 top-0 bottom-0 w-1/4 group z-20"
+          onClick={(e) => { e.stopPropagation(); handlePrev(); }}
+          aria-label="Previous project"
+        >
+          <div className="absolute left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm">
+            ‹
+          </div>
+        </button>
+
+        {/* Right click zone */}
+        <button
+          className="absolute right-0 top-0 bottom-0 w-1/4 group z-20"
+          onClick={(e) => { e.stopPropagation(); handleNext(); }}
+          aria-label="Next project"
+        >
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-white text-sm">
+            ›
+          </div>
+        </button>
 
         {/* Title overlay */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 z-10">

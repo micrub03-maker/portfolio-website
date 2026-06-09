@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useMediaQuery } from "react-responsive";
+import emailjs from "@emailjs/browser";
+import { motion, AnimatePresence } from "framer-motion";
 import { useBackground } from "../contexts/BackgroundContext";
 import links from "../config/links";
 import TableOfContents from "../components/TableOfContents";

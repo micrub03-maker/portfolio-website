@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -423,6 +423,7 @@ export default function ProjectPortfolio({ initialSlideId }) {
   const [currentIndex, setCurrentIndex] = useState(getInitialIndex);
   const [isHovered, setIsHovered] = useState(false);
   const [openDropdownCount, setOpenDropdownCount] = useState(0);
+  const touchStartX = useRef(null);
 
   const isPaused = isHovered || openDropdownCount > 0;
 
@@ -438,6 +439,14 @@ export default function ProjectPortfolio({ initialSlideId }) {
     const t = setInterval(goNext, 8000);
     return () => clearInterval(t);
   }, [isPaused, currentIndex]);
+
+  const handleTouchStart = (e) => { touchStartX.current = e.targetTouches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
+    touchStartX.current = null;
+  };
 
   const handleDd = (isOpening) => {
     setOpenDropdownCount((prev) => (isOpening ? prev + 1 : Math.max(0, prev - 1)));
@@ -455,6 +464,8 @@ export default function ProjectPortfolio({ initialSlideId }) {
         className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Nav bar */}
         <div className="flex items-center justify-between px-4 py-2">
