@@ -1,0 +1,42 @@
+{
+  "visited_countries": [
+    { "code": "BE", "name": "Belgium", "note": "Home country" },
+    { "code": "NL", "name": "Netherlands", "note": "TU Delft" },
+    { "code": "US", "name": "United States", "note": "UC Berkeley" },
+    { "code": "CA", "name": "Canada", "note": "Big White Ski Resort" },
+    { "code": "FR", "name": "France", "note": "TODO: add note" },
+    { "code": "DE", "name": "Germany", "note": "TODO: add note" },
+    { "code": "CH", "name": "Switzerland", "note": "TODO: add note" },
+    { "code": "GB", "name": "United Kingdom", "note": "TODO: add note" },
+    { "code": "ES", "name": "Spain", "note": "TODO: add note" },
+    { "code": "IT", "name": "Italy", "note": "TODO: add note" },
+    { "code": "AT", "name": "Austria", "note": "TODO: add note" },
+    { "code": "PT", "name": "Portugal", "note": "TODO: add note" }
+  ],
+  "trips": [
+    {
+      "name": "Big White Ski Season",
+      "country": "CA",
+      "year": 2025,
+      "note": "Ski instructor, CSIA Level 2"
+    },
+    {
+      "name": "CERN IdeaSquare",
+      "country": "CH",
+      "year": 2024,
+      "note": "Summer research program"
+    },
+    {
+      "name": "UC Berkeley",
+      "country": "US",
+      "year": 2025,
+      "note": "MEng Mechanical Engineering"
+    },
+    {
+      "name": "TU Delft",
+      "country": "NL",
+      "year": 2021,
+      "note": "BSc Mechanical Engineering"
+    }
+  ]
+}
