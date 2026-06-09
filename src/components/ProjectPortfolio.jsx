@@ -1,19 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MediaSlot } from "./MediaSlot";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
-
-function MediaPlaceholder({ label, tall }) {
-  return (
-    <div
-      className={`w-full ${tall ? 'h-52' : 'h-40'} rounded-xl bg-slate-100 border border-gray-200 flex items-center justify-center my-3 flex-shrink-0`}
-    >
-      <span className="text-gray-400 text-xs font-mono text-center px-4 leading-relaxed">
-        TEMP: {label}
-      </span>
-    </div>
-  );
-}
 
 function Bullets({ items }) {
   return (
@@ -86,7 +75,14 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, c
 function IntroSlide() {
   return (
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
-      <MediaPlaceholder label="Project picture" tall />
+      <MediaSlot
+        // CHANGE THIS LINE to swap the image:
+        // Set src to "/images/<filename>.<ext>" for your image in public/images,
+        // e.g. src="/images/project.jpg"
+        src={null}
+        label="Project picture"
+        tall
+      />
       <p className="text-gray-700 text-base md:text-lg leading-relaxed mt-4">
         "I learn the most by building real things, not just solving problem sets. I used to let perfectionism slow me down, but university projects and hands-on teams pushed me to let go of the fear of failing and build cool stuff!"
       </p>
@@ -102,7 +98,14 @@ function FeaturedProjectsSlide({ onDd }) {
       <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <MediaPlaceholder label="ONR Luci CAD" tall />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/luci-cad.jpg"
+            src={null}
+            label="ONR Luci CAD"
+            tall
+          />
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a
@@ -139,16 +142,40 @@ function FeaturedProjectsSlide({ onDd }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             I began the role by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To validate those issues firsthand, I rebuilt the rover from scratch and documented every complication, dependency, and time-consuming step along the way.
           </p>
-          <MediaPlaceholder label="Luci build" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/luci-build.jpg"
+            src={null}
+            label="Luci build"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
           </p>
-          <MediaPlaceholder label="wiring diagram" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/wiring-diagram.jpg"
+            src={null}
+            label="wiring diagram"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues, which reflects my documentation discipline, attention to detail, and user-centered engineering approach. Having done this for this project, I feel confident I have enough context now, and I have started working on a redesigned mount for the camera: improving strength, including damping and pan/tilt mechanism and controls.
           </p>
-          <MediaPlaceholder label="pan/tilt mount CAD" />
-          <MediaPlaceholder label="pan/tilt mount video" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/pan-tilt-cad.jpg"
+            src={null}
+            label="pan/tilt mount CAD"
+          />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/pan-tilt-video.jpg"
+            src={null}
+            label="pan/tilt mount video"
+          />
         </Dropdown>
       </Dropdown>
 
@@ -156,7 +183,14 @@ function FeaturedProjectsSlide({ onDd }) {
       <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <MediaPlaceholder label="CALSOL car" tall />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/calsol-car.jpg"
+            src={null}
+            label="CALSOL car"
+            tall
+          />
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a
@@ -183,15 +217,33 @@ function FeaturedProjectsSlide({ onDd }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             To safely anchor the lap and anti-submarine belts into a thin carbon fiber occupant cell, I designed bonded metal inserts that follow the shell curvature while maintaining proper belt geometry and load paths. The inserts are sandwiched within the laminate, with belts attaching via clips to eyebolts threaded into the inserts.
           </p>
-          <MediaPlaceholder label="inserts" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/inserts.jpg"
+            src={null}
+            label="inserts"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             I translated regulation requirements into explicit load cases and analyzed two primary failure modes: thread stripping at the insert and debonding or pull-through at the laminate. Through analytical validation I found high safety factors for the threads and a more limiting FOS of 1.3 at the bonded interface.
           </p>
-          <MediaPlaceholder label="inserts calcs and sketch" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/inserts-calcs.jpg"
+            src={null}
+            label="inserts calcs and sketch"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             To validate the concept without access to dynamic crash equipment, I developed a conservative quasi-static pull-out test using in-house fabricated flat inserts embedded in CFRP panels. Four samples averaged failure at 6.11 kN, combined with published dynamic CFRP insert data, this supported that the final design could credibly meet the regulated requirement with an estimated dynamic FOS of about 1.15.
           </p>
-          <MediaPlaceholder label="Inserts test set up" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/inserts-test.jpg"
+            src={null}
+            label="Inserts test set up"
+          />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -208,15 +260,33 @@ function FeaturedProjectsSlide({ onDd }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             For the shoulder harness, I designed a steel backplate that bolts through the chassis and supports transverse "wrapping bolts" around which the shoulder belts are looped, eliminating single-point failure by allowing each strap to wrap independently.
           </p>
-          <MediaPlaceholder label="shoulder belt anchorage" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/shoulder-anchorage.jpg"
+            src={null}
+            label="shoulder belt anchorage"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             I modeled the wrapping bolts as fixed-fixed beams under the projected distributed load to size them for the governing failure mode: bending, since shear and tension are easily satisfied. A 9/16 inch grade 8.8 is the smallest size bolt that keeps peak bending stress safely below it's flexural strength of 640 MPa, and the rest of the part was designed around these wrapping bolts.
           </p>
-          <MediaPlaceholder label="Shoulder belt calcs" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/shoulder-calcs.jpg"
+            src={null}
+            label="Shoulder belt calcs"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             Once the baseline design cleared all load cases, I ran a SolidWorks topology optimization on the backplate to strip non-critical material while preserving manufacturability (uniform thickness, waterjet-friendly geometry, intact interfaces), ultimately cutting weight by roughly 40% while maintaining acceptable safety margins.
           </p>
-          <MediaPlaceholder label="Shoulder belt CAD topology" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/shoulder-topology.jpg"
+            src={null}
+            label="Shoulder belt CAD topology"
+          />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -231,7 +301,13 @@ function FeaturedProjectsSlide({ onDd }) {
       <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <MediaPlaceholder label="Axiris logo" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/axiris-logo.jpg"
+            src={null}
+            label="Axiris logo"
+          />
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a href="#" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Slidedeck</a>
@@ -251,15 +327,33 @@ function FeaturedProjectsSlide({ onDd }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             Hundreds of millions of people live with avoidable vision loss, We started with a simple question: why? Through interviewing ophthalmologists, NGO screeners, and engineers, we realized this gap in care is due to current solution being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem before narrowing to ten concrete product formats.
           </p>
-          <MediaPlaceholder label="Axiris concept sketches" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/axiris-sketches.jpg"
+            src={null}
+            label="Axiris concept sketches"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             Using a Pugh chart and expert feedback, we landed on a handheld device with dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
           </p>
-          <MediaPlaceholder label="Axiris optical path" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/axiris-optical.jpg"
+            src={null}
+            label="Axiris optical path"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             I then tackled the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
           </p>
-          <MediaPlaceholder label="Axiris final product" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/axiris-product.jpg"
+            src={null}
+            label="Axiris final product"
+          />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -276,11 +370,23 @@ function FeaturedProjectsSlide({ onDd }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             We started from a bulky V1 assembly with light leaks and awkward ergonomics and iterated through six major versions before we had something both functional and presentable as a product.
           </p>
-          <MediaPlaceholder label="iterations Axiris" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/axiris-iterations.jpg"
+            src={null}
+            label="iterations Axiris"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state for tuning the image-processing pipeline and guiding mechanical changes.
           </p>
-          <MediaPlaceholder label="model eye Axiris" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/axiris-model-eye.jpg"
+            src={null}
+            label="model eye Axiris"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment, and the final V6 housing is fully light-tight, uses only eight mechanical parts, and assembles in about two minutes.
           </p>
@@ -297,7 +403,13 @@ function FeaturedProjectsSlide({ onDd }) {
       <Dropdown summaryTitle="Tactile End Effector Capstone @ EDG Lab" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <MediaPlaceholder label="Suction cup overview" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/suction-cup.jpg"
+            src={null}
+            label="Suction cup overview"
+          />
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">EDG website</a>
@@ -315,15 +427,33 @@ function FeaturedProjectsSlide({ onDd }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             The team started by defining system requirements and mapping the full production and assembly workflow to expose bottlenecks in fabrication, wiring, and maintenance. I then led a complete electrical and mechanical redesign to improve manufacturability and robustness at scale without losing the original functionality of the system.
           </p>
-          <MediaPlaceholder label="Requirements Suction Cup" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/suction-requirements.jpg"
+            src={null}
+            label="Requirements Suction Cup"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             An example I led is the silicone suction cup redesign. I switched from a four to a three-chamber geometry and redesigned its mold for better demolding. The new mold uses a four-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success compared to the original mold.
           </p>
-          <MediaPlaceholder label="Suction cup mold" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/suction-mold.jpg"
+            src={null}
+            label="Suction cup mold"
+          />
           <p className="text-sm text-gray-700 leading-relaxed">
             After implementing the new geometry, I worked with the PhD students on the project leading control to verify that suction performance and chamber-level sensing were unchanged with the new design. We ran maximum payload and varied object pick-and-place tests on representative items and observed similar performance to the prior prototype.
           </p>
-          <MediaPlaceholder label="maximum payload suction cup" />
+          <MediaSlot
+            // CHANGE THIS LINE to swap the image:
+            // Set src to "/images/<filename>.<ext>" for your image in public/images,
+            // e.g. src="/images/suction-payload.jpg"
+            src={null}
+            label="maximum payload suction cup"
+          />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -383,7 +513,14 @@ function HonoursSlide({ onDd }) {
           onOpenChange={onDd}
         >
           {item.media.map((m) => (
-            <MediaPlaceholder key={m} label={m} />
+            <MediaSlot
+              key={m}
+              // CHANGE THIS LINE to swap the image:
+              // Set src to "/images/<filename>.<ext>" for your image in public/images,
+              // e.g. src="/images/sproutup.jpg"
+              src={null}
+              label={m}
+            />
           ))}
           {item.links.length > 0 && (
             <div className="flex justify-end gap-2 mt-2 flex-wrap">

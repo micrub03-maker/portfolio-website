@@ -2,6 +2,7 @@
 // The Polarsteps stats strip is preserved and degrades gracefully when the backend is offline.
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import 'jsvectormap/dist/jsvectormap.min.css';
 import travelData from '../data/travel.json';
 
 const BACKEND_URL = 'http://localhost:8000/api/polarsteps';
@@ -33,14 +34,14 @@ const SuitcaseIcon = ({ className }) => (
 
 const StatItem = ({ icon: Icon, label, value }) => (
   <div className="flex flex-col items-center gap-0.5 flex-1">
-    <Icon className="w-4 h-4 text-gray-400" />
-    <span className="text-sm font-semibold text-gray-800">{value}</span>
-    <span className="text-xs text-gray-400">{label}</span>
+    <Icon className="w-3 h-3 text-white/60" />
+    <span className="text-xs font-semibold text-white">{value}</span>
+    <span className="text-[10px] text-white/60">{label}</span>
   </div>
 );
 
 const SkeletonBlock = ({ className }) => (
-  <div className={`animate-pulse bg-gray-100 rounded ${className}`} />
+  <div className={`animate-pulse bg-white/20 rounded ${className}`} />
 );
 
 // --- World Map via JSVectorMap ---
@@ -48,20 +49,28 @@ const SkeletonBlock = ({ className }) => (
 const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
 
 function WorldMap() {
-  const containerRef = useRef(null);
+  const mountRef = useRef(null);
   const mapRef = useRef(null);
 
   useEffect(() => {
     let map;
     const initMap = async () => {
       try {
-        // Dynamically import jsvectormap so bundle doesn't break if not installed
-        const [{ default: JsVectorMap }, worldMapModule] = await Promise.all([
-          import('jsvectormap'),
-          import('jsvectormap/dist/maps/world.js'),
-        ]);
+        // Sequential imports — world.js calls window.jsVectorMap.addMap() which
+        // requires the main library to have run first and set window.jsVectorMap.
+        // Promise.all does NOT guarantee this order.
+        const { default: JsVectorMap } = await import('jsvectormap');
+        await import('jsvectormap/dist/maps/world.js');
 
-        if (!containerRef.current) return;
+        await new Promise(resolve => requestAnimationFrame(resolve));
+
+        if (!mountRef.current) return;
+
+        console.log("TravelMap mount size before init", {
+          width: mountRef.current?.offsetWidth,
+          height: mountRef.current?.offsetHeight,
+          rect: mountRef.current?.getBoundingClientRect(),
+        });
 
         const regionValues = {};
         VISITED_COUNTRY_CODES.forEach(code => {
@@ -69,7 +78,7 @@ function WorldMap() {
         });
 
         map = new JsVectorMap({
-          selector: containerRef.current,
+          selector: mountRef.current,
           map: 'world',
           regionsSelectable: false,
           series: {
@@ -89,8 +98,11 @@ function WorldMap() {
           },
         });
         mapRef.current = map;
-      } catch {
-        // jsvectormap not installed — map stays hidden
+
+        console.log("TravelMap children after init", mountRef.current?.children.length);
+        console.log("TravelMap innerHTML after init", mountRef.current?.innerHTML?.slice(0, 200));
+      } catch (err) {
+        console.error("TravelMap map init error:", err);
       }
     };
     initMap();
@@ -99,62 +111,13 @@ function WorldMap() {
     };
   }, []);
 
+  // Fills whatever absolute/relative context the parent provides.
   return (
     <div
-      ref={containerRef}
-      className="w-full h-40 rounded-lg overflow-hidden"
-      style={{ background: 'rgba(240,244,242,0.5)' }}
-    />
-  );
-}
-
-// --- Showcase cards cloned from meetAndy slices-of-life sol1 ---
-
-const showcaseItems = [
-  {
-    id: 'next',
-    tag: 'Next',
-    tagColor: 'bg-blue-100 text-blue-700',
-    title: 'Sevilla to Porto',
-    description: 'Planning a trip to south Spain and a bit of Portugal!',
-    emoji: '\uD83C\uDDEA\uD83C\uDDF8',
-  },
-  {
-    id: 'latest',
-    tag: 'Latest',
-    tagColor: 'bg-green-100 text-green-700',
-    title: 'Oahu, Hawai\u02BBi',
-    description: 'Our family is big on all things Disney — spent time at Aulani.',
-    emoji: '\uD83C\uDDFA\uD83C\uDDF8',
-  },
-  {
-    id: 'favorite',
-    tag: 'Favorite',
-    tagColor: 'bg-amber-100 text-amber-700',
-    title: 'Florence Study Abroad',
-    description: 'Three awesome months in Florence for my last semester. La Dolce Vita.',
-    emoji: '\uD83C\uDDEE\uD83C\uDDF9',
-  },
-];
-
-function ShowcaseCards() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
-      {showcaseItems.map(item => (
-        <div
-          key={item.id}
-          className="flex flex-col gap-1 rounded-xl border border-gray-100 bg-white/70 px-3 py-2.5 shadow-sm"
-        >
-          <div className="flex items-center gap-2">
-            <span className="text-lg">{item.emoji}</span>
-            <span className={`text-xs font-semibold px-1.5 py-0.5 rounded-full ${item.tagColor}`}>
-              {item.tag}
-            </span>
-          </div>
-          <p className="text-sm font-semibold text-gray-800 leading-snug">{item.title}</p>
-          <p className="text-xs text-gray-500 leading-snug">{item.description}</p>
-        </div>
-      ))}
+      className="absolute inset-0"
+      style={{ background: 'rgba(255,255,255,0.05)' }}
+    >
+      <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }
@@ -188,34 +151,57 @@ const TravelMap = () => {
   const isOffline = error && (error.includes('fetch') || error.includes('Failed') || error.includes('NetworkError'));
 
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm">
+    <div className="flex flex-col gap-2 relative bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl md:h-full overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GlobeIcon className="w-4 h-4 text-gray-500" />
-          <span className="text-sm font-semibold text-gray-700">Travel map &amp; stats</span>
+          <GlobeIcon className="w-4 h-4 text-white/70" />
+          <span className="text-sm font-semibold text-white">Travel map &amp; stats</span>
         </div>
         {!error && !loading && (
           <a
             href="https://www.polarsteps.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xs text-white/40 hover:text-white/70 transition-colors"
           >
             Polarsteps
           </a>
         )}
       </div>
 
+      {/* World map — grows to fill remaining card space; overlays sit on top */}
+      <div className="flex-1 min-h-[9rem] relative rounded-lg overflow-hidden">
+        <WorldMap />
+
+        {/* "Places I've visited" label — bottom-left overlay */}
+        <p className="absolute bottom-1.5 left-2 text-[10px] text-white/50 z-10 pointer-events-none">
+          Places I&apos;ve visited
+        </p>
+
+        {/* Favourite destination card — bottom-right overlay */}
+        <div className="absolute bottom-2 right-2 z-10 flex flex-col gap-0.5 rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm px-2 py-1.5 max-w-[9rem]">
+          <div className="flex items-center gap-1">
+            <span className="text-sm">🇮🇹</span>
+            <span className="text-[9px] font-semibold px-1 py-0.5 rounded-full bg-amber-500/25 text-amber-200">
+              Favorite
+            </span>
+          </div>
+          <p className="text-[10px] font-semibold text-white leading-tight line-clamp-1">
+            Florence Study Abroad
+          </p>
+        </div>
+      </div>
+
       {/* Stats strip — shows skeleton while loading, values when ready, hidden on offline */}
       {loading ? (
         <div className="flex gap-3">
-          <SkeletonBlock className="h-10 flex-1" />
-          <SkeletonBlock className="h-10 flex-1" />
-          <SkeletonBlock className="h-10 flex-1" />
+          <SkeletonBlock className="h-6 flex-1" />
+          <SkeletonBlock className="h-6 flex-1" />
+          <SkeletonBlock className="h-6 flex-1" />
         </div>
       ) : !error && data ? (
-        <div className="flex divide-x divide-gray-100">
+        <div className="flex divide-x divide-white/20">
           <StatItem
             icon={GlobeIcon}
             label="countries"
@@ -234,25 +220,16 @@ const TravelMap = () => {
         </div>
       ) : (
         // Offline / error — show static country count from travel.json
-        <div className="flex divide-x divide-gray-100">
+        <div className="flex divide-x divide-white/20">
           <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
           <StatItem icon={SuitcaseIcon} label="trips" value={travelData.trips.length} />
           {isOffline && (
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-xs text-gray-400 italic">backend offline</span>
+              <span className="text-[10px] text-white/40 italic">backend offline</span>
             </div>
           )}
         </div>
       )}
-
-      {/* World map */}
-      <div>
-        <p className="text-xs text-gray-400 mb-1">Places I&apos;ve visited</p>
-        <WorldMap />
-      </div>
-
-      {/* Showcase cards — cloned from meetAndy slices-of-life travel section */}
-      <ShowcaseCards />
     </div>
   );
 };

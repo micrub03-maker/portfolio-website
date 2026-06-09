@@ -218,7 +218,6 @@ export default function About() {
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center">
-                {/* TODO: TEMP placeholder for "profile-picture" */}
                 <div className="w-44 h-44 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/20 mb-2 md:mb-4 flex-shrink-0">
                   <img
                     src={profile}
@@ -265,7 +264,7 @@ export default function About() {
               </div>
 
               {/* Travel Map widget */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
                 <TravelMap />
               </div>
 

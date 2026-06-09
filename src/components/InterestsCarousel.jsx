@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TravelMap from './TravelMap';
 
 const slides = [
   {
@@ -134,9 +135,15 @@ export default function InterestsCarousel() {
           >
             <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
 
-            <div className="mt-4 mb-4 h-40 w-full rounded-lg border border-dashed border-slate-300 bg-white/40 flex items-center justify-center text-xs uppercase tracking-wide text-gray-400">
-              {active.mediaLabel}
-            </div>
+            {active.id === 'traveling' ? (
+              <div className="mt-4 mb-4 h-72 w-full rounded-2xl overflow-hidden">
+                <TravelMap />
+              </div>
+            ) : (
+              <div className="mt-4 mb-4 h-40 w-full rounded-lg border border-dashed border-slate-300 bg-white/40 flex items-center justify-center text-xs uppercase tracking-wide text-gray-400">
+                {active.mediaLabel}
+              </div>
+            )}
 
             <p className="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
               {active.description}

@@ -18,13 +18,13 @@
     "@react-three/fiber": "^8.16.6",
     "emailjs-com": "^3.2.0",
     "framer-motion": "^12.23.11",
+    "jsvectormap": "^1.7.0",
     "ldrs": "^1.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-responsive": "^10.0.0",
     "react-router-dom": "^6.23.1",
-    "three": "^0.164.1",
-    "jsvectormap": "^1.5.3"
+    "three": "^0.164.1"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

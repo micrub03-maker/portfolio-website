@@ -8,6 +8,11 @@ const TableOfContents = ({ isWidget = false }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isDarkBackground, setIsDarkBackground] = useState(true);
   const hideTimer = useRef(null);
+  const activeSectionRef = useRef('home');
+
+  useEffect(() => {
+    activeSectionRef.current = activeSection;
+  }, [activeSection]);
 
   const sections = [
     { id: 'home', label: 'Home' },
@@ -36,6 +41,7 @@ const TableOfContents = ({ isWidget = false }) => {
     };
 
     const handleMouseMove = (e) => {
+      if (activeSectionRef.current === 'home') return;
       const distFromRight = window.innerWidth - e.clientX;
       if (distFromRight < 80) {
         if (hideTimer.current) clearTimeout(hideTimer.current);
@@ -104,13 +110,48 @@ const TableOfContents = ({ isWidget = false }) => {
   // Don't render floating version on mobile
   if (!isDesktop) return null;
 
+  const isOnHome = activeSection === 'home';
+
   return (
     <>
+      {/* Arrow tab — persistent hint when not on home and panel is collapsed */}
+      <motion.div
+        animate={{ opacity: !isOnHome && !isHovered ? 1 : 0, x: !isOnHome && !isHovered ? 0 : 16 }}
+        transition={{ duration: 0.2 }}
+        style={{ pointerEvents: !isOnHome && !isHovered ? 'auto' : 'none' }}
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-40 cursor-pointer"
+        onMouseEnter={() => {
+          if (hideTimer.current) clearTimeout(hideTimer.current);
+          setIsHovered(true);
+        }}
+      >
+        <motion.div
+          animate={{
+            backgroundColor: isDarkBackground ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.75)',
+            borderColor: isDarkBackground ? 'rgba(255,255,255,0.3)' : 'rgb(229,231,235)',
+          }}
+          transition={{ duration: 0.3 }}
+          className="flex items-center justify-center pl-2 pr-1 py-4 rounded-l-xl shadow-lg border border-r-0 backdrop-blur-md"
+        >
+          <motion.svg
+            animate={{ color: isDarkBackground ? '#ffffff' : '#475569' }}
+            transition={{ duration: 0.3 }}
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </motion.svg>
+        </motion.div>
+      </motion.div>
+
+      {/* Full TOC panel — slides in on hover, hidden on home */}
       <motion.div
         initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : 50 }}
+        animate={{ opacity: isHovered && !isOnHome ? 1 : 0, x: isHovered && !isOnHome ? 0 : 50 }}
         transition={{ duration: 0.12 }}
-        style={{ pointerEvents: isHovered ? 'auto' : 'none' }}
+        style={{ pointerEvents: isHovered && !isOnHome ? 'auto' : 'none' }}
         className="fixed right-8 top-1/3 transform -translate-y-1/3 z-40"
         onMouseEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); }}
         onMouseLeave={() => { hideTimer.current = setTimeout(() => setIsHovered(false), 50); }}
