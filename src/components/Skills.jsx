@@ -36,8 +36,8 @@ const cards = [
 
 export default function Skills() {
   return (
-    <section>
-      <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Skills</h2>
+    <div>
+      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Skills</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {cards.map((card) => (
@@ -54,6 +54,6 @@ export default function Skills() {
           </div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

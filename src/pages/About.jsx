@@ -188,7 +188,7 @@ export default function About() {
                   />
                 </div>
                 <h1 className="text-xl md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
-                <p className="text-white/80 text-sm md:text-lg mb-1">Mechanical/Controls Engineer intern @ MPC lab Berkeley</p>
+                <p className="text-white/80 text-sm md:text-lg mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
                 <p className="text-white/80 text-xs md:text-sm mb-1">UC Berkeley MEng '26 · TU Delft BSc '24</p>
                 <p className="text-white/70 text-xs md:text-sm mb-2 md:mb-4 leading-relaxed">
                   From Antwerp, Belgium
@@ -222,9 +222,9 @@ export default function About() {
                 </div>
               </div>
 
-              {/* Recent Reads - Top left widget */}
+              {/* World Clock - Top left widget */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                <RecentReads />
+                <WorldClock />
               </div>
 
               {/* A.3 Project Overview */}
@@ -232,14 +232,14 @@ export default function About() {
                 <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} />
               </div>
 
-              {/* World Clock - Bottom left widget */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                <WorldClock />
-              </div>
-
-              {/* Table of Contents - Bottom right widget */}
+              {/* Table of Contents - Bottom left widget */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
                 <TableOfContents isWidget={true} />
+              </div>
+
+              {/* Recent Reads - Bottom right widget */}
+              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+                <RecentReads />
               </div>
 
             </div>
@@ -259,20 +259,19 @@ export default function About() {
         <div className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <AboutMe />
         </div>
-        <div id="education" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <Education />
-        </div>
-        <div id="experience" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <Experience />
-        </div>
         <div id="projects" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <ProjectPortfolio />
         </div>
-        <div id="skills" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <Skills />
-        </div>
         <div id="interests" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <InterestsCarousel />
+        </div>
+        <div id="resume" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
+          <h2 className="text-center mb-8 text-2xl md:text-3xl font-bold text-gray-400">Resume Overview</h2>
+          <div className="flex flex-col gap-10">
+            <Skills />
+            <Experience />
+            <Education />
+          </div>
         </div>
         <div id="getInTouch" className="flex flex-col items-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Contact</h2>

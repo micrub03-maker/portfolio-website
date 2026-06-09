@@ -30,7 +30,7 @@ export const Loader = ({ setIsLoaded }) => {
         </h1>
 
         <p className="text-xl md:text-3xl font-medium md:whitespace-nowrap">
-          Mechanical/Controls Engineer intern @ MPC lab Berkeley
+          Mechanical/Controls Engineer @ MPC lab Berkeley
         </p>
 
         <p className="text-lg md:text-2xl text-white/80 md:whitespace-nowrap">

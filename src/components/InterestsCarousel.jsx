@@ -74,7 +74,7 @@ export default function InterestsCarousel() {
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Nav bar — arrows + dots */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 py-2">
           <button
             onClick={goPrev}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
@@ -106,7 +106,7 @@ export default function InterestsCarousel() {
         </div>
 
         {/* Label */}
-        <p className="text-center text-xs text-gray-400 uppercase tracking-wide pt-4 px-4">
+        <p className="text-center text-xs text-gray-400 uppercase tracking-wide pt-2 px-4">
           What I'm into outside the lab
         </p>
 
@@ -118,7 +118,7 @@ export default function InterestsCarousel() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
-            className="p-6 md:p-8"
+            className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4"
           >
             <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
 

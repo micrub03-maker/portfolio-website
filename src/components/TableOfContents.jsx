@@ -12,11 +12,9 @@ const TableOfContents = ({ isWidget = false }) => {
   const sections = [
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'About me' },
-    { id: 'education', label: 'Education' },
-    { id: 'experience', label: 'Experience' },
     { id: 'projects', label: 'Projects' },
-    { id: 'skills', label: 'Skills' },
     { id: 'interests', label: 'Interests' },
+    { id: 'resume', label: 'Resume Overview' },
     { id: 'getInTouch', label: 'Contact' },
   ];
 

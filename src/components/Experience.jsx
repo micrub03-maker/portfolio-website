@@ -138,8 +138,8 @@ export default function Experience() {
   const [showMore, setShowMore] = useState(false);
 
   return (
-    <section>
-      <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Experience</h2>
+    <div>
+      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
 
       <div className="flex flex-col gap-4">
         {mainEntries.map((entry, i) => (
@@ -182,6 +182,6 @@ export default function Experience() {
           )}
         </AnimatePresence>
       </div>
-    </section>
+    </div>
   );
 }

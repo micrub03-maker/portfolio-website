@@ -1,7 +1,6 @@
 import React, { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, Html, OrbitControls } from '@react-three/drei';
-import { Soccer } from '../models/Soccer';
 import { Loader } from '../components/Loader';
 import { HomeText } from '../components/HomeText';
 import { useBackground } from '../contexts/BackgroundContext';

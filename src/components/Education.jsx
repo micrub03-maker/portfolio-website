@@ -39,14 +39,17 @@ const entries = [
     logoLabel: 'Logo Academie Berchem',
     title: 'Academie Berchem',
     period: '2008-2021',
-    body: 'I was enrolled in the part time graphic arts program, broadening my perspective and developing my creativity. My most valuable hobby growing up!',
+    bullets: [
+      'I graduated from the part time graphic arts program, broadening my perspective and developing my creativity',
+      'My most valuable hobby growing up!'
+    ],
   },
 ];
 
 export default function Education() {
   return (
-    <section>
-      <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Education</h2>
+    <div>
+      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Education</h3>
       <div className="flex flex-col gap-4">
         {entries.map((entry, i) => (
           <motion.div
@@ -95,6 +98,6 @@ export default function Education() {
           </motion.div>
         ))}
       </div>
-    </section>
+    </div>
   );
 }
