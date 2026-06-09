@@ -99,7 +99,7 @@ function FeaturedProjectsSlide({ onDd }) {
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
 
       {/* ── LUCI ── */}
-      <Dropdown summaryTitle="Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} noClickClose>
+      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaPlaceholder label="ONR Luci CAD" tall />
@@ -153,7 +153,7 @@ function FeaturedProjectsSlide({ onDd }) {
       </Dropdown>
 
       {/* ── CALSOL ── */}
-      <Dropdown summaryTitle="Driver Safety Lead @ CALSOL" onOpenChange={onDd} noClickClose>
+      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaPlaceholder label="CALSOL car" tall />
@@ -228,7 +228,7 @@ function FeaturedProjectsSlide({ onDd }) {
       </Dropdown>
 
       {/* ── AXIRIS ── */}
-      <Dropdown summaryTitle="Optics Lead @ Axiris Autorefractor Project" onOpenChange={onDd} noClickClose>
+      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaPlaceholder label="Axiris logo" />
@@ -294,7 +294,7 @@ function FeaturedProjectsSlide({ onDd }) {
       </Dropdown>
 
       {/* ── SUCTION CUP ── */}
-      <Dropdown summaryTitle="Tactile End EffectorCapstone @ EDG Lab" onOpenChange={onDd} noClickClose>
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ EDG Lab" onOpenChange={onDd} noClickClose>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaPlaceholder label="Suction cup overview" />
@@ -342,7 +342,7 @@ function FeaturedProjectsSlide({ onDd }) {
 const honourItems = [
   {
     id: 'sproutup',
-    title: 'SproutUp: An Assistive standing device',
+    title: 'SproutUp: an assistive standing device',
     media: ['wearing sproutup'],
     links: [
       { label: 'Poster', href: '#' },
@@ -351,19 +351,19 @@ const honourItems = [
   },
   {
     id: 'mpc-robot',
-    title: 'Incline steering of a self balancing robot using Model predictive control',
+    title: 'Incline steering of a self balancing robot using model predictive control',
     media: [],
     links: [{ label: 'Paper', href: '#' }],
   },
   {
     id: 'pcm',
-    title: 'Phase change Materials based cooling in Photovoltaic cells',
+    title: 'Phase change materials based cooling in photovoltaic cells',
     media: [],
     links: [{ label: 'Paper', href: '#' }],
   },
   {
     id: 'adlap',
-    title: 'BSc Thesis: Designing a detachable light source for a robotic surgery system',
+    title: 'BSc thesis: designing a detachable light module for a robotic surgery system',
     media: ['Adlap rendering', 'Adlap test op buik'],
     links: [
       { label: 'Slides', href: '#' },

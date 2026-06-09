@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const slides = [
   {
-    title: "Mechanical/Controls Engineer @ MPC Lab",
+    title: " Mechanical/Control Engineer @ MPC Lab",
     description:
-      "Contracted with UC Berkeley's MPC Lab as a mechanical/control engineer developing an all-terrain autonomous surveillance rover for NIWC Pacific",
+      "Contracted with UC Berkeley's MPC Lab to develop an all-terrain autonomous surveillance rover for NIWC Pacific",
     mediaType: "video",
     mediaLabel: "ONR Luci intro",
     projectKey: "luci",
@@ -22,9 +22,9 @@ const slides = [
     cta: "Visit Team Site",
   },
   {
-    title: "Optics lead @ Axiris autorefractor project",
+    title: "Optics lead @ Axiris",
     description:
-      "Enabling Accessible Vision Screening Through Low-Cost Handheld Autorefraction for Resource-Constrained Settings",
+      "Enabling accessible vision screening through low-cost handheld autorefraction for resource-constrained settings",
     image: "/images/Axiris-logo.png",
     projectKey: "axiris",
   },

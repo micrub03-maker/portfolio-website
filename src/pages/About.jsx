@@ -162,6 +162,43 @@ export default function About() {
     window.open(url, "_blank");
   };
 
+  // --- Contact form ---
+  const [noteOpen, setNoteOpen] = useState(false);
+  const [formData, setFormData] = useState({ firstName: "", email: "", message: "" });
+  const [submitStatus, setSubmitStatus] = useState(null); // null | "sending" | "success" | "error"
+  const formRef = useRef(null);
+
+  const allFilled = formData.firstName.trim() && formData.email.trim() && formData.message.trim();
+
+  const handleFormChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!allFilled) return;
+    setSubmitStatus("sending");
+    try {
+      // Configure these three values in .env.local:
+      //   VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, VITE_EMAILJS_PUBLIC_KEY
+      await emailjs.send(
+        import.meta.env.VITE_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+        {
+          from_name: formData.firstName,
+          from_email: formData.email,
+          message: formData.message,
+          to_email: "_michael_rbn@berkeley.edu",
+        },
+        import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+      );
+      setSubmitStatus("success");
+      setFormData({ firstName: "", email: "", message: "" });
+    } catch {
+      setSubmitStatus("error");
+    }
+  };
+
   return (
     <main className="h-auto top-0 left-0">
       <TableOfContents />
@@ -281,39 +318,37 @@ export default function About() {
         <div id="getInTouch" className="flex flex-col items-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Contact</h2>
 
-        <div className="w-full rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-6 md:p-10">
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 items-start">
+          <div className="w-full rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-6 md:p-10">
 
-            {/* Left — blurb + email */}
-            <div className="flex-1">
-              <p className="text-base md:text-lg text-gray-800 leading-relaxed mb-5">
-                Thanks for making it all the way here! Let's get in touch
-              </p>
+            {/* Blurb */}
+            <p className="text-base md:text-lg text-gray-800 leading-relaxed mb-6">
+              Thanks for making it all the way here! Let's get in touch
+            </p>
+
+            {/* Contact cards grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+
+              {/* Email */}
               <a
                 href="mailto:_michael_rbn@berkeley.edu"
-                className="inline-flex items-center gap-2 bg-gray-900 hover:bg-gray-700 text-white text-sm font-semibold px-5 py-2.5 rounded-full transition-all hover:shadow-lg"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"
               >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 flex-shrink-0 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                _michael_rbn@berkeley.edu
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 leading-none mb-0.5">Email</p>
+                  <p className="text-xs text-gray-400 truncate">_michael_rbn@berkeley.edu</p>
+                </div>
               </a>
-            </div>
 
-            {/* Divider */}
-            <div className="hidden md:block w-px bg-gray-200 self-stretch" />
-            <div className="block md:hidden h-px w-full bg-gray-200" />
-
-            {/* Right — LinkedIn */}
-            <div className="flex flex-col gap-3 min-w-[200px]">
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Also find me on</p>
+              {/* LinkedIn */}
               <a
                 href="https://www.linkedin.com/in/-michael-rubin"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"
               >
-                {/* LinkedIn wordmark SVG — no external image needed */}
                 <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="#0A66C2">
                   <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                 </svg>
@@ -322,20 +357,137 @@ export default function About() {
                   <p className="text-xs text-gray-400">-michael-rubin</p>
                 </div>
               </a>
+
+              {/* Phone */}
+              <a
+                href="tel:+19295120901"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"
+              >
+                <svg className="w-5 h-5 flex-shrink-0 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 leading-none mb-0.5">Phone</p>
+                  <p className="text-xs text-gray-400">+1 (929) 512-0901</p>
+                </div>
+              </a>
+
+              {/* Resume */}
+              <a
+                href="/resume.pdf"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"
+              >
+                <svg className="w-5 h-5 flex-shrink-0 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 leading-none mb-0.5">Resume</p>
+                  <p className="text-xs text-gray-400">View / Download</p>
+                </div>
+              </a>
+            </div>
+
+            {/* Drop me a note accordion */}
+            <div className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden">
+              <button
+                onClick={() => { setNoteOpen((o) => !o); setSubmitStatus(null); }}
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+              >
+                <span className="text-sm font-semibold text-gray-800">Drop me a note...</span>
+                <motion.span
+                  animate={{ rotate: noteOpen ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-gray-400 text-base leading-none"
+                >
+                  ▾
+                </motion.span>
+              </button>
+
+              <AnimatePresence initial={false}>
+                {noteOpen && (
+                  <motion.div
+                    key="note-form"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <form
+                      ref={formRef}
+                      onSubmit={handleSubmit}
+                      className="px-4 pb-5 pt-3 border-t border-gray-100 flex flex-col gap-3"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-medium text-gray-500">First Name</label>
+                          <input
+                            type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleFormChange}
+                            placeholder="First Name"
+                            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <label className="text-xs font-medium text-gray-500">Email</label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleFormChange}
+                            placeholder="Email"
+                            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <label className="text-xs font-medium text-gray-500">What's on your mind?</label>
+                        <textarea
+                          name="message"
+                          value={formData.message}
+                          onChange={handleFormChange}
+                          placeholder="What's on your mind?"
+                          rows={4}
+                          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        {submitStatus === "success" && (
+                          <p className="text-sm text-green-600 font-medium">Message sent!</p>
+                        )}
+                        {submitStatus === "error" && (
+                          <p className="text-sm text-red-500 font-medium">Something went wrong — try emailing directly.</p>
+                        )}
+                        {!submitStatus && <span />}
+                        <button
+                          type="submit"
+                          disabled={!allFilled || submitStatus === "sending"}
+                          className="ml-auto text-sm font-semibold px-5 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {submitStatus === "sending" ? "Sending…" : "Submit"}
+                        </button>
+                      </div>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
-        </div>
 
-        {/* Back to top */}
-        <button
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="mt-8 inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-          </svg>
-          Back to top
-        </button>
+          {/* Back to top */}
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="mt-8 inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+            Back to top
+          </button>
         </div>
       </div>
     </main>
