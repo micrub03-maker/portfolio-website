@@ -18,6 +18,7 @@ const mainEntries = [
     key: 'calsol',
     logoLabel: 'calsol logo',
     logoSrc: '/images/calsol.png',
+    logoFit: 'object-contain',
     role: 'Chassis Engineer – Driver Safety Lead (CALSOL Solar Vehicle Team) · Sept 2025 – Present',
     bullets: [
       'Led seatbelt system design to meet ASC and World Solar Challenge safety regulations',
@@ -80,6 +81,7 @@ const moreEntries = [
     key: 'drop',
     logoLabel: 'DROP Delft logo',
     logoSrc: '/images/DROP-logo-black.png',
+    logoWidth: 'w-32',
     role: 'External Relations Manager – Skate Committee (DROP Delft) · Sept 2021 – June 2022',
     bullets: [
       'Built partnerships with local shops and brands while organizing weekly training sessions and events',
@@ -121,12 +123,12 @@ function ExperienceCard({ entry, index = 0 }) {
       <div className="flex-shrink-0 flex flex-row gap-1">
         {entry.logoSrcs
           ? entry.logoSrcs.map((logo) => (
-              <div key={logo.label} className="w-20 flex-shrink-0 flex flex-col">
+              <div key={logo.label} className="w-32 flex-shrink-0 flex flex-col">
                 <MediaSlot label={logo.label} src={logo.src} fill />
               </div>
             ))
-          : <div className="w-24 flex-shrink-0 flex flex-col">
-              <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} fill />
+          : <div className={`${entry.logoWidth ?? 'w-44'} flex-shrink-0 flex flex-col rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden`}>
+              <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} fill fit={entry.logoFit ?? 'object-cover'} compact />
             </div>
         }
       </div>

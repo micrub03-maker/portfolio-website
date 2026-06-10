@@ -59,6 +59,12 @@ const StatItem = ({ icon: Icon, label, value }) => (
 
 const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
 
+// jsvectormap's EventHandler uses a module-level singleton registry.
+// map.destroy() calls EventHandler.flush() which removes ALL registered
+// listeners globally — killing any other live map instances on the same page.
+// This set lets surviving WorldMap instances reinitialize after a flush.
+const _pendingReinit = new Set();
+
 // mapRef is owned by TravelMap and passed down so zoom handlers and
 // the WorldMap init share a single, stable reference.
 function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
@@ -66,14 +72,20 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
   const activeNameRef = useRef('');
   const isDraggingRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
+  // Holds the current initMap fn so doReinit can re-invoke it without re-running the effect.
+  const initMapFnRef = useRef(null);
+  // Preserves zoom/pan across reinits triggered by another instance's destroy().
+  const pendingTransformRef = useRef(null);
 
   useEffect(() => {
-    // destroyed flag prevents the stale async continuation that fires after
-    // React Strict Mode's cleanup from appending a second SVG on top of the
-    // correctly-initialised one, which would make the map appear frozen on zoom.
+    // destroyed: prevents stale async continuations after React Strict Mode's
+    // double-invoke cleanup from appending a second SVG on top of the real one.
     let destroyed = false;
+    // initGen: cancels in-flight initMap calls when doReinit starts a fresh one.
+    let initGen = 0;
 
     const initMap = async () => {
+      const myGen = ++initGen;
       try {
         // Sequential imports — world.js calls window.jsVectorMap.addMap() which
         // requires the main library to have run first and set window.jsVectorMap.
@@ -83,7 +95,7 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
 
         await new Promise(r => requestAnimationFrame(r));
 
-        if (destroyed || !mountRef.current) return;
+        if (destroyed || !mountRef.current || initGen !== myGen) return;
 
         const regionValues = {};
         VISITED_COUNTRY_CODES.forEach(code => { regionValues[code] = 'visited'; });
@@ -127,29 +139,74 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
         });
 
         // Second guard: cleanup may have fired while the sync constructor ran
-        if (destroyed) {
+        if (destroyed || initGen !== myGen) {
           try { map.destroy(); } catch {}
           if (mountRef.current) mountRef.current.innerHTML = '';
+          if (mountRef.current) mountRef.current.classList.remove('jvm-container');
           return;
         }
 
         mapRef.current = map;
+
+        // Restore zoom/pan if this reinit followed a flush from another instance.
+        if (pendingTransformRef.current) {
+          const { scale, transX, transY } = pendingTransformRef.current;
+          pendingTransformRef.current = null;
+          map.scale = scale;
+          map.transX = transX;
+          map.transY = transY;
+          map._applyTransform?.();
+        }
       } catch (err) {
         console.error('TravelMap map init error:', err);
       }
     };
 
+    initMapFnRef.current = initMap;
+
+    // When another WorldMap instance is destroyed its map.destroy() calls
+    // EventHandler.flush(), wiping this instance's event listeners too.
+    // doReinit disposes the now-listenerless map state and recreates it.
+    const doReinit = () => {
+      initGen++; // cancel any in-flight initMap
+      if (mapRef.current) {
+        // Save zoom/pan so the new instance starts where the user left off.
+        pendingTransformRef.current = {
+          scale: mapRef.current.scale ?? 1,
+          transX: mapRef.current.transX ?? 0,
+          transY: mapRef.current.transY ?? 0,
+        };
+        try { mapRef.current._tooltip?.dispose?.(); } catch {}
+        mapRef.current = null;
+      }
+      if (mountRef.current) {
+        mountRef.current.innerHTML = '';
+        mountRef.current.classList.remove('jvm-container');
+      }
+      initMapFnRef.current?.();
+    };
+    _pendingReinit.add(doReinit);
+
     initMap();
 
     return () => {
       destroyed = true;
+      initGen++;
+      _pendingReinit.delete(doReinit);
+
+      // Snapshot surviving instances before destroy() flushes all events.
+      const survivors = new Set(_pendingReinit);
+
       try { mapRef.current?.destroy?.(); } catch {}
       mapRef.current = null;
-      // jsvectormap's destroy() does not remove the SVG from the DOM;
-      // clear it manually so a Strict Mode re-mount starts with a clean container.
       if (mountRef.current) {
         mountRef.current.innerHTML = '';
         mountRef.current.classList.remove('jvm-container');
+      }
+
+      // Reinit survivors after the flush so their tooltip events are restored.
+      if (survivors.size > 0) {
+        setTimeout(() => survivors.forEach(fn => fn()), 0);
       }
     };
   }, [mapRef, onTooltip]);

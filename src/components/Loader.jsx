@@ -51,6 +51,9 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
   const kickflipActiveRef = useRef(false);
   const kbAnimFrameRef = useRef(null);
   const lastFrameTimeRef = useRef(null);
+  const [handstandT, setHandstandT] = useState(null);
+  const handstandActiveRef = useRef(false);
+  const handstandSideRef = useRef(1); // 1 = right half, -1 = left half
 
   const updateSkater = (val) => {
     skaterRef.current = val;
@@ -59,13 +62,13 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
 
   useEffect(() => {
     const handleMouseMove = (e) => {
-      if (isExitingRef.current) return;
+      if (isExitingRef.current || handstandActiveRef.current) return;
       const path = rampRef.current;
       const svg = svgRef.current;
       if (!path || !svg) return;
 
       const rect = svg.getBoundingClientRect();
-      const vbX = ((e.clientX - rect.left) * 280) / rect.width;
+      const vbX = ((e.clientX - rect.left) * 360) / rect.width - 40;
       const clamped = Math.max(12, Math.min(268, vbX));
       const t = (clamped - 10) / 260;
 
@@ -93,6 +96,10 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
   };
 
   const kbLoop = (now) => {
+    if (handstandActiveRef.current) {
+      kbAnimFrameRef.current = requestAnimationFrame(kbLoop);
+      return;
+    }
     const keys = keysRef.current;
     if (!keys.left && !keys.right) {
       lastFrameTimeRef.current = null;
@@ -110,7 +117,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
   };
 
   const playKickflipOnly = () => {
-    if (kickflipActiveRef.current) return;
+    if (kickflipActiveRef.current || handstandActiveRef.current) return;
     kickflipActiveRef.current = true;
     const flipDuration = 1100;
     const start = performance.now();
@@ -125,6 +132,26 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
       }
     };
     requestAnimationFrame(animateFlip);
+  };
+
+  const playHandstand = () => {
+    if (handstandActiveRef.current || kickflipActiveRef.current) return;
+    handstandActiveRef.current = true;
+    handstandSideRef.current = skaterRef.current.x >= 140 ? 1 : -1;
+    const upDur = 500, holdDur = 1000, downDur = 500;
+    const total = upDur + holdDur + downDur;
+    const start = performance.now();
+    const animate = (now) => {
+      const el = now - start;
+      let t;
+      if (el < upDur) t = el / upDur;
+      else if (el < upDur + holdDur) t = 1;
+      else t = 1 - (el - upDur - holdDur) / downDur;
+      setHandstandT(Math.max(0, Math.min(1, t)));
+      if (el < total) requestAnimationFrame(animate);
+      else { setHandstandT(null); handstandActiveRef.current = false; }
+    };
+    requestAnimationFrame(animate);
   };
 
   useEffect(() => {
@@ -143,6 +170,9 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         playKickflipOnly();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        playHandstand();
       }
     };
 
@@ -231,22 +261,23 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
             <span className="font-mono text-[10px] text-cyan-400/60 tracking-widest">ONLINE</span>
           </div>
 
-          <div className="flex flex-col items-center gap-3">
-            <h1 className="text-4xl md:text-6xl font-light tracking-wide">
+          <div className="flex flex-col items-center gap-3 font-mono">
+            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
               Hey there! I&apos;m Michael
             </h1>
-            <p className="text-lg md:text-2xl font-light tracking-wide text-white/90">
+            <p className="text-base md:text-xl tracking-wide text-cyan-300/90">
               Mechanical/Controls Engineer @ MPC lab Berkeley
             </p>
-            <p className="text-base md:text-lg font-light text-white/80 tracking-wide">
+            <p className="text-sm md:text-base text-white/70 tracking-wide">
               UC Berkeley MEng &apos;26 · TU Delft BSc &apos;24
             </p>
-            <p className="text-sm md:text-base font-light text-white/60 leading-relaxed max-w-xl mx-auto mt-2">
-              Welcome to my portfolio website, glad you stopped by :)<br />
-              My goal is to give you a clear sense of what drives me, how I learn and solve problems, and the kind of energy I bring to a team.
+            <div className="w-full border-t border-cyan-400/20 my-1" />
+            <p className="text-xs md:text-sm text-white/55 leading-relaxed max-w-xl mx-auto">
+              <span className="text-cyan-400/50">&gt; </span>Welcome to my portfolio website, glad you stopped by :)<br />
+              <span className="text-cyan-400/50">&gt; </span>My goal is to give you a clear sense of what drives me, how I learn and solve problems, and the kind of energy I bring to a team.
             </p>
-            <p className="text-sm md:text-base font-light text-white/60 leading-relaxed">
-              Have fun browsing!
+            <p className="text-xs md:text-sm text-white/55">
+              <span className="text-cyan-400/50">&gt; </span>Have fun browsing!
             </p>
           </div>
         </div>
@@ -256,9 +287,9 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
       <div className="absolute left-1/2 bottom-12 -translate-x-1/2 flex flex-col items-center gap-3">
         <svg
           ref={svgRef}
-          width="140"
+          width="180"
           height="70"
-          viewBox="0 -50 280 140"
+          viewBox="-40 -50 360 140"
           xmlns="http://www.w3.org/2000/svg"
         >
           {/* Subtle ramp surface fill */}
@@ -278,45 +309,53 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
 
           {/* Base group: follows mouse along ramp */}
           <g transform={`translate(${skater.x},${skater.y}) rotate(${skater.angle})`}>
-            {/* Board + Wheels */}
-            <g transform={`translate(0,${kf.boardDy})`}>
-              <g
-                transform={`translate(0,${BOARD_CENTER_Y}) rotate(${
-                  kf.boardTilt + kf.boardFlipAngle
-                }) translate(0,${-BOARD_CENTER_Y})`}
-              >
-                <circle cx="-9" cy="-3" r="3" fill="white" opacity="0.85" />
-                <circle cx="9" cy="-3" r="3" fill="white" opacity="0.85" />
+            {/* Handstand: pivots 180° around waist (0, -20); head ends up near ramp, board in air */}
+            <g transform={handstandT !== null ? `rotate(${140 * handstandT * handstandSideRef.current}, 0, -24)` : ""}>
+              {/* Board + Wheels */}
+              <g transform={`translate(0,${kf.boardDy})`}>
+                <g
+                  transform={`translate(0,${BOARD_CENTER_Y}) rotate(${
+                    kf.boardTilt + kf.boardFlipAngle
+                  }) translate(0,${-BOARD_CENTER_Y})`}
+                >
+                  <circle cx="-9" cy="-3" r="3" fill="white" opacity="0.85" />
+                  <circle cx="9" cy="-3" r="3" fill="white" opacity="0.85" />
+                  <rect
+                    x="-18"
+                    y="-11"
+                    width="36"
+                    height="5"
+                    rx="2"
+                    fill="white"
+                    opacity="0.85"
+                  />
+                </g>
+              </g>
+
+              {/* Body + Head */}
+              <g transform={`translate(0,${kf.bodyDy})`}>
+                {/* Arm — hidden in normal stance, fades in during handstand; counter-rotates 40° around shoulder so it lags behind the body */}
+                <g transform={handstandT !== null ? `rotate(${50 * handstandT * handstandSideRef.current}, ${6 * handstandSideRef.current}, -28)` : ""}>
+                  <line x1={6 * (handstandSideRef.current ?? 1)} y1="-28" x2="0" y2="-48" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round" opacity={handstandT ?? 0} />
+                </g>
                 <rect
-                  x="-18"
-                  y="-11"
-                  width="36"
-                  height="5"
+                  x="-6"
+                  y="-31"
+                  width="12"
+                  height="20"
                   rx="2"
                   fill="white"
                   opacity="0.85"
                 />
+                <circle cx="0" cy="-39" r="7" fill="white" opacity="0.85" />
               </g>
             </g>
 
-            {/* Body + Head */}
-            <g transform={`translate(0,${kf.bodyDy})`}>
-              <rect
-                x="-6"
-                y="-31"
-                width="12"
-                height="20"
-                rx="2"
-                fill="white"
-                opacity="0.85"
-              />
-              <circle cx="0" cy="-39" r="7" fill="white" opacity="0.85" />
-            </g>
           </g>
         </svg>
 
-        <p className="text-sm md:text-base text-white/60 tracking-widest uppercase animate-pulse">
-          Click anywhere to continue
+        <p className="font-mono text-xs text-cyan-400/60 tracking-widest animate-pulse">
+          <span className="text-cyan-400/40">&gt; </span>click anywhere to continue<span className="ml-1 inline-block animate-blink">_</span>
         </p>
       </div>
     </div>
