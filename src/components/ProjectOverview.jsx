@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MediaSlot } from "./MediaSlot";
 
 const slides = [
   {
@@ -124,9 +123,17 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="absolute inset-0 flex items-center justify-center"
+            className="absolute inset-0"
           >
-            <MediaSlot label={active.title} src={active.src} />
+            {active.src?.endsWith('.mp4') ? (
+              <video src={active.src} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+            ) : active.src ? (
+              <img src={active.src} alt={active.title} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-white/50 text-xs font-medium">{active.title}</span>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
 

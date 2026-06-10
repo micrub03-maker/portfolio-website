@@ -30,6 +30,9 @@ const mainEntries = [
     key: 'acurity',
     logoLabel: 'Acurity logo',
     logoSrc: '/images/Acurity-logo.png',
+    logoHeight: 'h-20',
+    logoFit: 'object-contain',
+    logoScale: 'scale-[2.3] translate-x-[5%] translate-y-[5%]',
     role: 'AutoCAD Drawing Engineer (KBC Acurity) · Oct 2022 – June 2025',
     bullets: [
       'Produced 300+ technical drawings supporting nationwide security camera installations',
@@ -51,6 +54,7 @@ const moreEntries = [
     key: 'cern',
     logoLabel: 'CERN logo',
     logoSrc: '/images/CERN_logo.png',
+    logoPlain: true,
     role: 'CERN Science Gateway Summer Program (CERN IdeaSquare) · May 2024 – Aug 2024',
     bullets: [
       'Visiting student at CERN Ideasquare; Explored innovation and design methods to turn Big Science technologies into real-world applications',
@@ -61,6 +65,10 @@ const moreEntries = [
     key: 'lde',
     logoLabel: 'LDE logo',
     logoSrc: '/images/LDE-logo.jpg',
+    logoPlain: true,
+    logoHeight: 'h-20',
+    logoFit: 'object-cover',
+    logoScale: 'scale-[1.1] -translate-x-[4%]',
     role: 'LDE Sustainability Program (TU Delft / Leiden / Erasmus) · Sept 2022 – June 2023',
     bullets: [
       'Applied systems thinking and sustainability principles to Dutch government research on biofuels and heavy-duty vehicle electrification',
@@ -70,7 +78,8 @@ const moreEntries = [
   {
     key: 'ta',
     logoLabel: 'TU Delft logo',
-    logoSrc: '/images/tudelft logo.png',
+    logoSrc: '/images/tu-delft-logo.webp',
+    compactCard: true,
     role: 'Teaching Assistant – Statics & Mechanics of Materials (TU Delft) · Sept 2022 – Jan 2023',
     bullets: [
       'Taught two sections of 35 students each, totaling 4 weekly sessions',
@@ -81,7 +90,10 @@ const moreEntries = [
     key: 'drop',
     logoLabel: 'DROP Delft logo',
     logoSrc: '/images/DROP-logo-black.png',
-    logoWidth: 'w-32',
+    logoPlain: true,
+    logoHeight: 'h-[95px]',
+    logoFit: 'object-cover',
+    logoPadding: 'py-[2.5px]',
     role: 'External Relations Manager – Skate Committee (DROP Delft) · Sept 2021 – June 2022',
     bullets: [
       'Built partnerships with local shops and brands while organizing weekly training sessions and events',
@@ -94,6 +106,7 @@ const moreEntries = [
       { src: '/images/Agora-kaffee-logo.png', label: 'Agora Kaffee' },
       { src: '/images/MINT-logo.png', label: 'MINT' },
     ],
+    logoSrcsHeight: 'h-[80px]',
     role: 'Hospitality & Events (Antwerp, Belgium) · July 2019 – July 2025',
     bullets: [
       'Worked part-time in restaurants and at events, handling floor operations, bar service, and customer-facing responsibilities',
@@ -103,6 +116,10 @@ const moreEntries = [
     key: 'filigranes',
     logoLabel: 'Filigranes',
     logoSrc: '/images/Filigranes-logo.jpg',
+    logoPlain: true,
+    logoHeight: 'h-[95px]',
+    logoFit: 'object-cover',
+    logoPadding: 'py-[2.5px]',
     role: 'Sales Assistant (Filigranes Bookshop, Antwerp) · July 2020 – Aug 2022',
     bullets: [
       'Books, books, books !! The best first job one could wish for',
@@ -117,19 +134,23 @@ function ExperienceCard({ entry, index = 0 }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.06 }}
-      className="flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow"
+      className={`flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg hover:shadow-xl transition-shadow ${entry.compactCard ? 'py-2 px-4 md:py-3 md:px-6' : 'p-4 md:p-6'}`}
     >
       {/* Logo */}
-      <div className="flex-shrink-0 flex flex-row gap-1">
+      <div className="w-44 flex-shrink-0 flex flex-row gap-1">
         {entry.logoSrcs
           ? entry.logoSrcs.map((logo) => (
-              <div key={logo.label} className="w-32 flex-shrink-0 flex flex-col">
+              <div key={logo.label} className={`flex-1 min-w-0 flex flex-col overflow-hidden ${entry.logoSrcsHeight ?? 'h-[100px]'}}`}>
                 <MediaSlot label={logo.label} src={logo.src} fill />
               </div>
             ))
-          : <div className={`${entry.logoWidth ?? 'w-44'} flex-shrink-0 flex flex-col rounded-xl bg-white border border-gray-100 shadow-sm overflow-hidden`}>
-              <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} fill fit={entry.logoFit ?? 'object-cover'} compact />
-            </div>
+          : entry.logoHeight
+            ? <div className={`${entry.logoWidth ?? 'w-44'} ${entry.logoHeight} flex-shrink-0 flex items-center justify-center rounded-xl overflow-hidden ${entry.logoPadding ?? (entry.logoFit === 'object-cover' ? '' : 'p-2')} ${entry.logoPlain ? '' : 'bg-white border border-gray-100 shadow-sm'}`}>
+                <img src={entry.logoSrc} alt={entry.logoLabel} className={`${entry.logoFit === 'object-cover' ? 'w-full h-full' : 'max-w-full max-h-full'} ${entry.logoFit ?? 'object-contain'} rounded-xl ${entry.logoScale ?? ''}`} />
+              </div>
+            : <div className={`${entry.logoWidth ?? 'w-44'} flex-shrink-0 flex flex-col rounded-xl overflow-hidden ${entry.logoPlain ? '' : 'bg-white border border-gray-100 shadow-sm'}`}>
+                <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} fill fit={entry.logoFit ?? 'object-cover'} compact />
+              </div>
         }
       </div>
 

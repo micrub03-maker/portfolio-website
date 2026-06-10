@@ -19,7 +19,7 @@ export default {
         '500': '0.5s',
       },
       backgroundImage: {
-        'banner': "url('../public/cover.jpeg')",
+        'banner': "url('/sky.jpg')",
         'sky' : "url('../public/nightsky.jpg')",
       },
       fontFamily: {

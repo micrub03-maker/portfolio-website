@@ -157,7 +157,8 @@ export default function About() {
       >
         <div
           id="home"
-          className="w-full min-h-screen md:h-screen flex flex-col bg-banner bg-cover bg-center relative overflow-hidden"
+          className="w-full min-h-screen md:h-screen flex flex-col bg-cover bg-center relative overflow-hidden"
+          style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/sunset.jpg')" }}
         >
           {/* Hero Dashboard - Redesigned */}
           <div className="w-full h-full flex items-center justify-center px-4 md:px-8 py-4 md:py-6">

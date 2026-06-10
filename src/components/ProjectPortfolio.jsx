@@ -192,14 +192,39 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
       <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/calsol-car.jpg"
-            src='/images/calsol-team.png'
-            label="CALSOL car"
-            tall
-          />
+          <div className="relative group">
+            <MediaSlot
+              // CHANGE THIS LINE to swap the image:
+              // Set src to "/images/<filename>.<ext>" for your image in public/images,
+              // e.g. src="/images/calsol-car.jpg"
+              src= "/images/calsol-team.jpg"
+              label="CALSOL team"
+              tall
+            />
+            <div
+              className="absolute pointer-events-none flex flex-col items-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              style={{ left: '61%', top: '38%', transform: 'translate(-50%, -50%)' }}
+            >
+              <div className="bg-black/70 text-white/90 text-[10px] px-2 py-1 rounded-md border border-white/15 backdrop-blur-sm whitespace-nowrap mb-[-10px]">
+                I'm here!
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.6))', transform: 'rotate(90deg)', marginTop: '9px' }}
+              >
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="13 6 19 12 13 18" />
+              </svg>
+            </div>
+          </div>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a
@@ -485,7 +510,7 @@ const honourItems = [
   {
     id: 'sproutup',
     title: 'SproutUp: an assistive standing device',
-    media: ['wearing sproutup'],
+    media: [{ src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup' }],
     links: [
       { label: 'Poster', href: '#' },
       { label: 'Paper', href: '#' },
@@ -494,23 +519,23 @@ const honourItems = [
   {
     id: 'mpc-robot',
     title: 'Incline steering of a self balancing robot using model predictive control',
-    media: [],
+    media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot' }],
     links: [{ label: 'Paper', href: '#' }],
   },
   {
     id: 'pcm',
     title: 'Phase change materials based cooling in photovoltaic cells',
-    media: [],
+    media: [{ src: '/images/PCM-results.png', label: 'PCM results' }],
     links: [{ label: 'Paper', href: '#' }],
   },
   {
     id: 'adlap',
     title: 'BSc thesis: designing a detachable light module for a robotic surgery system',
-    media: ['Adlap rendering', 'Adlap test op buik'],
-    links: [
-      { label: 'Slides', href: '#' },
-      { label: 'Design paper', href: '#' },
+    media: [
+      { src: null, label: 'adlap rendering' },
+      { src: null, label: 'Adlap test op buik' },
     ],
+    links: [{ label: 'Design paper', href: '#' }],
   },
 ];
 
@@ -525,14 +550,7 @@ function HonoursSlide({ onDd }) {
           onOpenChange={onDd}
         >
           {item.media.map((m) => (
-            <MediaSlot
-              key={m}
-              // CHANGE THIS LINE to swap the image:
-              // Set src to "/images/<filename>.<ext>" for your image in public/images,
-              // e.g. src="/images/sproutup.jpg"
-              src={null}
-              label={m}
-            />
+            <MediaSlot key={m.label} src={m.src} label={m.label} />
           ))}
           {item.links.length > 0 && (
             <div className="flex justify-end gap-2 mt-2 flex-wrap">
