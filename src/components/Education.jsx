@@ -44,8 +44,8 @@ const entries = [
     logoSrc: null,
     title: 'Academie Berchem',
     period: '2008-2021',
-    bullets: 'I graduated from the part time graphic arts program, broadening my perspective and developing my creativity',
-    'My most valuable hobby growing up!'
+    bullets: ['I graduated from the part time graphic arts program, broadening my perspective and developing my creativity'],
+    body: 'My most valuable hobby growing up!'
   },
 ];
 

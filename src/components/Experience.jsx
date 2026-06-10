@@ -185,6 +185,6 @@ export default function Experience() {
           )}
         </AnimatePresence>
       </div>
-    </section>
+    </div>
   );
 }
