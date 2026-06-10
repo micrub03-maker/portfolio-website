@@ -6,8 +6,7 @@ const slides = [
     title: " Mechanical/Control Engineer @ MPC Lab",
     description:
       "Contracted with UC Berkeley's MPC Lab to develop an all-terrain autonomous surveillance rover for NIWC Pacific",
-    mediaType: "video",
-    mediaLabel: "ONR Luci intro",
+    image: "/images/ONR-LUCI.mp4",
     projectKey: "luci",
     link: "https://sites.google.com/berkeley.edu/mpc-lab/home",
     cta: "Visit Lab Website",

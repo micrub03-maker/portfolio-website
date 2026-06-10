@@ -1,11 +1,11 @@
-// TravelMap — world map (JSVectorMap) + showcase cards cloned from meetAndy/slices-of-life sol1
-// The Polarsteps stats strip is preserved and degrades gracefully when the backend is offline.
-
+import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import 'jsvectormap/dist/jsvectormap.min.css';
 import travelData from '../data/travel.json';
 
 const BACKEND_URL = 'http://localhost:8000/api/polarsteps';
+
+const ZOOM_MAX = 8;
 
 // --- Icons ---
 
@@ -19,7 +19,7 @@ const GlobeIcon = ({ className }) => (
 const RoadIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M9 201-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
   </svg>
 );
 
@@ -48,12 +48,20 @@ const SkeletonBlock = ({ className }) => (
 
 const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
 
-function WorldMap() {
+// mapRef is owned by TravelMap and passed down so zoom handlers and
+// the WorldMap init share a single, stable reference.
+function WorldMap({ mapRef, onTooltip }) {
   const mountRef = useRef(null);
-  const mapRef = useRef(null);
+  const activeNameRef = useRef('');
+  const isDraggingRef = useRef(false);
+  const lastPosRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    let map;
+    // destroyed flag prevents the stale async continuation that fires after
+    // React Strict Mode's cleanup from appending a second SVG on top of the
+    // correctly-initialised one, which would make the map appear frozen on zoom.
+    let destroyed = false;
+
     const initMap = async () => {
       try {
         // Sequential imports — world.js calls window.jsVectorMap.addMap() which
@@ -62,25 +70,23 @@ function WorldMap() {
         const { default: JsVectorMap } = await import('jsvectormap');
         await import('jsvectormap/dist/maps/world.js');
 
-        await new Promise(resolve => requestAnimationFrame(resolve));
+        await new Promise(r => requestAnimationFrame(r));
 
-        if (!mountRef.current) return;
-
-        console.log("TravelMap mount size before init", {
-          width: mountRef.current?.offsetWidth,
-          height: mountRef.current?.offsetHeight,
-          rect: mountRef.current?.getBoundingClientRect(),
-        });
+        if (destroyed || !mountRef.current) return;
 
         const regionValues = {};
-        VISITED_COUNTRY_CODES.forEach(code => {
-          regionValues[code] = 'visited';
-        });
+        VISITED_COUNTRY_CODES.forEach(code => { regionValues[code] = 'visited'; });
 
-        map = new JsVectorMap({
+        const map = new JsVectorMap({
           selector: mountRef.current,
           map: 'world',
+          draggable: false,
           regionsSelectable: false,
+          zoomOnScroll: false,
+          zoomButtons: false,
+          showTooltip: true,
+          zoomMin: 1,
+          zoomMax: ZOOM_MAX,
           series: {
             regions: [{
               values: regionValues,
@@ -88,36 +94,114 @@ function WorldMap() {
               scale: { visited: '#558071' },
             }],
           },
-          style: {
+          regionStyle: {
             initial: {
-              fill: 'rgba(200, 200, 200, 0.25)',
-              stroke: 'rgba(150, 150, 150, 0.2)',
+              fill: 'rgba(255, 255, 255, 0.13)',
+              stroke: 'rgba(255, 255, 255, 0.07)',
               strokeWidth: 0.5,
             },
-            hover: { fillOpacity: 0.8, fill: '#78ab9a' },
+            hover: { fill: '#78ab9a' },
+          },
+          // Intercept JSVectorMap's native tooltip show event.
+          // e.preventDefault() stops the native tooltip element from becoming
+          // visible; we drive our own React-portal tooltip instead.
+          onRegionTooltipShow: (e, tooltip) => {
+            e.preventDefault();
+            activeNameRef.current = tooltip.text();
+            onTooltip?.({ visible: true, name: tooltip.text(), x: e.clientX, y: e.clientY });
           },
         });
-        mapRef.current = map;
 
-        console.log("TravelMap children after init", mountRef.current?.children.length);
-        console.log("TravelMap innerHTML after init", mountRef.current?.innerHTML?.slice(0, 200));
+        // Second guard: cleanup may have fired while the sync constructor ran
+        if (destroyed) {
+          try { map.destroy(); } catch {}
+          if (mountRef.current) mountRef.current.innerHTML = '';
+          return;
+        }
+
+        mapRef.current = map;
       } catch (err) {
-        console.error("TravelMap map init error:", err);
+        console.error('TravelMap map init error:', err);
       }
     };
-    initMap();
-    return () => {
-      try { mapRef.current?.destroy?.(); } catch {}
-    };
-  }, []);
 
-  // Fills whatever absolute/relative context the parent provides.
+    initMap();
+
+    return () => {
+      destroyed = true;
+      try { mapRef.current?.destroy?.(); } catch {}
+      mapRef.current = null;
+      // jsvectormap's destroy() does not remove the SVG from the DOM;
+      // clear it manually so a Strict Mode re-mount starts with a clean container.
+      if (mountRef.current) {
+        mountRef.current.innerHTML = '';
+        mountRef.current.classList.remove('jvm-container');
+      }
+    };
+  }, [mapRef, onTooltip]);
+
+  // Custom pan — jsvectormap's built-in drag uses container-level mousemove which
+  // loses tracking the moment the cursor leaves the container during a fast drag.
+  // Document-level listeners ensure the drag stays live until mouseup anywhere.
+  useEffect(() => {
+    const el = mountRef.current;
+    if (!el) return;
+
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      isDraggingRef.current = true;
+      lastPosRef.current = { x: e.clientX, y: e.clientY };
+      el.style.cursor = 'grabbing';
+    };
+
+    const onMouseMove = (e) => {
+      if (!isDraggingRef.current) return;
+      const map = mapRef.current;
+      if (!map) return;
+      map.transX -= (lastPosRef.current.x - e.clientX) / map.scale;
+      map.transY -= (lastPosRef.current.y - e.clientY) / map.scale;
+      map._applyTransform?.();
+      lastPosRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const onMouseUp = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      el.style.cursor = 'grab';
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <div
       className="absolute inset-0"
-      style={{ background: 'rgba(255,255,255,0.05)' }}
+      style={{ background: 'rgba(0,0,0,0.20)' }}
+      onMouseMove={(e) => {
+        // Skip tooltip tracking while a mouse button is held (user is panning)
+        if (e.buttons !== 0) return;
+        const isOverCountry = e.target?.classList?.contains('jvm-element');
+        if (isOverCountry && activeNameRef.current) {
+          onTooltip?.({ visible: true, name: activeNameRef.current, x: e.clientX, y: e.clientY });
+        } else if (!isOverCountry && activeNameRef.current) {
+          activeNameRef.current = '';
+          onTooltip?.({ visible: false, name: '', x: 0, y: 0 });
+        }
+      }}
+      onMouseLeave={() => {
+        activeNameRef.current = '';
+        onTooltip?.({ visible: false, name: '', x: 0, y: 0 });
+      }}
     >
-      <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
+      <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
     </div>
   );
 }
@@ -128,6 +212,48 @@ const TravelMap = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+
+  // mapRef lives here so both WorldMap init and handleZoom share the same instance
+  const mapRef = useRef(null);
+
+  // Tooltip state: only visible/name trigger re-renders.
+  // Position is written directly to the DOM element via tooltipElRef to avoid
+  // a re-render on every mousemove.
+  const [tooltipInfo, setTooltipInfo] = useState({ visible: false, name: '' });
+  const tooltipElRef = useRef(null);
+  const tooltipPos = useRef({ x: 0, y: 0 });
+
+  const handleTooltip = useCallback(({ visible, name, x, y }) => {
+    if (visible) {
+      tooltipPos.current = { x, y };
+      // Direct DOM write for position — avoids re-render on every mousemove
+      if (tooltipElRef.current) {
+        tooltipElRef.current.style.top = `${y - 32}px`;
+        tooltipElRef.current.style.left = `${x + 12}px`;
+      }
+      // Only re-render if visibility or country name actually changed
+      setTooltipInfo(prev =>
+        prev.visible && prev.name === name ? prev : { visible: true, name }
+      );
+    } else {
+      setTooltipInfo(prev => prev.visible ? { visible: false, name: prev.name } : prev);
+    }
+  }, []);
+
+  const handleZoom = useCallback((direction) => {
+    const map = mapRef.current;
+    if (!map) return;
+    const factor = direction === 'in' ? 1.5 : 1 / 1.5;
+    // _setScale clamps against zoomMin/zoomMax × _baseScale set in the constructor,
+    // so ZOOM_MAX is enforced without any custom raw-scale comparison.
+    map._setScale?.(
+      (map.scale ?? 1) * factor,
+      (map._width ?? 300) / 2,
+      (map._height ?? 200) / 2,
+      false,
+      false
+    );
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -151,86 +277,107 @@ const TravelMap = () => {
   const isOffline = error && (error.includes('fetch') || error.includes('Failed') || error.includes('NetworkError'));
 
   return (
-    <div className="flex flex-col gap-2 relative bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl md:h-full overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <GlobeIcon className="w-4 h-4 text-white/70" />
-          <span className="text-sm font-semibold text-white">Travel map &amp; stats</span>
+    <>
+      <div className="flex flex-col gap-2 relative bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl md:h-full overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GlobeIcon className="w-4 h-4 text-white/70" />
+            <span className="text-sm font-semibold text-white">Travel map &amp; stats</span>
+          </div>
+          {!error && !loading && (
+            <a
+              href="https://www.polarsteps.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-white/40 hover:text-white/70 transition-colors"
+            >
+              Polarsteps
+            </a>
+          )}
         </div>
-        {!error && !loading && (
-          <a
-            href="https://www.polarsteps.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-white/40 hover:text-white/70 transition-colors"
-          >
-            Polarsteps
-          </a>
+
+        {/* World map — grows to fill remaining card space; overlays sit on top */}
+        <div className="flex-1 min-h-[9rem] relative rounded-lg overflow-hidden">
+          <WorldMap mapRef={mapRef} onTooltip={handleTooltip} />
+
+          {/* Zoom controls — sibling to WorldMap, not inside its SVG DOM */}
+          <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
+            <button
+              aria-label="Zoom in"
+              className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+              onPointerDown={(e) => { e.stopPropagation(); handleZoom('in'); }}
+            >+</button>
+            <button
+              aria-label="Zoom out"
+              className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+              onPointerDown={(e) => { e.stopPropagation(); handleZoom('out'); }}
+            >−</button>
+          </div>
+
+          {/* "Places I've visited" label — bottom-left overlay */}
+          <p className="absolute bottom-1.5 left-2 text-[10px] text-white/50 z-10 pointer-events-none">
+            Places I&apos;ve visited
+          </p>
+        </div>
+
+        {/* Stats strip — shows skeleton while loading, values when ready, hidden on offline */}
+        {loading ? (
+          <div className="flex gap-3">
+            <SkeletonBlock className="h-6 flex-1" />
+            <SkeletonBlock className="h-6 flex-1" />
+            <SkeletonBlock className="h-6 flex-1" />
+          </div>
+        ) : !error && data ? (
+          <div className="flex divide-x divide-white/20">
+            <StatItem
+              icon={GlobeIcon}
+              label="countries"
+              value={(data.countries?.length ?? travelData.visited_countries.length)}
+            />
+            <StatItem
+              icon={RoadIcon}
+              label="km travelled"
+              value={Number(data.km_count || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
+            />
+            <StatItem
+              icon={SuitcaseIcon}
+              label="trips"
+              value={data.trip_count ?? (data.trips?.length ?? travelData.trips.length)}
+            />
+          </div>
+        ) : (
+          // Offline / error — show static country count from travel.json
+          <div className="flex divide-x divide-white/20">
+            <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+            <StatItem icon={SuitcaseIcon} label="trips" value={travelData.trips.length} />
+            {isOffline && (
+              <div className="flex-1 flex items-center justify-center">
+                <span className="text-[10px] text-white/40 italic">backend offline</span>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
-      {/* World map — grows to fill remaining card space; overlays sit on top */}
-      <div className="flex-1 min-h-[9rem] relative rounded-lg overflow-hidden">
-        <WorldMap />
-
-        {/* "Places I've visited" label — bottom-left overlay */}
-        <p className="absolute bottom-1.5 left-2 text-[10px] text-white/50 z-10 pointer-events-none">
-          Places I&apos;ve visited
-        </p>
-
-        {/* Favourite destination card — bottom-right overlay */}
-        <div className="absolute bottom-2 right-2 z-10 flex flex-col gap-0.5 rounded-xl border border-white/10 bg-black/40 backdrop-blur-sm px-2 py-1.5 max-w-[9rem]">
-          <div className="flex items-center gap-1">
-            <span className="text-sm">🇮🇹</span>
-            <span className="text-[9px] font-semibold px-1 py-0.5 rounded-full bg-amber-500/25 text-amber-200">
-              Favorite
-            </span>
-          </div>
-          <p className="text-[10px] font-semibold text-white leading-tight line-clamp-1">
-            Florence Study Abroad
-          </p>
-        </div>
-      </div>
-
-      {/* Stats strip — shows skeleton while loading, values when ready, hidden on offline */}
-      {loading ? (
-        <div className="flex gap-3">
-          <SkeletonBlock className="h-6 flex-1" />
-          <SkeletonBlock className="h-6 flex-1" />
-          <SkeletonBlock className="h-6 flex-1" />
-        </div>
-      ) : !error && data ? (
-        <div className="flex divide-x divide-white/20">
-          <StatItem
-            icon={GlobeIcon}
-            label="countries"
-            value={(data.countries?.length ?? travelData.visited_countries.length)}
-          />
-          <StatItem
-            icon={RoadIcon}
-            label="km travelled"
-            value={Number(data.km_count || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-          />
-          <StatItem
-            icon={SuitcaseIcon}
-            label="trips"
-            value={data.trip_count ?? (data.trips?.length ?? travelData.trips.length)}
-          />
-        </div>
-      ) : (
-        // Offline / error — show static country count from travel.json
-        <div className="flex divide-x divide-white/20">
-          <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-          <StatItem icon={SuitcaseIcon} label="trips" value={travelData.trips.length} />
-          {isOffline && (
-            <div className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] text-white/40 italic">backend offline</span>
-            </div>
-          )}
-        </div>
+      {/* Country name tooltip — portalled to document.body so it is never clipped
+          by overflow-hidden or contained by any ancestor's backdrop-filter context */}
+      {tooltipInfo.visible && createPortal(
+        <div
+          ref={tooltipElRef}
+          className="pointer-events-none bg-black/70 text-white/90 text-[10px] px-2 py-1 rounded-md border border-white/15 backdrop-blur-sm whitespace-nowrap"
+          style={{
+            position: 'fixed',
+            zIndex: 9999,
+            top: `${tooltipPos.current.y - 32}px`,
+            left: `${tooltipPos.current.x + 12}px`,
+          }}
+        >
+          {tooltipInfo.name}
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 };
 

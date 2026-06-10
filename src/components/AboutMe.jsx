@@ -27,7 +27,7 @@ export default function AboutMe() {
             </p>
 
             <p>
-              Previous projects range from designing a lighting system for a minimally invasive surgical robot, design and manufacturing of a fully functional CNC machine, a low cost easy-to-use autorefractor and manufacturabilty improvement of a multichambered suction cup robotic end effector. After studying and working across several countries and academic systems, I have picked up 5 languages and been exposed to mix of perspectives, teaching me how to connect with very different people and teams.
+              Previous projects range from designing a light module for a surgical robot, to a low cost easy-to-use autorefractor or a fully functional CNC machine. After studying and working across several countries and academic systems, I have picked up 5 languages and been exposed to mix of perspectives, teaching me how to connect with very different people and teams.
             </p>
 
             <p>

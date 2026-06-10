@@ -16,64 +16,31 @@ import Skills from "../components/Skills";
 import InterestsCarousel from "../components/InterestsCarousel";
 // Using public directory paths directly for Vite
 const profile = "/images/profile.png";
+const Delft = "/images/tu-delft-logo-black.png"
 const github = "/images/github.png";
 const linkedin = "/images/linkedin.png";
 const arrow = "/images/arrow.png";
-const r = "/images/r.png";
 const python = "/images/python.png";
 const cpp = "/images/c++.png";
 const rp = "/images/rp.png";
-const owlLogo = "/images/owl-logo.png";
 const java = "/images/java.png";
 const cLogo = "/images/clogo.png";
 const jsLogo = "/images/jslogo.png";
-const swift = "/images/swift.png";
-const php = "/images/php.png";
-const sql = "/images/sqllogo.png";
 const html = "/images/html.png";
-const css = "/images/css.png";
-const flask = "/images/flask.png";
 const reactLogo = "/images/react.png";
-const threejs = "/images/threejs.png";
 const tailwind = "/images/tailwind.png";
-const mysql = "/images/mysql.png";
-const mongodb = "/images/mongodb.svg";
-const firebase = "/images/firebase.png";
-const ruby = "/images/ruby.png";
 const kicad = "/images/kicad.png";
-const ros2Logo = "/images/ros2logo.png";
-const golang = "/images/golang.png";
-const bash = "/images/bash.png";
 const nodejs = "/images/nodejs.svg";
-const neo4j = "/images/neo4j.png";
 const linux = "/images/linux.png";
-const azure = "/images/azure.png";
 const git = "/images/git.png";
 const docker = "/images/docker.png";
 const vscode = "/images/vscode.png";
-const pytorch = "/images/pytorch.png";
-const platformio = "/images/platformio.png";
-const rust = "/images/rust.png";
-const webScreenshot = "/images/webss.png";
-const messageScreenshot = "/images/messagess.png";
-const weatherScreenshot = "/images/weatherss.png";
-const findUrPartyScreenshot = "/images/findurpartyss.jpg";
-const scrabbleScreenshot = "/images/scrabbless.png";
-const blackjackScreenshot = "/images/blackjackss.png";
-const tuinetScreenshot = "/images/tuinet.jpg";
-const kiteScreenshot = "/images/askkite.png";
 const berkeley = "/images/ucberkeley.png";
-const aiRacingTech = "/images/airacingtech.jpeg";
 const ucbEng = "/images/ucb-eng.jpg";
-const kite = "/images/kite.png";
-const opendr = "/images/opendr.jpg";
-const unity = "/images/unity.png";
 const cal = "/images/cal.png";
-const roc_new = "/images/rochester_new.png";
 const calsolLogo = "/images/calsol.png";
 const calsolCar = "/images/calsolcar.png";
 const roarCar = "/images/roarcar.png";
-
 export default function About() {
   const isDesktop = useMediaQuery({ query: "(min-width: 768px)" });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
@@ -121,46 +88,6 @@ export default function About() {
     window.open(url, "_blank");
   };
 
-  const msgWeb = (e) => {
-    e.preventDefault();
-    const url = "https://logankm02.github.io/Message-App/";
-    window.open(url, "_blank");
-  };
-
-  const trvlWeb = (e) => {
-    e.preventDefault();
-    const url = "https://logankm02.github.io/travel-helper/";
-    window.open(url, "_blank");
-  };
-
-  const scrabbleWeb = (e) => {
-    e.preventDefault();
-    const url = "https://logankm02.github.io/scrabble-bot/";
-    window.open(url, "_blank");
-  };
-  const BlackjackWeb = (e) => {
-    e.preventDefault();
-    const url = "https://logankm02.github.io/blackjack/";
-    window.open(url, "_blank");
-  };
-
-  const kiteWeb = (e) => {
-    e.preventDefault();
-    const url = "https://usekite.app";
-    window.open(url, "_blank");
-  };
-
-  const findUrPartyAppStore = (e) => {
-    e.preventDefault();
-    const url = "https://apps.apple.com/app/id6465749219";
-    window.open(url, "_blank");
-  };
-
-  const tuinetWeb = (e) => {
-    e.preventDefault();
-    const url = "https://medium.com/project-owl/project-t%C5%AB%C4%ABnet-tools-for-native-wildlife-conservation-5551211158fe";
-    window.open(url, "_blank");
-  };
 
   // --- Contact form ---
   const [noteOpen, setNoteOpen] = useState(false);
@@ -218,7 +145,7 @@ export default function About() {
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center">
-                <div className="w-44 h-44 md:w-56 md:h-56 rounded-full overflow-hidden border border-white/20 mb-2 md:mb-4 flex-shrink-0">
+                <div className="w-36 h-36 md:w-48 md:h-48 rounded-full overflow-hidden border border-white/20 mb-2 md:mb-4 flex-shrink-0">
                   <img
                     src={profile}
                     alt="Portrait of Michael Rubin"
@@ -226,10 +153,10 @@ export default function About() {
                   />
                 </div>
                 <h1 className="text-xl md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
-                <p className="text-white/80 text-sm md:text-lg mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
+                <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
                 <div className="flex items-center gap-3 mb-1">
-                  <img src="/images/berkeley-logo.png" alt="UC Berkeley" className="h-6 md:h-8 w-auto opacity-80" />
-                  <img src="/images/tudelft-logo.png" alt="TU Delft" className="h-6 md:h-8 w-auto opacity-80" />
+                  <img src={berkeley} alt="UC Berkeley" className="h-8 md:h-11 w-auto opacity-80" />
+                  <img src={Delft} alt="TU Delft" className="h-8 md:h-11 w-auto opacity-80" />
                 </div>
                 <p className="text-white/70 text-xs md:text-sm mb-2 md:mb-4 leading-relaxed">
                   From Antwerp, Belgium

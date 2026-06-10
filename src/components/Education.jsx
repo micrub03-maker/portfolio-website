@@ -62,7 +62,11 @@ export default function Education() {
             {/* Logo placeholder */}
             <div className="flex-shrink-0 flex items-start justify-center sm:justify-start pt-0.5">
               <div className="w-16 h-16 rounded-xl bg-white/60 border border-gray-200 flex items-center justify-center text-gray-400 text-[10px] font-mono text-center leading-tight p-2">
-                TEMP: {entry.logoLabel}
+                <img
+                  src="/images/berkeley.png"
+                  alt="logo UC Berkeley"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
 
