@@ -48,6 +48,8 @@ export default function About() {
 
   const [fadeIn, setFadeIn] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [travelJump, setTravelJump] = useState(0);
+  const [projectJump, setProjectJump] = useState({ key: null, count: 0 });
 
   useEffect(() => {
     if (profileLoaded) {
@@ -80,6 +82,24 @@ export default function About() {
     e.preventDefault();
     const aboutSection = document.querySelector("#getInTouch");
     aboutSection.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleTravelNavigate = () => {
+    setTravelJump(n => n + 1);
+    const el = document.getElementById('interests');
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.pageYOffset - 10;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  };
+
+  const handleProjectsNavigate = (projectKey) => {
+    setProjectJump(prev => ({ key: projectKey, count: prev.count + 1 }));
+    const el = document.getElementById('projects');
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
   };
 
   const navWeb = (e) => {
@@ -131,13 +151,13 @@ export default function About() {
       <TableOfContents />
 
       <div
-        className={`flex flex-col items-center mx-4 md:mx-10 transition-opacity duration-300 ${
+        className={`flex flex-col items-center transition-opacity duration-300 ${
           fadeIn ? "opacity-100" : "opacity-0"
         }`}
       >
         <div
           id="home"
-          className="w-screen min-h-screen md:h-screen flex flex-col bg-banner bg-cover bg-center relative overflow-hidden"
+          className="w-full min-h-screen md:h-screen flex flex-col bg-banner bg-cover bg-center relative overflow-hidden"
         >
           {/* Hero Dashboard - Redesigned */}
           <div className="w-full h-full flex items-center justify-center px-4 md:px-8 py-4 md:py-6">
@@ -164,7 +184,7 @@ export default function About() {
 
                 {/* Social Links */}
                 <div className="flex gap-1 md:gap-2 w-full mb-2 md:mb-4">
-                  <a href={links.github} className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
+                  <a href={links.github} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
                     <img className="h-4 w-4" src={github} alt="github" />
                     <span className="text-white text-xs font-medium">GitHub</span>
                   </a>
@@ -183,7 +203,7 @@ export default function About() {
                   </button>
                   <button 
                     onClick={handleScrollGetInTouch}
-                    className="text-white bg-white/20 hover:bg-white/30 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 backdrop-blur-sm border border-white/30 text-xs md:text-sm"
+                    className="text-white bg-white/20 hover:bg-white/30 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 border border-white/30 text-xs md:text-sm"
                   >
                     Get in Touch
                   </button>
@@ -192,12 +212,12 @@ export default function About() {
 
               {/* Travel Map widget */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
-                <TravelMap />
+                <TravelMap onNavigate={handleTravelNavigate} />
               </div>
 
               {/* A.3 Project Overview */}
               <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-64 md:h-full">
-                <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} />
+                <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} onNavigate={handleProjectsNavigate} />
               </div>
 
               {/* Table of Contents - Bottom left widget */}
@@ -228,10 +248,10 @@ export default function About() {
           <AboutMe />
         </div>
         <div id="projects" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <ProjectPortfolio />
+          <ProjectPortfolio jumpToProject={projectJump} />
         </div>
         <div id="interests" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <InterestsCarousel />
+          <InterestsCarousel jumpToTravel={travelJump} />
         </div>
         <div id="resume" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <h2 className="text-center mb-8 text-2xl md:text-3xl font-bold text-gray-400">Resume Overview</h2>

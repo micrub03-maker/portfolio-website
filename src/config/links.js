@@ -5,6 +5,7 @@ const links = {
   // ── Contact & social ────────────────────────────────────────────────────────
   email:    "mailto:_michael_rbn@berkeley.edu",
   linkedin: "https://www.linkedin.com/in/-michael-rubin",
+  github:   "https://github.com/micrub03-maker",
 
   // ── Internal navigation anchors ─────────────────────────────────────────────
   learnMore:  "#about",

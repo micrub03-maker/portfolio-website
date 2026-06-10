@@ -17,8 +17,14 @@ function Bullets({ items }) {
   );
 }
 
-function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, children }) {
-  const [open, setOpen] = useState(false);
+function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, children }) {
+  const [open, setOpen] = useState(() => !!forceOpenTrigger);
+
+  useEffect(() => {
+    if (!forceOpenTrigger) return;
+    setOpen(true);
+    onOpenChange?.(true);
+  }, [forceOpenTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = () => {
     const next = !open;
@@ -90,12 +96,13 @@ function IntroSlide() {
   );
 }
 
-function FeaturedProjectsSlide({ onDd }) {
+function FeaturedProjectsSlide({ onDd, autoOpen }) {
   return (
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
 
       {/* ── LUCI ── */}
-      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} noClickClose>
+      <div id="project-luci">
+      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaSlot
@@ -178,16 +185,18 @@ function FeaturedProjectsSlide({ onDd }) {
           />
         </Dropdown>
       </Dropdown>
+      </div>
 
       {/* ── CALSOL ── */}
-      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} noClickClose>
+      <div id="project-calsol">
+      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaSlot
             // CHANGE THIS LINE to swap the image:
             // Set src to "/images/<filename>.<ext>" for your image in public/images,
             // e.g. src="/images/calsol-car.jpg"
-            src={null}
+            src='/images/calsol-team.png'
             label="CALSOL car"
             tall
           />
@@ -296,9 +305,11 @@ function FeaturedProjectsSlide({ onDd }) {
           />
         </Dropdown>
       </Dropdown>
+      </div>
 
       {/* ── AXIRIS ── */}
-      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} noClickClose>
+      <div id="project-axiris">
+      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaSlot
@@ -398,6 +409,7 @@ function FeaturedProjectsSlide({ onDd }) {
           />
         </Dropdown>
       </Dropdown>
+      </div>
 
       {/* ── SUCTION CUP ── */}
       <Dropdown summaryTitle="Tactile End Effector Capstone @ EDG Lab" onOpenChange={onDd} noClickClose>
@@ -550,7 +562,7 @@ const slides = [
   { id: 'honours', label: 'Honours' },
 ];
 
-export default function ProjectPortfolio({ initialSlideId }) {
+export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
   const getInitialIndex = () => {
     if (!initialSlideId) return 0;
     const idx = slides.findIndex((s) => s.id === initialSlideId);
@@ -561,6 +573,18 @@ export default function ProjectPortfolio({ initialSlideId }) {
   const [isHovered, setIsHovered] = useState(false);
   const [openDropdownCount, setOpenDropdownCount] = useState(0);
   const touchStartX = useRef(null);
+
+  useEffect(() => {
+    if (!jumpToProject?.count) return;
+    const projectsIdx = slides.findIndex(s => s.id === 'projects');
+    setCurrentIndex(projectsIdx);
+    setOpenDropdownCount(0);
+    if (jumpToProject.key) {
+      setTimeout(() => {
+        document.getElementById(`project-${jumpToProject.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 400);
+    }
+  }, [jumpToProject]);
 
   const isPaused = isHovered || openDropdownCount > 0;
 
@@ -649,7 +673,7 @@ export default function ProjectPortfolio({ initialSlideId }) {
             transition={{ duration: 0.3 }}
           >
             {slideId === 'intro' && <IntroSlide />}
-            {slideId === 'projects' && <FeaturedProjectsSlide onDd={handleDd} />}
+            {slideId === 'projects' && <FeaturedProjectsSlide onDd={handleDd} autoOpen={jumpToProject} />}
             {slideId === 'honours' && <HonoursSlide onDd={handleDd} />}
           </motion.div>
         </AnimatePresence>

@@ -30,7 +30,7 @@ const slides = [
   },
 ];
 
-export default function ProjectOverview({ onProjectClick }) {
+export default function ProjectOverview({ onProjectClick, onNavigate }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const touchStartX = useRef(null);
@@ -86,18 +86,29 @@ export default function ProjectOverview({ onProjectClick }) {
           </h3>
         </div>
 
-        {/* Dot indicators */}
-        <div className="flex gap-1.5 items-center">
-          {slides.map((_, idx) => (
+        <div className="flex items-center gap-2">
+          {/* Dot indicators */}
+          <div className="flex gap-1.5 items-center">
+            {slides.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => goTo(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  idx === activeIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
+          {onNavigate && (
             <button
-              key={idx}
-              onClick={() => goTo(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                idx === activeIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/30'
-              }`}
-            />
-          ))}
+              onClick={() => onNavigate(active.projectKey)}
+              className="flex items-center gap-1 text-[10px] text-white/60 hover:text-white/90 transition-colors bg-white/10 hover:bg-white/20 rounded-full px-2 py-0.5"
+              aria-label="View in Projects section"
+            >
+              dive in ↓
+            </button>
+          )}
         </div>
       </div>
 

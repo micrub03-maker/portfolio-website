@@ -3,8 +3,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import 'jsvectormap/dist/jsvectormap.min.css';
 import travelData from '../data/travel.json';
 
-const BACKEND_URL = 'http://localhost:8000/api/polarsteps';
-
 const ZOOM_MAX = 8;
 
 // --- Icons ---
@@ -16,33 +14,46 @@ const GlobeIcon = ({ className }) => (
   </svg>
 );
 
-const RoadIcon = ({ className }) => (
+
+const MapPinIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
-const SuitcaseIcon = ({ className }) => (
+const HouseIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
   </svg>
 );
 
 // --- Sub-components ---
 
+const TripHighlightCard = ({ title, year }) => (
+  <div className="bg-white/10 border border-white/10 rounded-lg px-2 py-1.5">
+    <p className="text-[10px] text-white leading-tight">{title}</p>
+    {year && <p className="text-[9px] text-white/40 mt-0.5">{year}</p>}
+  </div>
+);
+
+const TripDreamCard = ({ title }) => (
+  <div className="bg-amber-500/15 border border-amber-400/20 rounded-lg px-2 py-1.5">
+    <p className="text-[10px] text-amber-100 leading-tight">{title}</p>
+  </div>
+);
+
 const StatItem = ({ icon: Icon, label, value }) => (
   <div className="flex flex-col items-center gap-0.5 flex-1">
     <Icon className="w-3 h-3 text-white/60" />
     <span className="text-xs font-semibold text-white">{value}</span>
-    <span className="text-[10px] text-white/60">{label}</span>
+    <span className="text-[10px] text-white/60 text-center leading-tight">{label}</span>
   </div>
 );
 
-const SkeletonBlock = ({ className }) => (
-  <div className={`animate-pulse bg-white/20 rounded ${className}`} />
-);
 
 // --- World Map via JSVectorMap ---
 
@@ -50,7 +61,7 @@ const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
 
 // mapRef is owned by TravelMap and passed down so zoom handlers and
 // the WorldMap init share a single, stable reference.
-function WorldMap({ mapRef, onTooltip }) {
+function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
   const mountRef = useRef(null);
   const activeNameRef = useRef('');
   const isDraggingRef = useRef(false);
@@ -86,7 +97,7 @@ function WorldMap({ mapRef, onTooltip }) {
           zoomButtons: false,
           showTooltip: true,
           zoomMin: 1,
-          zoomMax: ZOOM_MAX,
+          zoomMax: zoomMax,
           series: {
             regions: [{
               values: regionValues,
@@ -204,19 +215,14 @@ function WorldMap({ mapRef, onTooltip }) {
         onTooltip?.({ visible: false, name: '', x: 0, y: 0 });
       }}
     >
-      <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab' }} />
+      <div ref={mountRef} style={{ width: '100%', height: '100%', cursor: 'grab', touchAction: 'pan-y' }} />
     </div>
   );
 }
 
 // --- Main Component ---
 
-const TravelMap = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
-
-  // mapRef lives here so both WorldMap init and handleZoom share the same instance
+const TravelMap = ({ compact = false, onNavigate }) => {
   const mapRef = useRef(null);
 
   // Tooltip state: only visible/name trigger re-renders.
@@ -226,19 +232,35 @@ const TravelMap = () => {
   const tooltipElRef = useRef(null);
   const tooltipPos = useRef({ x: 0, y: 0 });
 
+  const belgiumTimerRef = useRef(null);
+
   const handleTooltip = useCallback(({ visible, name, x, y }) => {
     if (visible) {
       tooltipPos.current = { x, y };
-      // Direct DOM write for position — avoids re-render on every mousemove
       if (tooltipElRef.current) {
         tooltipElRef.current.style.top = `${y - 32}px`;
         tooltipElRef.current.style.left = `${x + 12}px`;
       }
-      // Only re-render if visibility or country name actually changed
-      setTooltipInfo(prev =>
-        prev.visible && prev.name === name ? prev : { visible: true, name }
-      );
+      setTooltipInfo(prev => {
+        if (prev.visible && prev.name === name) return prev;
+        // Country changed — clear any pending Belgium timer
+        if (belgiumTimerRef.current) {
+          clearTimeout(belgiumTimerRef.current);
+          belgiumTimerRef.current = null;
+        }
+        if (name === 'Belgium') {
+          belgiumTimerRef.current = setTimeout(() => {
+            setTooltipInfo(cur => cur.visible ? { ...cur, name: "you didn't even know where it was, did you..." } : cur);
+            belgiumTimerRef.current = null;
+          }, 2000);
+        }
+        return { visible: true, name };
+      });
     } else {
+      if (belgiumTimerRef.current) {
+        clearTimeout(belgiumTimerRef.current);
+        belgiumTimerRef.current = null;
+      }
       setTooltipInfo(prev => prev.visible ? { visible: false, name: prev.name } : prev);
     }
   }, []);
@@ -258,108 +280,81 @@ const TravelMap = () => {
     );
   }, []);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(BACKEND_URL);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `HTTP ${res.status}`);
-      }
-      setData(await res.json());
-    } catch (err) {
-      setError(err.message || 'Unknown error');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const header = (
+    <div className="flex items-center gap-2">
+      <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+        <svg className="w-3 h-3 text-white rotate-45" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0 C10.5 1 10 4 10 7 L2 9 L2 13 L10 12 L10 18 L8 19 L8 21 L12 20 L16 21 L16 19 L14 18 L14 12 L22 13 L22 9 L14 7 C14 4 13.5 1 12 0 Z" />
+        </svg>
+      </div>
+      <span className="text-sm font-semibold text-white">Travel map &amp; stats</span>
+    </div>
+  );
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const isOffline = error && (error.includes('fetch') || error.includes('Failed') || error.includes('NetworkError'));
+  const mapArea = (
+    <div className={`relative rounded-lg overflow-hidden ${compact ? 'flex-1 min-h-[9rem]' : 'flex-1 min-h-[9rem]'}`}>
+      <WorldMap mapRef={mapRef} onTooltip={handleTooltip} zoomMax={compact ? 4 : ZOOM_MAX} />
+      <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
+        <button
+          aria-label="Zoom in"
+          className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+          onPointerDown={(e) => { e.stopPropagation(); handleZoom('in'); }}
+        >+</button>
+        <button
+          aria-label="Zoom out"
+          className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+          onPointerDown={(e) => { e.stopPropagation(); handleZoom('out'); }}
+        >−</button>
+      </div>
+    </div>
+  );
 
   return (
     <>
-      <div className="flex flex-col gap-2 relative bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl md:h-full overflow-hidden">
+      <div className={`flex flex-col gap-2 relative backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl overflow-hidden ${compact ? 'bg-black/30' : 'bg-white/10 md:h-full'}`}>
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <GlobeIcon className="w-4 h-4 text-white/70" />
-            <span className="text-sm font-semibold text-white">Travel map &amp; stats</span>
-          </div>
-          {!error && !loading && (
-            <a
-              href="https://www.polarsteps.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-white/40 hover:text-white/70 transition-colors"
+          {header}
+          {onNavigate && (
+            <button
+              onClick={onNavigate}
+              className="flex items-center gap-1 text-[10px] text-white/60 hover:text-white/90 transition-colors bg-white/10 hover:bg-white/20 rounded-full px-2 py-0.5"
+              aria-label="View in Interests section"
             >
-              Polarsteps
-            </a>
+              explore ↓
+            </button>
           )}
         </div>
 
-        {/* World map — grows to fill remaining card space; overlays sit on top */}
-        <div className="flex-1 min-h-[9rem] relative rounded-lg overflow-hidden">
-          <WorldMap mapRef={mapRef} onTooltip={handleTooltip} />
-
-          {/* Zoom controls — sibling to WorldMap, not inside its SVG DOM */}
-          <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
-            <button
-              aria-label="Zoom in"
-              className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
-              onPointerDown={(e) => { e.stopPropagation(); handleZoom('in'); }}
-            >+</button>
-            <button
-              aria-label="Zoom out"
-              className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
-              onPointerDown={(e) => { e.stopPropagation(); handleZoom('out'); }}
-            >−</button>
-          </div>
-
-          {/* "Places I've visited" label — bottom-left overlay */}
-          <p className="absolute bottom-1.5 left-2 text-[10px] text-white/50 z-10 pointer-events-none">
-            Places I&apos;ve visited
-          </p>
-        </div>
-
-        {/* Stats strip — shows skeleton while loading, values when ready, hidden on offline */}
-        {loading ? (
-          <div className="flex gap-3">
-            <SkeletonBlock className="h-6 flex-1" />
-            <SkeletonBlock className="h-6 flex-1" />
-            <SkeletonBlock className="h-6 flex-1" />
-          </div>
-        ) : !error && data ? (
-          <div className="flex divide-x divide-white/20">
-            <StatItem
-              icon={GlobeIcon}
-              label="countries"
-              value={(data.countries?.length ?? travelData.visited_countries.length)}
-            />
-            <StatItem
-              icon={RoadIcon}
-              label="km travelled"
-              value={Number(data.km_count || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })}
-            />
-            <StatItem
-              icon={SuitcaseIcon}
-              label="trips"
-              value={data.trip_count ?? (data.trips?.length ?? travelData.trips.length)}
-            />
+        {compact ? (
+          /* Compact: map | stats | trip highlights */
+          <div className="flex flex-row gap-2">
+            {mapArea}
+            <div className="flex flex-col gap-3 justify-center w-20 shrink-0 border-l border-white/20 pl-3">
+              <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} />
+              <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
+            </div>
+            <div className="flex flex-col gap-1 w-36 shrink-0 border-l border-white/20 pl-3 justify-center">
+              <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mb-0.5">favourite trips</p>
+              {travelData.trip_highlights.filter(h => h.type === 'highlight').map((h, i) => (
+                <TripHighlightCard key={i} title={h.title} year={h.year} />
+              ))}
+              <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mt-1.5 mb-0.5">dream trips</p>
+              {travelData.trip_highlights.filter(h => h.type === 'dream').map((h, i) => (
+                <TripDreamCard key={i} title={h.title} />
+              ))}
+            </div>
           </div>
         ) : (
-          // Offline / error — show static country count from travel.json
-          <div className="flex divide-x divide-white/20">
-            <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-            <StatItem icon={SuitcaseIcon} label="trips" value={travelData.trips.length} />
-            {isOffline && (
-              <div className="flex-1 flex items-center justify-center">
-                <span className="text-[10px] text-white/40 italic">backend offline</span>
-              </div>
-            )}
-          </div>
+          /* Default: map on top, stats strip below */
+          <>
+            {mapArea}
+            <div className="flex divide-x divide-white/20">
+              <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} />
+            </div>
+          </>
         )}
       </div>
 

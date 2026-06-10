@@ -1,42 +1,145 @@
 {
   "visited_countries": [
     { "code": "BE", "name": "Belgium", "note": "Home country" },
-    { "code": "NL", "name": "Netherlands", "note": "TU Delft" },
-    { "code": "US", "name": "United States", "note": "UC Berkeley" },
+    { "code": "KH", "name": "Cambodia", "note": null },
     { "code": "CA", "name": "Canada", "note": "Big White Ski Resort" },
-    { "code": "FR", "name": "France", "note": "TODO: add note" },
-    { "code": "DE", "name": "Germany", "note": "TODO: add note" },
-    { "code": "CH", "name": "Switzerland", "note": "TODO: add note" },
-    { "code": "GB", "name": "United Kingdom", "note": "TODO: add note" },
-    { "code": "ES", "name": "Spain", "note": "TODO: add note" },
-    { "code": "IT", "name": "Italy", "note": "TODO: add note" },
-    { "code": "AT", "name": "Austria", "note": "TODO: add note" },
-    { "code": "PT", "name": "Portugal", "note": "TODO: add note" }
+    { "code": "CN", "name": "China", "note": null },
+    { "code": "CO", "name": "Colombia", "note": null },
+    { "code": "HR", "name": "Croatia", "note": null },
+    { "code": "CZ", "name": "Czechia", "note": null },
+    { "code": "DK", "name": "Denmark", "note": null },
+    { "code": "FR", "name": "France", "note": null },
+    { "code": "DE", "name": "Germany", "note": null },
+    { "code": "GR", "name": "Greece", "note": null },
+    { "code": "HK", "name": "Hong Kong", "note": null },
+    { "code": "HU", "name": "Hungary", "note": null },
+    { "code": "IL", "name": "Israel", "note": null },
+    { "code": "IT", "name": "Italy", "note": null },
+    { "code": "LU", "name": "Luxembourg", "note": null },
+    { "code": "MO", "name": "Macao", "note": null },
+    { "code": "MA", "name": "Morocco", "note": null },
+    { "code": "NL", "name": "Netherlands", "note": "TU Delft" },
+    { "code": "NO", "name": "Norway", "note": null },
+    { "code": "PS", "name": "Palestine", "note": null },
+    { "code": "PL", "name": "Poland", "note": null },
+    { "code": "PT", "name": "Portugal", "note": null },
+    { "code": "KR", "name": "South Korea", "note": null },
+    { "code": "ES", "name": "Spain", "note": null },
+    { "code": "SE", "name": "Sweden", "note": null },
+    { "code": "CH", "name": "Switzerland", "note": null },
+    { "code": "TZ", "name": "Tanzania", "note": null },
+    { "code": "TH", "name": "Thailand", "note": null },
+    { "code": "GB", "name": "United Kingdom", "note": null },
+    { "code": "US", "name": "United States", "note": "UC Berkeley" },
+    { "code": "VA", "name": "Vatican City", "note": null },
+    { "code": "VN", "name": "Vietnam", "note": null }
   ],
+  "homes_count": 6,
+  "continents_count": 5,
+  "trip_highlights": [
+    { "type": "highlight", "title": "Hitchhiking Belgium → Spain", "year": 2024 },
+    { "type": "highlight", "title": "Colombia high school exchange", "year": 2018 },
+    { "type": "highlight", "title": "Norway Erasmus exchange", "year": 2023 },
+    { "type": "dream",     "title": "Skiing in Japan",             "year": null }
+  ],
+  "visited_us_states": ["CA", "NJ", "MD", "WY", "UT", "ID", "MT", "WA", "NH", "NY", "NV", "LA"],
+  "visited_ca_provinces": ["BC", "AB", "ON", "QC"],
   "trips": [
     {
-      "name": "Big White Ski Season",
-      "country": "CA",
-      "year": 2025,
-      "note": "Ski instructor, CSIA Level 2"
+      "name": "Norway interrail",
+      "country": "NO",
+      "year": 2023,
+      "note": "Theo en mic gaan nr noorwegen"
     },
     {
-      "name": "CERN IdeaSquare",
-      "country": "CH",
+      "name": "Eerste hike trondheim",
+      "country": "NO",
+      "year": 2023,
+      "note": null
+    },
+    {
+      "name": "Lakeside foresthike",
+      "country": "NO",
+      "year": 2023,
+      "note": "Got a lot classes to do so Martins and i are going for a hike haha"
+    },
+    {
+      "name": "Voll cabintrip",
+      "country": "NO",
+      "year": 2023,
+      "note": "27 people in a 20 person cabin ..."
+    },
+    {
+      "name": "Lofoten",
+      "country": "NO",
+      "year": 2023,
+      "note": "Island hopping and wild camping for a week"
+    },
+    {
+      "name": "Hike to cheap alcohol",
+      "country": "NO",
+      "year": 2023,
+      "note": null
+    },
+    {
+      "name": "Oslo citytripje",
+      "country": "NO",
+      "year": 2023,
+      "note": null
+    },
+    {
+      "name": "Koe cabin trip wannes",
+      "country": "NO",
+      "year": 2023,
+      "note": "Bena doodgaan kan plezant zijn"
+    },
+    {
+      "name": "Roadtrip mam&pap",
+      "country": "NO",
+      "year": 2023,
+      "note": null
+    },
+    {
+      "name": "Cabin trip 2",
+      "country": "NO",
+      "year": 2023,
+      "note": null
+    },
+    {
+      "name": "Cabin trip heinfjordstua",
+      "country": "NO",
+      "year": 2023,
+      "note": "Onno, dirkie, luiz, mic en alexis gaan bootje varen"
+    },
+    {
+      "name": "Skitrip met de boys",
+      "country": "SE",
+      "year": 2023,
+      "note": "8 dagen Are met Theo, Alexis, jona, Simen en Alex"
+    },
+    {
+      "name": "Besseggen ridge",
+      "country": "NO",
+      "year": 2023,
+      "note": null
+    },
+    {
+      "name": "Tussenjaartje want t is nodig",
+      "country": null,
       "year": 2024,
-      "note": "Summer research program"
+      "note": "Veel gezien, veel geskied en weer een tijdje thuis gewoond"
     },
     {
-      "name": "UC Berkeley",
+      "name": "liften naar Sevilla",
+      "country": "ES",
+      "year": 2024,
+      "note": "Met mika liften naar oscartje en iedereen"
+    },
+    {
+      "name": "Murica",
       "country": "US",
       "year": 2025,
-      "note": "MEng Mechanical Engineering"
-    },
-    {
-      "name": "TU Delft",
-      "country": "NL",
-      "year": 2021,
-      "note": "BSc Mechanical Engineering"
+      "note": "Locking in this year"
     }
   ]
 }

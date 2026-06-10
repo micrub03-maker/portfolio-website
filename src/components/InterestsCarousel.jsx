@@ -26,7 +26,7 @@ const slides = [
     mediaLabel: 'TEMP: traveling',
     mediaSrc: null,
     description:
-      '- Exploring other cultures, learning from other people, meeting new people.\nCheck out the map of the world I have already seen: 32 countries! Check them out.',
+      'What a blessing to have seen so many places! Every trip has taught me to be more independent, adapt to new environments and endless new ways to have fun.',
   },
   {
     id: 'music',
@@ -54,9 +54,15 @@ const slides = [
   },
 ];
 
-export default function InterestsCarousel() {
+export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (jumpToTravel === 0) return;
+    const idx = slides.findIndex(s => s.id === 'traveling');
+    if (idx !== -1) setCurrentIndex(idx);
+  }, [jumpToTravel]);
 
   useEffect(() => {
     if (isHovered) return;
@@ -143,16 +149,22 @@ export default function InterestsCarousel() {
             <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
 
             {active.id === 'traveling' ? (
-              <div className="mt-4 mb-4 h-72 w-full rounded-2xl overflow-hidden">
-                <TravelMap />
-              </div>
+              <>
+                <p className="mt-3 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                  {active.description}
+                </p>
+                <div className="mt-4 mb-4 w-full">
+                  <TravelMap compact />
+                </div>
+              </>
             ) : (
-              <MediaSlot label={active.mediaLabel} src={active.mediaSrc} tall />
+              <>
+                <MediaSlot label={active.mediaLabel} src={active.mediaSrc} tall />
+                <p className="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                  {active.description}
+                </p>
+              </>
             )}
-
-            <p className="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
-              {active.description}
-            </p>
           </motion.div>
         </AnimatePresence>
       </div>

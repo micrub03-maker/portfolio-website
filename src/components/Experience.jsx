@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaSlot } from "./MediaSlot";
 
@@ -6,7 +6,7 @@ const mainEntries = [
   {
     key: 'luci',
     logoLabel: 'MPC logo',
-    logoSrc: null,
+    logoSrc: '/images/MPC-logo.png',
     role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2025 – Present',
     bullets: [
       'Developing an all-terrain autonomous surveillance rover in collaboration with NIWC Pacific',
@@ -17,7 +17,7 @@ const mainEntries = [
   {
     key: 'calsol',
     logoLabel: 'calsol logo',
-    logoSrc: null,
+    logoSrc: '/images/calsol.png',
     role: 'Chassis Engineer – Driver Safety Lead (CALSOL Solar Vehicle Team) · Sept 2025 – Present',
     bullets: [
       'Led seatbelt system design to meet ASC and World Solar Challenge safety regulations',
@@ -28,7 +28,7 @@ const mainEntries = [
   {
     key: 'acurity',
     logoLabel: 'Acurity logo',
-    logoSrc: null,
+    logoSrc: '/images/Acurity-logo.png',
     role: 'AutoCAD Drawing Engineer (KBC Acurity) · Oct 2022 – June 2025',
     bullets: [
       'Produced 300+ technical drawings supporting nationwide security camera installations',
@@ -36,8 +36,8 @@ const mainEntries = [
   },
   {
     key: 'ski',
-    logoLabel: null,
-    logoSrc: null,
+    logoLabel: 'Big White Ski Resort Logo',
+    logoSrc:'/images/Big-White-logo.jpg',
     role: 'Ski Instructor (Big White Ski Resort, Canada) · Nov 2024 – Apr 2025',
     bullets: [
       'Taught and supervised lessons for children ages 3–12 while training for and achieving CSIA Level 2 certification',
@@ -49,7 +49,7 @@ const moreEntries = [
   {
     key: 'cern',
     logoLabel: 'CERN logo',
-    logoSrc: null,
+    logoSrc: '/images/CERN_logo.png',
     role: 'CERN Science Gateway Summer Program (CERN IdeaSquare) · May 2024 – Aug 2024',
     bullets: [
       'Visiting student at CERN Ideasquare; Explored innovation and design methods to turn Big Science technologies into real-world applications',
@@ -59,7 +59,7 @@ const moreEntries = [
   {
     key: 'lde',
     logoLabel: 'LDE logo',
-    logoSrc: null,
+    logoSrc: '/images/LDE-logo.jpg',
     role: 'LDE Sustainability Program (TU Delft / Leiden / Erasmus) · Sept 2022 – June 2023',
     bullets: [
       'Applied systems thinking and sustainability principles to Dutch government research on biofuels and heavy-duty vehicle electrification',
@@ -69,7 +69,7 @@ const moreEntries = [
   {
     key: 'ta',
     logoLabel: 'TU Delft logo',
-    logoSrc: null,
+    logoSrc: '/images/tudelft logo.png',
     role: 'Teaching Assistant – Statics & Mechanics of Materials (TU Delft) · Sept 2022 – Jan 2023',
     bullets: [
       'Taught two sections of 35 students each, totaling 4 weekly sessions',
@@ -79,7 +79,7 @@ const moreEntries = [
   {
     key: 'drop',
     logoLabel: 'DROP Delft logo',
-    logoSrc: null,
+    logoSrc: '/images/DROP-logo-black.png',
     role: 'External Relations Manager – Skate Committee (DROP Delft) · Sept 2021 – June 2022',
     bullets: [
       'Built partnerships with local shops and brands while organizing weekly training sessions and events',
@@ -88,20 +88,23 @@ const moreEntries = [
   {
     key: 'hospitality',
     logoLabel: 'restaurants logo',
-    logoSrc: null,
+    logoSrcs: [
+      { src: '/images/Agora-kaffee-logo.png', label: 'Agora Kaffee' },
+      { src: '/images/MINT-logo.png', label: 'MINT' },
+    ],
     role: 'Hospitality & Events (Antwerp, Belgium) · July 2019 – July 2025',
     bullets: [
-      'Worked part-time in restaurants and events, handling floor operations, bar service, and customer-facing responsibilities',
+      'Worked part-time in restaurants and at events, handling floor operations, bar service, and customer-facing responsibilities',
     ],
   },
   {
     key: 'filigranes',
     logoLabel: 'Filigranes',
-    logoSrc: null,
+    logoSrc: '/images/Filigranes-logo.jpg',
     role: 'Sales Assistant (Filigranes Bookshop, Antwerp) · July 2020 – Aug 2022',
     bullets: [
-      'Part time work during holidays. Supported front-of-house sales, inventory, and customer service in a high-traffic retail environment',
-      'Books, books, books !! Best first job one could wish for',
+      'Books, books, books !! The best first job one could wish for',
+      'Supported front-of-house sales, inventory, and customer service in a high-traffic retail environment',
     ],
   },
 ];
@@ -115,8 +118,17 @@ function ExperienceCard({ entry, index = 0 }) {
       className="flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow"
     >
       {/* Logo */}
-      <div className="flex-shrink-0 flex items-start justify-center sm:justify-start pt-0.5">
-        <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} />
+      <div className="flex-shrink-0 flex flex-row gap-1">
+        {entry.logoSrcs
+          ? entry.logoSrcs.map((logo) => (
+              <div key={logo.label} className="w-20 flex-shrink-0 flex flex-col">
+                <MediaSlot label={logo.label} src={logo.src} fill />
+              </div>
+            ))
+          : <div className="w-24 flex-shrink-0 flex flex-col">
+              <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} fill />
+            </div>
+        }
       </div>
 
       {/* Text */}
@@ -139,9 +151,11 @@ function ExperienceCard({ entry, index = 0 }) {
 
 export default function Experience() {
   const [showMore, setShowMore] = useState(false);
+  const toggleRef = useRef(null);
+  const sectionRef = useRef(null);
 
   return (
-    <div>
+    <div ref={sectionRef} onClick={() => { if (showMore) { setShowMore(false); sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
 
       <div className="flex flex-col gap-4">
@@ -151,7 +165,8 @@ export default function Experience() {
 
         {/* More Experience toggle */}
         <button
-          onClick={() => setShowMore((v) => !v)}
+          ref={toggleRef}
+          onClick={(e) => { e.stopPropagation(); setShowMore((v) => !v); }}
           aria-expanded={showMore}
           aria-controls="more-experience"
           className="flex items-center justify-between w-full rounded-2xl bg-white/50 backdrop-blur-md border border-gray-100 shadow-sm px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-white/70 hover:shadow-md transition-all"
