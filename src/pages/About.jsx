@@ -71,7 +71,7 @@ export default function About() {
   const handleScrollAbout = (e) => {
     e.preventDefault();
     const aboutSection = document.querySelector("#about");
-    const yOffset = -80; // Offset to not scroll too far
+    const yOffset = -10;
     const y = aboutSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
     window.scrollTo({top: y, behavior: 'smooth'});
   };
@@ -158,7 +158,7 @@ export default function About() {
                   <img src={berkeley} alt="UC Berkeley" className="h-8 md:h-11 w-auto opacity-80" />
                   <img src={Delft} alt="TU Delft" className="h-8 md:h-11 w-auto opacity-80" />
                 </div>
-                <p className="text-white/70 text-xs md:text-sm mb-2 md:mb-4 leading-relaxed">
+                <p className="text-white/70 text-xs md:text-sm mt-3 mb-2 md:mb-4 leading-relaxed">
                   From Antwerp, Belgium
                 </p>
 
@@ -300,7 +300,7 @@ export default function About() {
 
               {/* Resume */}
               <a
-                href="/resume.pdf"
+                href="/download-it-i-know-you-want-to.PlsHireMe"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"

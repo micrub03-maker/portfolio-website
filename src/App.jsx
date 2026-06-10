@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import About from "./pages/About";
+import ResumePage from "./pages/ResumePage";
 import { Loader } from "./components/Loader";
 import { BackgroundProvider, useBackground } from "./contexts/BackgroundContext";
 
@@ -20,6 +21,7 @@ function AppContent() {
         <Route path="/home" element={<About />} />
         <Route path="/3d" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/download-it-i-know-you-want-to.PlsHireMe" element={<ResumePage />} />
       </Routes>
     </main>
   );

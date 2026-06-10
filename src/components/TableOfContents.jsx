@@ -65,7 +65,7 @@ const TableOfContents = ({ isWidget = false }) => {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const yOffset = -80; // Offset to account for any fixed headers
+      const yOffset = (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10 : -80;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }

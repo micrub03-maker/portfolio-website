@@ -96,12 +96,12 @@ function WorldMap({ mapRef, onTooltip }) {
           },
           regionStyle: {
             initial: {
-              fill: 'rgba(255, 255, 255, 0.13)',
-              stroke: 'rgba(255, 255, 255, 0.07)',
-              strokeWidth: 0.5,
+              fill: 'rgba(255, 255, 255, 0.2)',
+              stroke: 'rgba(0, 0, 0, 0.25)',
+              strokeWidth: 1.5,
             },
             hover: { fill: '#78ab9a' },
-            selected: { fill: 'rgba(255, 255, 255, 0.13)' },
+            selected: { fill: 'rgba(255, 255, 255, 0.2)' },
             selectedHover: { fill: '#78ab9a' },
           },
           onRegionClick: (e) => e.preventDefault(),
