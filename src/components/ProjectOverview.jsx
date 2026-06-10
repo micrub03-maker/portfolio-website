@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MediaSlot } from "./MediaSlot";
 
 const slides = [
   {
     title: " Mechanical/Control Engineer @ MPC Lab",
     description:
       "Contracted with UC Berkeley's MPC Lab to develop an all-terrain autonomous surveillance rover for NIWC Pacific",
-    image: "/images/ONR-LUCI.mp4",
+    src: "/images/ONR-LUCI.mp4",
     projectKey: "luci",
     link: "https://sites.google.com/berkeley.edu/mpc-lab/home",
     cta: "Visit Lab Website",
@@ -15,7 +16,7 @@ const slides = [
     title: "Driver Safety Lead @ CALSOL",
     description:
       "Designing, manufacturing and testing chassis parts for our gen XI solar car competing in the American Solar Challenge race this summer",
-    image: "/images/calsolcar.png",
+    src: "/images/calsolcar.png",
     projectKey: "calsol",
     link: "https://calsol.berkeley.edu/",
     cta: "Visit Team Site",
@@ -24,7 +25,7 @@ const slides = [
     title: "Optics lead @ Axiris",
     description:
       "Enabling accessible vision screening through low-cost handheld autorefraction for resource-constrained settings",
-    image: "/images/Axiris-logo.png",
+    src: "/images/Axiris-logo.png",
     projectKey: "axiris",
   },
 ];
@@ -114,17 +115,7 @@ export default function ProjectOverview({ onProjectClick }) {
             transition={{ duration: 0.3 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            {active.image ? (
-              <img
-                src={active.image}
-                alt={active.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-white/30 text-xs font-mono text-center px-4">
-                {active.mediaLabel}
-              </span>
-            )}
+            <MediaSlot label={active.title} src={active.src} />
           </motion.div>
         </AnimatePresence>
 

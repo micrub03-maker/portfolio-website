@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { MediaSlot } from "./MediaSlot";
 
 const mainEntries = [
   {
     key: 'luci',
     logoLabel: 'MPC logo',
+    logoSrc: null,
     role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2025 – Present',
     bullets: [
       'Developing an all-terrain autonomous surveillance rover in collaboration with NIWC Pacific',
@@ -15,6 +17,7 @@ const mainEntries = [
   {
     key: 'calsol',
     logoLabel: 'calsol logo',
+    logoSrc: null,
     role: 'Chassis Engineer – Driver Safety Lead (CALSOL Solar Vehicle Team) · Sept 2025 – Present',
     bullets: [
       'Led seatbelt system design to meet ASC and World Solar Challenge safety regulations',
@@ -25,6 +28,7 @@ const mainEntries = [
   {
     key: 'acurity',
     logoLabel: 'Acurity logo',
+    logoSrc: null,
     role: 'AutoCAD Drawing Engineer (KBC Acurity) · Oct 2022 – June 2025',
     bullets: [
       'Produced 300+ technical drawings supporting nationwide security camera installations',
@@ -33,6 +37,7 @@ const mainEntries = [
   {
     key: 'ski',
     logoLabel: null,
+    logoSrc: null,
     role: 'Ski Instructor (Big White Ski Resort, Canada) · Nov 2024 – Apr 2025',
     bullets: [
       'Taught and supervised lessons for children ages 3–12 while training for and achieving CSIA Level 2 certification',
@@ -44,6 +49,7 @@ const moreEntries = [
   {
     key: 'cern',
     logoLabel: 'CERN logo',
+    logoSrc: null,
     role: 'CERN Science Gateway Summer Program (CERN IdeaSquare) · May 2024 – Aug 2024',
     bullets: [
       'Visiting student at CERN Ideasquare; Explored innovation and design methods to turn Big Science technologies into real-world applications',
@@ -53,6 +59,7 @@ const moreEntries = [
   {
     key: 'lde',
     logoLabel: 'LDE logo',
+    logoSrc: null,
     role: 'LDE Sustainability Program (TU Delft / Leiden / Erasmus) · Sept 2022 – June 2023',
     bullets: [
       'Applied systems thinking and sustainability principles to Dutch government research on biofuels and heavy-duty vehicle electrification',
@@ -62,6 +69,7 @@ const moreEntries = [
   {
     key: 'ta',
     logoLabel: 'TU Delft logo',
+    logoSrc: null,
     role: 'Teaching Assistant – Statics & Mechanics of Materials (TU Delft) · Sept 2022 – Jan 2023',
     bullets: [
       'Taught two sections of 35 students each, totaling 4 weekly sessions',
@@ -71,6 +79,7 @@ const moreEntries = [
   {
     key: 'drop',
     logoLabel: 'DROP Delft logo',
+    logoSrc: null,
     role: 'External Relations Manager – Skate Committee (DROP Delft) · Sept 2021 – June 2022',
     bullets: [
       'Built partnerships with local shops and brands while organizing weekly training sessions and events',
@@ -79,6 +88,7 @@ const moreEntries = [
   {
     key: 'hospitality',
     logoLabel: 'restaurants logo',
+    logoSrc: null,
     role: 'Hospitality & Events (Antwerp, Belgium) · July 2019 – July 2025',
     bullets: [
       'Worked part-time in restaurants and events, handling floor operations, bar service, and customer-facing responsibilities',
@@ -87,6 +97,7 @@ const moreEntries = [
   {
     key: 'filigranes',
     logoLabel: 'Filigranes',
+    logoSrc: null,
     role: 'Sales Assistant (Filigranes Bookshop, Antwerp) · July 2020 – Aug 2022',
     bullets: [
       'Part time work during holidays. Supported front-of-house sales, inventory, and customer service in a high-traffic retail environment',
@@ -105,15 +116,7 @@ function ExperienceCard({ entry, index = 0 }) {
     >
       {/* Logo */}
       <div className="flex-shrink-0 flex items-start justify-center sm:justify-start pt-0.5">
-        {entry.logoLabel ? (
-          <div className="w-16 h-16 rounded-xl bg-white/60 border border-gray-200 flex items-center justify-center text-gray-400 text-[10px] font-mono text-center leading-tight p-2">
-            TEMP: {entry.logoLabel}
-          </div>
-        ) : (
-          <div className="w-16 h-16 rounded-xl bg-white/30 border border-gray-100 flex items-center justify-center text-gray-300 text-[10px] font-mono text-center leading-tight p-2">
-            no logo
-          </div>
-        )}
+        <MediaSlot label={entry.logoLabel ?? 'no logo'} src={entry.logoSrc} />
       </div>
 
       {/* Text */}
@@ -182,6 +185,6 @@ export default function Experience() {
           )}
         </AnimatePresence>
       </div>
-    </div>
+    </section>
   );
 }

@@ -101,7 +101,10 @@ function WorldMap({ mapRef, onTooltip }) {
               strokeWidth: 0.5,
             },
             hover: { fill: '#78ab9a' },
+            selected: { fill: 'rgba(255, 255, 255, 0.13)' },
+            selectedHover: { fill: '#78ab9a' },
           },
+          onRegionClick: (e) => e.preventDefault(),
           // Intercept JSVectorMap's native tooltip show event.
           // e.preventDefault() stops the native tooltip element from becoming
           // visible; we drive our own React-portal tooltip instead.

@@ -1,10 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { MediaSlot } from "./MediaSlot";
 
 const entries = [
   {
     key: 'berkeley',
     logoLabel: 'logo UC Berkeley',
+    logoSrc: null,
     title: 'MEng mechanical engineer: biomechanics & control',
     period: 'Class of 2026',
     bullets: [
@@ -16,6 +18,7 @@ const entries = [
   {
     key: 'tudelft',
     logoLabel: 'Logo TU Delft',
+    logoSrc: null,
     title: 'BSc Mechanical Engineer',
     period: 'Class of 2024',
     bullets: [
@@ -27,6 +30,7 @@ const entries = [
   {
     key: 'kla',
     logoLabel: 'Logo KLA',
+    logoSrc: null,
     title: 'Koninklijk Lyceum Antwerpen',
     period: 'Class of 2021',
     bullets: [
@@ -37,12 +41,11 @@ const entries = [
   {
     key: 'academie',
     logoLabel: 'Logo Academie Berchem',
+    logoSrc: null,
     title: 'Academie Berchem',
     period: '2008-2021',
-    bullets: [
-      'I graduated from the part time graphic arts program, broadening my perspective and developing my creativity',
-      'My most valuable hobby growing up!'
-    ],
+    bullets: 'I graduated from the part time graphic arts program, broadening my perspective and developing my creativity',
+    'My most valuable hobby growing up!'
   },
 ];
 
@@ -61,13 +64,7 @@ export default function Education() {
           >
             {/* Logo placeholder */}
             <div className="flex-shrink-0 flex items-start justify-center sm:justify-start pt-0.5">
-              <div className="w-16 h-16 rounded-xl bg-white/60 border border-gray-200 flex items-center justify-center text-gray-400 text-[10px] font-mono text-center leading-tight p-2">
-                <img
-                  src="/images/berkeley.png"
-                  alt="logo UC Berkeley"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <MediaSlot label={entry.logoLabel} src={entry.logoSrc} />
             </div>
 
             {/* Text content */}

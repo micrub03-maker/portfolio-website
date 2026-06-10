@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TravelMap from './TravelMap';
+import { MediaSlot } from "./MediaSlot";
 
 const slides = [
   {
     id: 'photography',
     title: 'Photography',
     mediaLabel: 'TEMP: photography',
+    mediaSrc: null,
     description:
       '- Attention to detail, different perspectives, patience.\nIn and out of this but I usually shoot on my old Pentax K-50, very fun!',
   },
@@ -14,6 +16,7 @@ const slides = [
     id: 'skateboarding',
     title: 'Skateboarding',
     mediaLabel: 'TEMP: skateboarding',
+    mediaSrc: null,
     description:
       'Creativity, community, challenging myself and overcoming fear and perseverance.',
   },
@@ -21,6 +24,7 @@ const slides = [
     id: 'traveling',
     title: 'Traveling',
     mediaLabel: 'TEMP: traveling',
+    mediaSrc: null,
     description:
       '- Exploring other cultures, learning from other people, meeting new people.\nCheck out the map of the world I have already seen: 32 countries! Check them out.',
   },
@@ -28,6 +32,7 @@ const slides = [
     id: 'music',
     title: 'Music',
     mediaLabel: 'TEMP: music',
+    mediaSrc: null,
     description:
       '- Trying to learn guitar, will boogie to nearly any sound and understand why music is so awesome!\nCheck out my top artists --> Spotify API.',
   },
@@ -35,6 +40,7 @@ const slides = [
     id: 'winter-sports',
     title: 'Winter sports',
     mediaLabel: 'TEMP: winter sports',
+    mediaSrc: null,
     description:
       '- Snowboarding and skiing, spent a whole season teaching on snow.\nAlso overcoming fear and perseverance.',
   },
@@ -42,6 +48,7 @@ const slides = [
     id: 'random-skills',
     title: 'Picking up random new skills',
     mediaLabel: 'TEMP: random skills',
+    mediaSrc: null,
     description:
       '- From practicing handstand, to learning how to juggle, I love setting small goals and challenges to overcome for myself and hyperfocusing on them for a little bit haha.',
   },
@@ -140,9 +147,7 @@ export default function InterestsCarousel() {
                 <TravelMap />
               </div>
             ) : (
-              <div className="mt-4 mb-4 h-40 w-full rounded-lg border border-dashed border-slate-300 bg-white/40 flex items-center justify-center text-xs uppercase tracking-wide text-gray-400">
-                {active.mediaLabel}
-              </div>
+              <MediaSlot label={active.mediaLabel} src={active.mediaSrc} tall />
             )}
 
             <p className="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
