@@ -1,6 +1,6 @@
 const isVideo = (src) => /\.(mp4|webm|ogg|mov)$/i.test(src);
 
-export function MediaImage({ src, alt, tall = false, fill = false, fit = 'object-cover', compact = false, padded = false }) {
+export function MediaImage({ src, alt, tall = false, fill = false, fit = 'object-cover', compact = false, padded = false, height }) {
   const video = isVideo(src);
   const containerClass = video
     ? `aspect-[9/16] max-w-[220px] mx-auto ${compact ? 'rounded-xl' : 'rounded-xl overflow-hidden my-3'} flex-shrink-0`
@@ -8,7 +8,7 @@ export function MediaImage({ src, alt, tall = false, fill = false, fit = 'object
   const mediaClass = `w-full h-full ${video ? 'object-cover' : padded ? 'object-contain' : fit} ${compact ? 'rounded-xl' : ''}`;
 
   return (
-    <div className={containerClass}>
+    <div className={containerClass} style={height ? { height } : undefined}>
       {video
         ? <video src={src} className={mediaClass} autoPlay loop muted playsInline />
         : <img src={src} alt={alt} className={mediaClass} />

@@ -18,11 +18,13 @@ function Bullets({ items }) {
   );
 }
 
-function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, children }) {
+function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, textWidth, centered, children }) {
   const imageCol = <div className={`${picWidth} flex-shrink-0`}>{pic}</div>;
-  const textCol = <p className="text-sm text-gray-700 leading-relaxed mt-8">{children}</p>;
+  const textCol = textWidth
+    ? <div className={`${textWidth} flex-shrink-0 self-start`}><p className="text-sm text-gray-700 leading-relaxed">{children}</p></div>
+    : <p className="text-sm text-gray-700 leading-relaxed mt-8">{children}</p>;
   return (
-    <div className="flex gap-4 items-start">
+    <div className={`flex gap-4 items-start${centered ? ' justify-center' : ''}`}>
       {picLeft ? <>{imageCol}{textCol}</> : <>{textCol}{imageCol}</>}
     </div>
   );
@@ -301,7 +303,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
               <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
               <div className="absolute top-0 left-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-gray-300 text-sm font-semibold tracking-wide">insert testing jig</p>
+                <p className="text-gray-800 text-sm font-semibold tracking-wide">insert testing jig</p>
               </div>
             </div>
           </div>
@@ -319,38 +321,26 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           onOpenChange={onDd}
           scrollTargetId="project-calsol"
         >
-          <p className="text-sm text-gray-700 leading-relaxed">
-            For the shoulder harness, I designed a steel backplate that bolts through the chassis and supports transverse "wrapping bolts" around which the shoulder belts are looped, eliminating single-point failure by allowing each strap to wrap independently.
-          </p>
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/shoulder-anchorage.jpg"
-            src={'/images/shoulder-mount-calsol.png'}
-            label="shoulder belt anchorage"
-          />
-          <p className="text-sm text-gray-700 leading-relaxed">
-            I modeled the wrapping bolts as fixed-fixed beams under the projected distributed load to size them for the governing failure mode: bending, since shear and tension are easily satisfied. A 9/16 inch grade 8.8 is the smallest size bolt that keeps peak bending stress safely below it's flexural strength of 640 MPa, and the rest of the part was designed around these wrapping bolts.
-          </p>
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/shoulder-calcs.jpg"
-            src={null}
-            label="Shoulder belt calcs"
-          />
+          <SideBySide picWidth="w-[41%]" textWidth="w-[50%]" centered pic={
+            <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" />
+          }>
+            For the shoulder harness, I designed a steel anchorage that bolts through the chassis and supports transverse "wrapping bolts" around which the shoulder belts are looped, eliminating single-point failure by allowing each strap to wrap independently.
+          </SideBySide>
+          <SideBySide picWidth="w-[38%]" picLeft={false} textWidth="w-[50%]" centered pic={
+            <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" />
+          }>
+            I modeled the wrapping bolts as fixed-fixed beams under the projected distributed load to size them for the governing failure mode: bending. The rest of the anchorage was designed around these choices.
+          </SideBySide>
           <p className="text-sm text-gray-700 leading-relaxed">
             Once the baseline design cleared all load cases, I ran a SolidWorks topology optimization on the backplate to strip non-critical material while preserving manufacturability (uniform thickness, waterjet-friendly geometry, intact interfaces), ultimately cutting weight by roughly 40% while maintaining acceptable safety margins.
           </p>
           <div className="relative group [&>div]:shadow-md">
             <MediaSlot
-              // CHANGE THIS LINE to swap the image:
-              // Set src to "/images/<filename>.<ext>" for your image in public/images,
-              // e.g. src="/images/shoulder-topology.jpg"
               src={'/images/calsol-topology.png'}
               label="Shoulder belt CAD topology"
+              height="240px"
             />
-            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+            <div className="absolute left-0 right-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{top: '0.75rem', height: '240px'}}>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
                 <p className="text-white text-sm font-semibold tracking-wide">Topology optimization of the shoulder anchorage</p>
