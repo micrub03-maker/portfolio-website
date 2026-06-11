@@ -33,6 +33,7 @@ function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, textWidth, center
 function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (!forceOpenTrigger) return;
@@ -51,16 +52,40 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
     const next = !open;
     setOpen(next);
     onOpenChange?.(next);
-    if (!next) {
+    if (next) {
+      setTimeout(() => {
+        if (!containerRef.current) return;
+        const rect = containerRef.current.getBoundingClientRect();
+        const navOffset = 80;
+        const vh = window.innerHeight;
+        const fitsInView = rect.height <= vh - navOffset;
+        if (fitsInView) {
+          if (rect.bottom > vh) {
+            const y = Math.min(
+              rect.bottom + window.pageYOffset - vh + 16,
+              rect.top + window.pageYOffset - navOffset
+            );
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          } else if (rect.top < navOffset) {
+            window.scrollTo({ top: rect.top + window.pageYOffset - navOffset, behavior: 'smooth' });
+          }
+        } else {
+          window.scrollTo({ top: rect.top + window.pageYOffset - navOffset, behavior: 'smooth' });
+        }
+      }, 350);
+    } else {
       setTimeout(() => {
         const target = scrollTargetId ? document.getElementById(scrollTargetId) : buttonRef.current;
-        target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (target) {
+          const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
       }, 350);
     }
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden mt-4">
+    <div ref={containerRef} className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden mt-4">
       <button
         ref={buttonRef}
         onClick={toggle}
@@ -146,7 +171,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="project-luci" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <div className="relative group flex flex-col">
@@ -194,7 +219,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into how I start new projects"
           summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration"
           onOpenChange={onDd}
-          scrollTargetId="project-luci"
+          scrollTargetId="projects"
         >
           <SideBySide picWidth="w-[45%]" pic={
             <div className="flex justify-center">
@@ -248,7 +273,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="project-calsol" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -306,7 +331,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into lap-belt insert design and validation"
           summarySubtitle="TL;DR I designed bonded metal inserts for the lap and sub-belts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
           onOpenChange={onDd}
-          scrollTargetId="project-calsol"
+          scrollTargetId="projects"
         >
           <SideBySide picWidth="w-[45%]" pic={
             <div className="relative group">
@@ -356,7 +381,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into the topology-optimized shoulder-belt anchorage"
           summarySubtitle='TL;DR I designed a steel shoulder-belt mount holding wrapping bolts, cut mount weight by ~40% via topology optimization.'
           onOpenChange={onDd}
-          scrollTargetId="project-calsol"
+          scrollTargetId="projects"
         >
           <SideBySide picWidth="w-1/2" pic={
             <div className="flex justify-center">
@@ -408,7 +433,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="project-axiris" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <div className="relative group">
@@ -438,7 +463,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into my design process"
           summarySubtitle="TL;DR Stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
-          scrollTargetId="project-axiris"
+          scrollTargetId="projects"
         >
           <div className="flex flex-row gap-4 items-start">
             <div className="relative group w-[54%] flex-shrink-0">
@@ -494,7 +519,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into my resilience under tight constraints"
           summarySubtitle="TL;DR We didn't have access to an optics lab, so I proposed and built a modular model eye that gave us a stable, repeatable testbed to calibrate Axiris and de-risk the design before touching human subjects."
           onOpenChange={onDd}
-          scrollTargetId="project-axiris"
+          scrollTargetId="projects"
         >
           <div className="flex flex-row gap-4 items-start">
             <div className="relative group w-[54%] flex-shrink-0">
@@ -529,7 +554,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" onOpenChange={onDd} scrollTargetId="project-edg" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
@@ -565,7 +590,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into how I design for manufacturability"
           summarySubtitle="TL;DR redesigned the injection mold for the suction cup to achieve higher success rate in production."
           onOpenChange={onDd}
-          scrollTargetId="project-edg"
+          scrollTargetId="projects"
         >
           <div className="flex flex-col md:flex-row gap-4 items-start">
             <p className="text-sm text-gray-700 leading-relaxed md:order-2 md:mt-8">
@@ -655,43 +680,44 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
 const honourItems = [
   {
+    id: 'adlap',
+    title: 'BSc capstone: designing a detachable light module for a robotic surgery system',
+    media: [
+      { src: '/images/adlap-final-design.jpg', label: 'adlap rendering', hoverLabel: 'Detailed design' },
+      { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action' },
+    ],
+    links: [{ label: 'Paper', href: '/pdfs/adlap-design-paper.pdf' }],
+  },
+  {
+    id: 'mpc-robot',
+    title: 'Model Predictive Torque Control for a Balancing Robot',
+    media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot', videoAspect: 'aspect-[10/7]', fluid: true, hoverLabel: 'Circle steering control on robot' }],
+    sideText: { heading: 'Why not PID?', body: 'We used MPC as a research tool to evaluate whether it could outperform a simpler controller on a self-balancing two-wheeled robot with slope and steering dynamics.' },
+    links: [{ label: 'Paper', href: '/images/C231A_project.pdf' }],
+  },
+  {
+    id: 'pcm',
+    title: 'Phase change materials based cooling in solar panels',
+    description: 'Built a Python model of a solar panel system with phase-change material cooling to analyze efficiency trends under varying environmental conditions.',
+    media: [
+      { src: '/images/PCM-schema.png', label: 'PCM schema', hoverLabel: 'PCM-PV cell interactions', natural: true, hoverTextColor: 'text-gray-800' },
+      { src: '/images/PCM-results.png', label: 'PCM results', hoverLabel: 'PV cell efficiency simulation results', imageAspect: 'aspect-[10/4.8]', hoverTextColor: 'text-gray-800' },
+    ],
+    links: [{ label: 'Paper', href: '/images/PCM_FINALREPORT.pdf' }],
+  },
+  {
     id: 'sproutup',
     title: 'SproutUp: an assistive standing device',
     squareImages: true,
     description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance.',
     media: [
-      { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup' },
-      { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', wrapperStyle: { paddingLeft: '2.5rem' } },
+      { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp' },
+      { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', hoverLabel: 'SproutUp electrical diagram and working', natural: true },
     ],
     links: [
-      { label: 'Paper', href: '/pdfs/sproutup-paper.pdf' },
+      { label: 'Paper', href: '/images/SproutUp-paper.pdf' },
       { label: 'Poster', href: '/images/SproutUp-poster.pdf' },
     ],
-  },
-  {
-    id: 'mpc-robot',
-    title: 'Model Predictive Torque Control for a Balancing Robot',
-    media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot', videoAspect: 'aspect-[10/7]', fluid: true }],
-    sideText: { heading: 'Why not PID?', body: 'We used MPC as a research tool to evaluate whether it could outperform a simpler controller on a self-balancing two-wheeled robot with slope and steering dynamics.' },
-    links: [{ label: 'Paper', href: '/pdfs/mpc-robot-paper.pdf' }],
-  },
-  {
-    id: 'pcm',
-    title: 'Phase change materials based cooling in photovoltaic cells',
-    media: [
-      { src: '/images/PCM-results.png', label: 'PCM results' },
-      { src: '/images/PCM-schema.png', label: 'PCM schema' },
-    ],
-    links: [{ label: 'Paper', href: '/pdfs/pcm-paper.pdf' }],
-  },
-  {
-    id: 'adlap',
-    title: 'BSc thesis: designing a detachable light module for a robotic surgery system',
-    media: [
-      { src: '/images/adlap-final-design.jpg', label: 'adlap rendering' },
-      { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik' },
-    ],
-    links: [{ label: 'Design paper', href: '/pdfs/adlap-design-paper.pdf' }],
   },
 ];
 
@@ -704,6 +730,7 @@ function HonoursSlide({ onDd, closeSignal }) {
           key={item.id}
           summaryTitle={item.title}
           onOpenChange={onDd}
+          scrollTargetId="projects"
           closeSignal={closeSignal}
         >
           {item.links.length > 0 && (
@@ -726,10 +753,18 @@ function HonoursSlide({ onDd, closeSignal }) {
             <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
           )}
           <div className={`flex gap-4 items-start ${item.sideText ? '' : 'flex-wrap'}`}>
-            <div className={`flex gap-2 ${item.sideText ? 'w-1/2 flex-shrink-0' : 'flex-1 min-w-0'}`}>
+            <div className={`flex gap-2 items-start ${item.sideText ? 'w-1/2 flex-shrink-0' : 'flex-1 min-w-0'}`}>
               {item.media.map((m) => (
-                <div key={m.label} className="flex-1 min-w-0" style={m.wrapperStyle}>
-                  <MediaSlot src={m.src} label={m.label} square={!!item.squareImages} videoAspect={m.videoAspect} fluid={!!m.fluid} />
+                <div key={m.label} className="flex-1 min-w-0 relative group">
+                  <MediaSlot src={m.src} label={m.label} square={!!item.squareImages} videoAspect={m.videoAspect} imageAspect={m.imageAspect} fluid={!!m.fluid} fit={m.fit} natural={!!m.natural} />
+                  {m.hoverLabel && (
+                    <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                        <p className={`${m.hoverTextColor || 'text-white'} text-sm font-semibold tracking-wide`}>{m.hoverLabel}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

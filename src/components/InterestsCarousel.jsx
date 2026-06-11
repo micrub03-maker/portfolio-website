@@ -34,7 +34,7 @@ const slides = [
     mediaLabel: 'TEMP: music',
     mediaSrc: null,
     description:
-      '- Trying to learn guitar, will boogie to nearly any sound and understand why music is so awesome!\nCheck out my top artists --> Spotify API.',
+      'Trying to learn guitar, will boogie to nearly any sound and understand why music is so awesome!\nCheck out my top artists --> Spotify API.',
   },
   {
     id: 'winter-sports',
@@ -42,7 +42,7 @@ const slides = [
     mediaLabel: 'TEMP: winter sports',
     mediaSrc: null,
     description:
-      '- Snowboarding and skiing, spent a whole season teaching on snow.\nAlso overcoming fear and perseverance.',
+      ' Snowboarding and skiing, spent a whole season teaching on snow. \n Also overcoming fear and perseverance.',
   },
   {
     id: 'random-skills',
@@ -50,7 +50,7 @@ const slides = [
     mediaLabel: 'TEMP: random skills',
     mediaSrc: null,
     description:
-      '- From practicing handstand, to learning how to juggle, I love setting small goals and challenges to overcome for myself and hyperfocusing on them for a little bit haha.',
+      ' From practicing handstand to learning how to juggle, I love setting small goals and challenges to overcome for myself. I do tend to hyperfocus on them for a little bit.',
   },
 ];
 
