@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import TravelMap from './TravelMap';
 import { MediaSlot } from "./MediaSlot";
+import DoodleJump from './DoodleJump';
+
+const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 
 const slides = [
   {
@@ -57,6 +60,9 @@ const slides = [
 export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [showGame, setShowGame] = useState(false);
+  const skateClicks = useRef(0);
+  const konamiBuffer = useRef([]);
 
   useEffect(() => {
     if (jumpToTravel === 0) return;
@@ -71,6 +77,26 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
     }, 6000);
     return () => clearInterval(t);
   }, [isHovered, currentIndex]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      konamiBuffer.current = [...konamiBuffer.current, e.key].slice(-KONAMI.length);
+      if (konamiBuffer.current.join(',') === KONAMI.join(',')) {
+        setShowGame(true);
+        konamiBuffer.current = [];
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const handleSkateClick = () => {
+    skateClicks.current += 1;
+    if (skateClicks.current >= 5) {
+      skateClicks.current = 0;
+      setShowGame(true);
+    }
+  };
 
   const touchStartX = useRef(null);
 
@@ -158,7 +184,11 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
               </>
             ) : active.mediaSrc ? (
               <div className="flex gap-4 items-start">
-                <div className="w-2/5 flex-shrink-0">
+                <div
+                  className="w-2/5 flex-shrink-0"
+                  onClick={active.id === 'skateboarding' ? handleSkateClick : undefined}
+                  style={active.id === 'skateboarding' ? { cursor: 'pointer' } : undefined}
+                >
                   <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
                 </div>
                 <div className="aspect-square flex-1 overflow-hidden flex flex-col">
@@ -180,6 +210,8 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {showGame && <DoodleJump onClose={() => setShowGame(false)} />}
     </section>
   );
 }
