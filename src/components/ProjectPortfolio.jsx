@@ -30,7 +30,7 @@ function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, textWidth, center
   );
 }
 
-function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, children }) {
+function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
 
@@ -39,6 +39,12 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
     setOpen(true);
     onOpenChange?.(true);
   }, [forceOpenTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!closeSignal) return;
+    setOpen(false);
+    onOpenChange?.(false);
+  }, [closeSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = (e) => {
     e?.stopPropagation();
@@ -100,7 +106,7 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
 
 // ── slide components ──────────────────────────────────────────────────────────
 
-function FeaturedProjectsSlide({ onDd, autoOpen }) {
+function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
   const assemblyVideoRef = useRef(null);
   const suctionDropdownRef = useRef(null);
   const [assemblyPlaying, setAssemblyPlaying] = useState(false);
@@ -140,14 +146,11 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="project-luci">
+      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="project-luci" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <div className="relative group flex flex-col">
             <MediaSlot
-              // CHANGE THIS LINE to swap the image:
-              // Set src to "/images/<filename>.<ext>" for your image in public/images,
-              // e.g. src="/images/luci-cad.jpg"
               src={"/images/LUCI-CAD.png"}
               label="ONR Luci CAD"
               fill
@@ -245,14 +248,11 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="project-calsol">
+      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="project-calsol" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
             <MediaSlot
-              // CHANGE THIS LINE to swap the image:
-              // Set src to "/images/<filename>.<ext>" for your image in public/images,
-              // e.g. src="/images/calsol-car.jpg"
               src= "/images/calsol-team.jpg"
               label="CALSOL team"
               tall
@@ -294,7 +294,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
               </a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              As Driver Safety Lead for CalSol's GenXI solar vehicle, I owned the design, analysis, and validation of the five-point seatbelt harness mounting system, from regulation interpretation through physical testing and manufacturing handoff. Our seatbelt system was the first mechanical subsystem to pass scrutineering for the 2026 race cycle.
+              As Driver Safety Lead for the Berkeley Solar car student team, I owned the design, analysis, and validation of the five-point seatbelt harness mounting system CalSol's for our GenXI solar vehicle. I oversaw the full process from regulation interpretation and design through physical testing and manufacturing handoff. 
+              <br /> 
+              < br/>
+              Our seatbelt system was the first mechanical subsystem to pass scrutineering for the 2026 race cycle.
             </p>
           </div>
         </div>
@@ -405,7 +408,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="project-axiris">
+      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="project-axiris" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <div className="relative group">
@@ -526,7 +529,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" onOpenChange={onDd} scrollTargetId="project-edg">
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" onOpenChange={onDd} scrollTargetId="project-edg" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
@@ -548,7 +551,6 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             <div className="flex justify-end gap-2 flex-wrap">
               <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Lab website</a>
               <a href="/images/135_report_finaldraft_pdf.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
-              <a href="/images/Smart Suction Cup Poster.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Poster</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
               The Smart Suction Cup is a multi-chamber robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
@@ -655,19 +657,22 @@ const honourItems = [
   {
     id: 'sproutup',
     title: 'SproutUp: an assistive standing device',
+    squareImages: true,
+    description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance.',
     media: [
       { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup' },
-      { src: null, label: 'sproutup picture 2' },
+      { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', wrapperStyle: { paddingLeft: '2.5rem' } },
     ],
     links: [
-      { label: 'Poster', href: '/pdfs/sproutup-poster.pdf' },
       { label: 'Paper', href: '/pdfs/sproutup-paper.pdf' },
+      { label: 'Poster', href: '/images/SproutUp-poster.pdf' },
     ],
   },
   {
     id: 'mpc-robot',
-    title: 'Incline steering of a self balancing robot using model predictive control',
-    media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot' }],
+    title: 'Model Predictive Torque Control for a Balancing Robot',
+    media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot', videoAspect: 'aspect-[10/7]', fluid: true }],
+    sideText: { heading: 'Why not PID?', body: 'We used MPC as a research tool to evaluate whether it could outperform a simpler controller on a self-balancing two-wheeled robot with slope and steering dynamics.' },
     links: [{ label: 'Paper', href: '/pdfs/mpc-robot-paper.pdf' }],
   },
   {
@@ -675,7 +680,7 @@ const honourItems = [
     title: 'Phase change materials based cooling in photovoltaic cells',
     media: [
       { src: '/images/PCM-results.png', label: 'PCM results' },
-      { src: null, label: 'PCM picture 2' },
+      { src: '/images/PCM-schema.png', label: 'PCM schema' },
     ],
     links: [{ label: 'Paper', href: '/pdfs/pcm-paper.pdf' }],
   },
@@ -690,7 +695,7 @@ const honourItems = [
   },
 ];
 
-function HonoursSlide({ onDd }) {
+function HonoursSlide({ onDd, closeSignal }) {
   return (
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
       <p className="text-lg font-bold text-gray-800 mb-2">Honorable mentions:</p>
@@ -699,16 +704,10 @@ function HonoursSlide({ onDd }) {
           key={item.id}
           summaryTitle={item.title}
           onOpenChange={onDd}
+          closeSignal={closeSignal}
         >
-          <div className="flex gap-2">
-            {item.media.map((m) => (
-              <div key={m.label} className="flex-1 min-w-0">
-                <MediaSlot src={m.src} label={m.label} />
-              </div>
-            ))}
-          </div>
           {item.links.length > 0 && (
-            <div className="flex justify-end gap-2 mt-2 flex-wrap">
+            <div className="flex justify-end gap-2 flex-wrap">
               {item.links.map((l) => (
                 <a
                   key={l.label}
@@ -723,6 +722,24 @@ function HonoursSlide({ onDd }) {
               ))}
             </div>
           )}
+          {item.description && (
+            <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
+          )}
+          <div className={`flex gap-4 items-start ${item.sideText ? '' : 'flex-wrap'}`}>
+            <div className={`flex gap-2 ${item.sideText ? 'w-1/2 flex-shrink-0' : 'flex-1 min-w-0'}`}>
+              {item.media.map((m) => (
+                <div key={m.label} className="flex-1 min-w-0" style={m.wrapperStyle}>
+                  <MediaSlot src={m.src} label={m.label} square={!!item.squareImages} videoAspect={m.videoAspect} fluid={!!m.fluid} />
+                </div>
+              ))}
+            </div>
+            {item.sideText && (
+              <div className="flex-1 min-w-0 mt-8">
+                <p className="text-sm font-semibold text-gray-800">{item.sideText.heading}</p>
+                <p className="text-sm text-gray-700 leading-relaxed mt-1">{item.sideText.body}</p>
+              </div>
+            )}
+          </div>
         </Dropdown>
       ))}
     </div>
@@ -744,8 +761,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
   };
 
   const [currentIndex, setCurrentIndex] = useState(getInitialIndex);
-  const [isHovered, setIsHovered] = useState(false);
-  const [openDropdownCount, setOpenDropdownCount] = useState(0);
+  const [closeSignal, setCloseSignal] = useState(0);
   const touchStartX = useRef(null);
 
   useEffect(() => {
@@ -760,20 +776,12 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
     }
   }, [jumpToProject]);
 
-  const isPaused = isHovered || openDropdownCount > 0;
-
   const goTo = (idx) => {
     setCurrentIndex(idx);
-    setOpenDropdownCount(0);
+    setCloseSignal((s) => s + 1);
   };
   const goNext = () => goTo((currentIndex + 1) % slides.length);
   const goPrev = () => goTo((currentIndex - 1 + slides.length) % slides.length);
-
-  useEffect(() => {
-    if (isPaused) return;
-    const t = setInterval(goNext, 8000);
-    return () => clearInterval(t);
-  }, [isPaused, currentIndex]);
 
   const handleTouchStart = (e) => { touchStartX.current = e.targetTouches[0].clientX; };
   const handleTouchEnd = (e) => {
@@ -781,10 +789,6 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
     touchStartX.current = null;
-  };
-
-  const handleDd = (isOpening) => {
-    setOpenDropdownCount((prev) => (isOpening ? prev + 1 : Math.max(0, prev - 1)));
   };
 
   const slideId = slides[currentIndex].id;
@@ -797,8 +801,6 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
 
       <div
         className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -846,8 +848,8 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3 }}
           >
-            {slideId === 'projects' && <FeaturedProjectsSlide onDd={handleDd} autoOpen={jumpToProject} />}
-            {slideId === 'honours' && <HonoursSlide onDd={handleDd} />}
+            {slideId === 'projects' && <FeaturedProjectsSlide autoOpen={jumpToProject} closeSignal={closeSignal} />}
+            {slideId === 'honours' && <HonoursSlide closeSignal={closeSignal} />}
           </motion.div>
         </AnimatePresence>
       </div>
