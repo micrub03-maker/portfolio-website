@@ -177,7 +177,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             <p className="text-sm text-gray-700 leading-relaxed mt-8">
               That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
               <br />
-              <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. And doing this was the best way to get up to speed quickly!
+              <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. Doing this was the best way to get up to speed quickly!
             </p>
             <div className="w-[55%] flex-shrink-0">
               <AssemblyGuide />
@@ -197,7 +197,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             </div>
           }>
             This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
-            Having done this, I now feel confident I have enough context and I started addressing the issues by designing a simple mount for the camera that improves stability, and am working on including damping and an automated pan/tilt mechanism.
+            After I now feel confident I have enough context to start the fun part! 
+            <br />
+            <br />
+             First solve: I designed a simple mount for the camera improving stability and crash resilience, and am working on including damping and an automated pan/tilt mechanism.
           </SideBySide>
         </Dropdown>
       </Dropdown>
@@ -283,7 +286,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             // CHANGE THIS LINE to swap the image:
             // Set src to "/images/<filename>.<ext>" for your image in public/images,
             // e.g. src="/images/inserts-test.jpg"
-            src={'/images/inserts testing jig picture.png'}
+            src={'/images/insert testing jig picture.png'}
             label="Inserts test set up"
           />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
