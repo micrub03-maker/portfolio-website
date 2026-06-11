@@ -137,7 +137,7 @@ function ExperienceCard({ entry, index = 0 }) {
       className={`flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg hover:shadow-xl transition-shadow ${entry.compactCard ? 'py-2 px-4 md:py-3 md:px-6' : 'p-4 md:p-6'}`}
     >
       {/* Logo */}
-      <div className="w-44 flex-shrink-0 flex flex-row gap-1">
+      <div className="w-44 flex-shrink-0 flex flex-row gap-1 mx-auto sm:mx-0">
         {entry.logoSrcs
           ? entry.logoSrcs.map((logo) => (
               <div key={logo.label} className={`flex-1 min-w-0 flex flex-col overflow-hidden ${entry.logoSrcsHeight ?? 'h-[100px]'}}`}>
@@ -156,7 +156,7 @@ function ExperienceCard({ entry, index = 0 }) {
 
       {/* Text */}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-800 text-sm md:text-base leading-snug mb-2">
+        <p className="font-semibold text-gray-800 text-sm md:text-base leading-snug mb-2 text-center sm:text-left">
           {entry.role}
         </p>
         <ul className="space-y-1">
@@ -178,7 +178,7 @@ export default function Experience() {
   const sectionRef = useRef(null);
 
   return (
-    <div ref={sectionRef} onClick={() => { if (showMore) { setShowMore(false); sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
+    <div ref={sectionRef} onClick={() => { if (showMore && window.innerWidth >= 768) { setShowMore(false); sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
 
       <div className="flex flex-col gap-4">

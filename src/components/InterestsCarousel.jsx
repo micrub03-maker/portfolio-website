@@ -10,15 +10,15 @@ const slides = [
     mediaLabel: 'TEMP: photography',
     mediaSrc: null,
     description:
-      '- Attention to detail, different perspectives, patience.\nIn and out of this but I usually shoot on my old Pentax K-50, very fun!',
+      'Attention to detail, different perspectives and patience. I have not gone deep enough intophotography, but everytime I spend time learning about it I always end up appreciating the world around me a little bit more.',
   },
   {
     id: 'skateboarding',
     title: 'Skateboarding',
     mediaLabel: 'TEMP: skateboarding',
-    mediaSrc: null,
+    mediaSrc: '/skate-videos.mp4',
     description:
-      'Creativity, community, challenging myself and overcoming fear and perseverance.',
+      'Creativity, community, challenging myself and overcoming fear. Skating has been a big part of my life since I was 16 years old.',
   },
   {
     id: 'traveling',
@@ -90,7 +90,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
 
   return (
     <section>
-      <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Interests</h2>
+      <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">interests</h2>
 
       <div
         className="max-w-3xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
@@ -146,10 +146,9 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
             transition={{ duration: 0.3 }}
             className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4"
           >
-            <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
-
             {active.id === 'traveling' ? (
               <>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
                 <p className="mt-3 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
                   {active.description}
                 </p>
@@ -157,8 +156,21 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                   <TravelMap compact />
                 </div>
               </>
+            ) : active.mediaSrc ? (
+              <div className="flex gap-4 items-start">
+                <div className="w-2/5 flex-shrink-0">
+                  <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
+                </div>
+                <div className="aspect-square flex-1 overflow-hidden flex flex-col">
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
+                  <p className="mt-2 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                    {active.description}
+                  </p>
+                </div>
+              </div>
             ) : (
               <>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
                 <MediaSlot label={active.mediaLabel} src={active.mediaSrc} tall />
                 <p className="text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
                   {active.description}

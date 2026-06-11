@@ -15,12 +15,12 @@ const TableOfContents = ({ isWidget = false }) => {
   }, [activeSection]);
 
   const sections = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'About me' },
-    { id: 'projects', label: 'Projects' },
-    { id: 'interests', label: 'Interests' },
-    { id: 'resume', label: 'Resume Overview' },
-    { id: 'getInTouch', label: 'Contact' },
+    { id: 'home', label: 'home' },
+    { id: 'about', label: 'about me' },
+    { id: 'projects', label: 'projects' },
+    { id: 'interests', label: 'interests' },
+    { id: 'resume', label: 'resume overview' },
+    { id: 'getInTouch', label: 'contact' },
   ];
 
   useEffect(() => {
@@ -65,7 +65,9 @@ const TableOfContents = ({ isWidget = false }) => {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const yOffset = (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10 : -80;
+      const yOffset = sectionId === 'projects' ? 30
+                    : (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10
+                    : -80;
       const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }

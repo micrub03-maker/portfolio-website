@@ -14,7 +14,7 @@ const slides = [
   {
     title: "Driver Safety Lead @ CALSOL",
     description:
-      "Designing, manufacturing and testing chassis parts for our gen XI solar car competing in the American Solar Challenge race this summer",
+      "Designing, manufacturing and testing chassis parts for our gen XI solar car competing in the World Solar Challenge",
     src: "/images/calsolcar.png",
     projectKey: "calsol",
     link: "https://calsol.berkeley.edu/",
@@ -126,7 +126,7 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
             className="absolute inset-0"
           >
             {active.src?.endsWith('.mp4') ? (
-              <video src={active.src} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+              <video src={active.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline />
             ) : active.src ? (
               <img src={active.src} alt={active.title} className="w-full h-full object-cover" />
             ) : (
@@ -175,20 +175,22 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <p className="text-white/80 text-xs leading-relaxed">{active.description}</p>
-            {active.link && (
-              <div className="flex justify-end mt-1.5">
-                <a
-                  href={active.link}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors"
-                >
-                  {active.cta}
-                </a>
-              </div>
-            )}
+            <div className="w-full">
+              <p className="text-white/80 text-xs leading-relaxed">{active.description}</p>
+              {active.link && (
+                <div className="hidden md:flex md:justify-end md:mt-1.5">
+                  <a
+                    href={active.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors whitespace-nowrap"
+                  >
+                    {active.cta}
+                  </a>
+                </div>
+              )}
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>

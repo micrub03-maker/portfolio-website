@@ -84,10 +84,10 @@ export default function Education() {
 
             {/* Text content */}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-gray-800 text-sm md:text-base leading-snug">
+              <p className="font-semibold text-gray-800 text-sm md:text-base leading-snug text-center sm:text-left">
                 {entry.title}
               </p>
-              <p className="text-gray-500 text-xs md:text-sm mt-0.5 mb-2">
+              <p className="text-gray-500 text-xs md:text-sm mt-0.5 mb-2 text-center sm:text-left">
                 {entry.period}
               </p>
 

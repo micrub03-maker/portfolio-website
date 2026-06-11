@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import 'jsvectormap/dist/jsvectormap.min.css';
 import travelData from '../data/travel.json';
 
@@ -67,7 +68,7 @@ const _pendingReinit = new Set();
 
 // mapRef is owned by TravelMap and passed down so zoom handlers and
 // the WorldMap init share a single, stable reference.
-function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
+function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX, isMobile = false }) {
   const mountRef = useRef(null);
   const activeNameRef = useRef('');
   const isDraggingRef = useRef(false);
@@ -211,10 +212,9 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
     };
   }, [mapRef, onTooltip]);
 
-  // Custom pan — jsvectormap's built-in drag uses container-level mousemove which
-  // loses tracking the moment the cursor leaves the container during a fast drag.
-  // Document-level listeners ensure the drag stays live until mouseup anywhere.
+  // Custom pan — desktop only; touch devices scroll the page instead.
   useEffect(() => {
+    if (isMobile) return;
     const el = mountRef.current;
     if (!el) return;
 
@@ -250,13 +250,13 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
       className="absolute inset-0"
       style={{ background: 'rgba(0,0,0,0.20)' }}
-      onMouseMove={(e) => {
+      onMouseMove={isMobile ? undefined : (e) => {
         // Skip tooltip tracking while a mouse button is held (user is panning)
         if (e.buttons !== 0) return;
         const isOverCountry = e.target?.classList?.contains('jvm-element');
@@ -267,7 +267,7 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
           onTooltip?.({ visible: false, name: '', x: 0, y: 0 });
         }
       }}
-      onMouseLeave={() => {
+      onMouseLeave={isMobile ? undefined : () => {
         activeNameRef.current = '';
         onTooltip?.({ visible: false, name: '', x: 0, y: 0 });
       }}
@@ -280,6 +280,7 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX }) {
 // --- Main Component ---
 
 const TravelMap = ({ compact = false, onNavigate }) => {
+  const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
   const mapRef = useRef(null);
 
   // Tooltip state: only visible/name trigger re-renders.
@@ -344,25 +345,27 @@ const TravelMap = ({ compact = false, onNavigate }) => {
           <path d="M12 0 C10.5 1 10 4 10 7 L2 9 L2 13 L10 12 L10 18 L8 19 L8 21 L12 20 L16 21 L16 19 L14 18 L14 12 L22 13 L22 9 L14 7 C14 4 13.5 1 12 0 Z" />
         </svg>
       </div>
-      <span className="text-sm font-semibold text-white">Travel map &amp; stats</span>
+      <span className="text-xs font-semibold text-white uppercase tracking-wide">Travel map &amp; stats</span>
     </div>
   );
 
   const mapArea = (
     <div className={`relative rounded-lg overflow-hidden ${compact ? 'flex-1 min-h-[9rem]' : 'flex-1 min-h-[9rem]'}`}>
-      <WorldMap mapRef={mapRef} onTooltip={handleTooltip} zoomMax={compact ? 4 : ZOOM_MAX} />
-      <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
-        <button
-          aria-label="Zoom in"
-          className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
-          onPointerDown={(e) => { e.stopPropagation(); handleZoom('in'); }}
-        >+</button>
-        <button
-          aria-label="Zoom out"
-          className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
-          onPointerDown={(e) => { e.stopPropagation(); handleZoom('out'); }}
-        >−</button>
-      </div>
+      <WorldMap mapRef={mapRef} onTooltip={isMobile ? null : handleTooltip} zoomMax={compact ? 4 : ZOOM_MAX} isMobile={isMobile} />
+      {!isMobile && (
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
+          <button
+            aria-label="Zoom in"
+            className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+            onPointerDown={(e) => { e.stopPropagation(); handleZoom('in'); }}
+          >+</button>
+          <button
+            aria-label="Zoom out"
+            className="w-6 h-6 rounded bg-black/40 text-white/80 text-sm flex items-center justify-center hover:bg-black/60 transition-colors"
+            onPointerDown={(e) => { e.stopPropagation(); handleZoom('out'); }}
+          >−</button>
+        </div>
+      )}
     </div>
   );
 
@@ -384,7 +387,18 @@ const TravelMap = ({ compact = false, onNavigate }) => {
         </div>
 
         {compact ? (
-          /* Compact: map | stats | trip highlights */
+          isMobile ? (
+            /* Mobile compact: full-width map, stats row below */
+            <>
+              {mapArea}
+              <div className="flex justify-around border-t border-white/20 pt-2">
+                <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+                <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} />
+                <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
+              </div>
+            </>
+          ) : (
+          /* Desktop compact: map | stats | trip highlights */
           <div className="flex flex-row gap-2">
             {mapArea}
             <div className="flex flex-col gap-3 justify-center w-20 shrink-0 border-l border-white/20 pl-3">
@@ -403,6 +417,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
               ))}
             </div>
           </div>
+          )
         ) : (
           /* Default: map on top, stats strip below */
           <>
@@ -415,9 +430,8 @@ const TravelMap = ({ compact = false, onNavigate }) => {
         )}
       </div>
 
-      {/* Country name tooltip — portalled to document.body so it is never clipped
-          by overflow-hidden or contained by any ancestor's backdrop-filter context */}
-      {tooltipInfo.visible && createPortal(
+      {/* Country name tooltip — desktop only; not shown on touch devices */}
+      {!isMobile && tooltipInfo.visible && createPortal(
         <div
           ref={tooltipElRef}
           className="pointer-events-none bg-black/70 text-white/90 text-[10px] px-2 py-1 rounded-md border border-white/15 backdrop-blur-sm whitespace-nowrap"

@@ -158,33 +158,33 @@ export default function About() {
         <div
           id="home"
           className="w-full min-h-screen md:h-screen flex flex-col bg-cover bg-center relative overflow-hidden"
-          style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('/sunset.jpg')" }}
+          style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/sunset.jpg')" }}
         >
           {/* Hero Dashboard - Redesigned */}
           <div className="w-full h-full flex items-center justify-center px-4 md:px-8 py-4 md:py-6">
             <div className="w-full max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3">
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center">
-                <div className="w-36 h-36 md:w-48 md:h-48 rounded-full overflow-hidden border border-white/20 mb-2 md:mb-4 flex-shrink-0">
+              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-all">
+                <div className="w-20 h-20 md:w-48 md:h-48 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-4 flex-shrink-0">
                   <img
                     src={profile}
                     alt="Portrait of Michael Rubin"
                     className="block w-full h-full object-cover object-top"
                   />
                 </div>
-                <h1 className="text-xl md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
+                <h1 className="text-base md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
                 <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
-                <div className="flex items-center gap-3 mb-1">
-                  <img src={berkeley} alt="UC Berkeley" className="h-8 md:h-11 w-auto opacity-80" />
-                  <img src={Delft} alt="TU Delft" className="h-8 md:h-11 w-auto opacity-80" />
+                <div className="flex items-center gap-2 mb-1">
+                  <img src={berkeley} alt="UC Berkeley" className="h-5 md:h-11 w-auto opacity-80" />
+                  <img src={Delft} alt="TU Delft" className="h-5 md:h-11 w-auto opacity-80" />
                 </div>
-                <p className="text-white/70 text-xs md:text-sm mt-3 mb-2 md:mb-4 leading-relaxed">
+                <p className="text-white/70 text-xs md:text-sm mt-1 mb-1 md:mb-4 leading-relaxed">
                   From Antwerp, Belgium
                 </p>
 
                 {/* Social Links */}
-                <div className="flex gap-1 md:gap-2 w-full mb-2 md:mb-4">
+                <div className="flex gap-1 md:gap-2 w-full mb-1 md:mb-4">
                   <a href={links.github} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
                     <img className="h-4 w-4" src={github} alt="github" />
                     <span className="text-white text-xs font-medium">GitHub</span>
@@ -211,25 +211,31 @@ export default function About() {
                 </div>
               </div>
 
-              {/* Travel Map widget */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
-                <TravelMap onNavigate={handleTravelNavigate} />
-              </div>
+              {/* Travel Map widget — desktop only */}
+              {!isMobile && (
+                <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
+                  <TravelMap onNavigate={handleTravelNavigate} />
+                </div>
+              )}
 
               {/* A.3 Project Overview */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-64 md:h-full">
+              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-52 md:h-full">
                 <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} onNavigate={handleProjectsNavigate} />
               </div>
 
-              {/* Table of Contents - Bottom left widget */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                <TableOfContents isWidget={true} />
-              </div>
+              {/* Table of Contents - Bottom left widget — desktop only */}
+              {!isMobile && (
+                <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+                  <TableOfContents isWidget={true} />
+                </div>
+              )}
 
-              {/* Recent Reads - Bottom right widget */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                <RecentReads />
-              </div>
+              {/* Recent Reads - Bottom right widget — desktop only */}
+              {!isMobile && (
+                <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+                  <RecentReads />
+                </div>
+              )}
 
             </div>
           </div>
@@ -255,7 +261,7 @@ export default function About() {
           <InterestsCarousel jumpToTravel={travelJump} />
         </div>
         <div id="resume" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <h2 className="text-center mb-8 text-2xl md:text-3xl font-bold text-gray-400">Resume Overview</h2>
+          <h2 className="text-center mb-8 text-2xl md:text-3xl font-bold text-gray-400">resume overview</h2>
           <div className="flex flex-col gap-10">
             <Skills />
             <Experience />
@@ -263,7 +269,7 @@ export default function About() {
           </div>
         </div>
         <div id="getInTouch" className="flex flex-col items-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">Contact</h2>
+          <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">contact</h2>
 
           <div className="w-full rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-6 md:p-10">
 
@@ -315,7 +321,7 @@ export default function About() {
                 </svg>
                 <div>
                   <p className="text-sm font-semibold text-gray-800 leading-none mb-0.5">Phone</p>
-                  <p className="text-xs text-gray-400">+1 (929) 512-0901</p>
+                  <p className="text-[11px] sm:text-xs text-gray-400 whitespace-nowrap">+1 (929) 512-0901</p>
                 </div>
               </a>
 

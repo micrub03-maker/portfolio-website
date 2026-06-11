@@ -12,9 +12,9 @@ function MediaPlaceholderFallback({ label, tall, fill = false }) {
   );
 }
 
-export function MediaSlot({ label, src = null, tall = false, fill = false, fit = 'object-cover', compact = false }) {
+export function MediaSlot({ label, src = null, tall = false, fill = false, fit = 'object-cover', compact = false, padded = false }) {
   if (src) {
-    return <MediaImage src={src} alt={label} tall={tall} fill={fill} fit={fit} compact={compact} />;
+    return <MediaImage src={src} alt={label} tall={tall} fill={fill} fit={fit} compact={compact} padded={padded} />;
   }
   return <MediaPlaceholderFallback label={label} tall={tall} fill={fill} />;
 }
