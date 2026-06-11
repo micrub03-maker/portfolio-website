@@ -37,10 +37,10 @@
   "homes_count": 6,
   "continents_count": 5,
   "trip_highlights": [
-    { "type": "highlight", "title": "Hitchhiking Belgium → Spain", "year": 2024 },
     { "type": "highlight", "title": "Colombia high school exchange", "year": 2018 },
+    { "type": "highlight", "title": "Hitchhiking Belgium → Spain", "year": 2024 },
     { "type": "highlight", "title": "Norway Erasmus exchange", "year": 2023 },
-    { "type": "highlight", "title": "Highway 1 spring break RV trip", "year": 2025 },
+    { "type": "highlight", "title": "Highway 1 spring break RV trip", "year": 2026 },
     { "type": "dream",     "title": "Skiing in Japan",             "year": null }
   ],
   "visited_us_states": ["CA", "NJ", "MD", "WY", "UT", "ID", "MT", "WA", "NH", "NY", "NV", "LA"],

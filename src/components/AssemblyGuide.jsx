@@ -160,7 +160,7 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
               <div className="text-2xl mb-2">🚫</div>
               <p className="text-xs font-semibold text-gray-800 mb-1">Cannot close document</p>
               <p className="text-[10px] text-gray-400 mb-3 leading-relaxed">
-                A rebuild is still<br />in progress.
+                A build of the robot is still<br />in progress.
               </p>
               <button
                 className="px-4 py-1 text-[10px] font-mono uppercase tracking-wider bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-colors"

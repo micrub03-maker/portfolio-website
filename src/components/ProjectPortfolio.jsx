@@ -21,7 +21,7 @@ function Bullets({ items }) {
 function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, textWidth, centered, children }) {
   const imageCol = <div className={`${picWidth} flex-shrink-0`}>{pic}</div>;
   const textCol = textWidth
-    ? <div className={`${textWidth} flex-shrink-0 self-start`}><p className="text-sm text-gray-700 leading-relaxed">{children}</p></div>
+    ? <div className={`${textWidth} flex-shrink-0 self-start mt-8`}><p className="text-sm text-gray-700 leading-relaxed">{children}</p></div>
     : <p className="text-sm text-gray-700 leading-relaxed mt-8">{children}</p>;
   return (
     <div className={`flex gap-4 items-start${centered ? ' justify-center' : ''}`}>
@@ -316,37 +316,49 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           />
         </Dropdown>
         <Dropdown
-          summaryTitle="An insight into topology-optimized shoulder-belt anchorage"
+          summaryTitle="An insight into the topology-optimized shoulder-belt anchorage"
           summarySubtitle='TL;DR I designed a steel shoulder-belt mount holding wrapping bolts, cut mount weight by ~40% via topology optimization.'
           onOpenChange={onDd}
           scrollTargetId="project-calsol"
         >
-          <SideBySide picWidth="w-[41%]" textWidth="w-[50%]" centered pic={
-            <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" />
+          <SideBySide picWidth="w-1/2" pic={
+            <div className="flex justify-center">
+              <div className="relative group w-[73%]">
+                <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" height="202px" />
+                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white text-sm font-semibold tracking-wide">Shoulder anchorage in car</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           }>
             For the shoulder harness, I designed a steel anchorage that bolts through the chassis and supports transverse "wrapping bolts" around which the shoulder belts are looped, eliminating single-point failure by allowing each strap to wrap independently.
           </SideBySide>
-          <SideBySide picWidth="w-[38%]" picLeft={false} textWidth="w-[50%]" centered pic={
-            <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" />
+          <SideBySide picWidth="w-1/2" picLeft={false} pic={
+            <div className="flex justify-center">
+              <div className="relative group w-[73%]">
+                <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" height="202px" />
+                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="absolute bottom-[15%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white text-sm font-semibold tracking-wide">Bolt governing load case</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           }>
             I modeled the wrapping bolts as fixed-fixed beams under the projected distributed load to size them for the governing failure mode: bending. The rest of the anchorage was designed around these choices.
           </SideBySide>
           <p className="text-sm text-gray-700 leading-relaxed">
             Once the baseline design cleared all load cases, I ran a SolidWorks topology optimization on the backplate to strip non-critical material while preserving manufacturability (uniform thickness, waterjet-friendly geometry, intact interfaces), ultimately cutting weight by roughly 40% while maintaining acceptable safety margins.
           </p>
-          <div className="relative group [&>div]:shadow-md">
-            <MediaSlot
-              src={'/images/calsol-topology.png'}
-              label="Shoulder belt CAD topology"
-              height="240px"
-            />
-            <div className="absolute left-0 right-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{top: '0.75rem', height: '240px'}}>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white text-sm font-semibold tracking-wide">Topology optimization of the shoulder anchorage</p>
-              </div>
-            </div>
-          </div>
+          <MediaSlot
+            src={'/images/calsol-topology.png'}
+            label="Shoulder belt CAD topology"
+            height="245px"
+          />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -361,18 +373,23 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
       <div id="project-axiris">
       <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="project-axiris">
         {/* Two-column intro */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/axiris-logo.jpg"
-            src={'/images/Axiris-final-design.png'}
-            label="Axiris final design"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
+          <div className="relative group">
+            <MediaSlot
+              src={'/images/Axiris-final-design.png'}
+              label="Axiris final design"
+            />
+            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300 text-right">
+                <p className="text-white text-sm font-semibold tracking-wide">Axiris current<br />design</p>
+              </div>
+            </div>
+          </div>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
-              <a href="/pdfs/axiris-slides.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Slidedeck</a>
-              <a href="/pdfs/axiris-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
+              <a href="/images/Axiris-slides.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Slidedeck</a>
+              <a href="/images/Axiris-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
               Axiris is a low-cost, handheld autorefractor for vision screening in low-resource settings, where conventional 5,000–30,000-dollar systems are hard to deploy. As optical lead, I chose a Scheiner-disk optical path with an external NIR camera and helped develop a Python image-processing stack to estimate refractive error, iterating through six prototypes over 13 weeks to reach a 574-dollar BOM.
@@ -386,28 +403,53 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
         >
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why? Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root."
-          </p>
-          <MediaSlot
-            src={'/images/Axiris-interviews.png'}
-            label="Axiris market research"
-          />
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Using a Pugh chart and expert feedback, we landed on a handheld device with dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
-          </p>
-          <MediaSlot
-            src={'/images/Axiris-optical.png'}
-            label="Axiris optical path"
-          />
-          <p className="text-sm text-gray-700 leading-relaxed">
-            I then tackled the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
-          </p>
+          <div className="flex flex-row gap-4 items-start">
+            <div className="relative group w-[54%] flex-shrink-0">
+              <MediaSlot
+                src={'/images/Axiris-interviews.png'}
+                label="Axiris market research"
+                height="227px"
+              />
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-white text-sm font-semibold tracking-wide">Market<br />Research</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 leading-relaxed flex-1 mt-8">
+              Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why? 
+              <br /> 
+              <br />
+              Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root.
+            </p>
+          </div>
+          <div className="flex flex-row gap-4 items-start">
+            <p className="text-sm text-gray-700 leading-relaxed flex-[1.1] mt-8">
+              Using a Pugh chart and expert feedback, we landed on a handheld device with dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
+              <br />
+              <br />
+              I then tackled the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
+            </p>
+            <div className="relative group flex-[0.9]">
+              <MediaSlot
+                src={'/images/Axiris-optical.png'}
+                label="Axiris optical path"
+                height="329px"
+              />
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-gray-600 text-sm font-semibold tracking-wide">Optical<br />Path</p>
+                </div>
+              </div>
+            </div>
+          </div>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'The current architecture only measures sphere; future iterations should extend to multi-pinhole or Shack-Hartmann-style sensing to capture astigmatism and higher-order aberrations without sacrificing affordability.',
-              'The design also depends on relatively expensive optical catalog parts; a follow-on phase should explore custom or lower-cost components and tighter integration with the housing to reduce BOM cost at scale.',
+              'Today’s design measures sphere only. Future versions should add cylinder and axis so the device can capture astigmatism and higher-order aberrations without losing affordability.',
+              'The current prototype has not been tested for durability. I would add accelerated life testing to future iterations.',
             ]}
           />
         </Dropdown>
@@ -417,19 +459,27 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
         >
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state for tuning the image-processing pipeline and guiding mechanical changes.
-          </p>
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/axiris-model-eye.jpg"
-            src={'/images/Axiris-model-eye.png'}
-            label="model eye Axiris"
-          />
-          <p className="text-sm text-gray-700 leading-relaxed">
-            We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment, and the final V6 housing is fully light-tight, uses only eight mechanical parts, and assembles in about two minutes.
-          </p>
+          <div className="flex flex-row gap-4 items-start">
+            <div className="relative group w-[54%] flex-shrink-0">
+              <MediaSlot
+                src={'/images/Axiris-model-eye.png'}
+                label="model eye Axiris"
+                height="320px"
+              />
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-white text-sm font-semibold tracking-wide">Modular Model Eye</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 leading-relaxed flex-1 mt-8">
+              Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state. This allowed us to tune the image-processing pipeline and guide mechanical changes.
+              <br />
+              <br />
+              We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment.
+            </p>
+          </div>
           <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
           <Bullets
             items={[
@@ -448,25 +498,22 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           <div className="flex gap-2">
             <div className="flex-1 min-w-0">
               <MediaSlot
-                // CHANGE THIS LINE to swap the image:
-                // Set src to "/images/<filename>.<ext>" for your image in public/images,
-                // e.g. src="/images/suction-cup.jpg"
                 src={'/images/suction-cup-gif.gif'}
                 label="Suction cup overview"
               />
             </div>
             <div className="flex-1 min-w-0">
               <MediaSlot
-                src={null}
+                src={'/images/capstone-on-robot.png'}
                 label="Suction cup picture 2"
               />
             </div>
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
-              <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">EDG website</a>
+              <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Lab website</a>
               <a href="/pdfs/edg-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
-              <a href="/pdfs/edg-poster.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Poster</a>
+              <a href="/images/Smart Suction Cup Poster.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Poster</a>
             </div>
           </div>
         </div>
