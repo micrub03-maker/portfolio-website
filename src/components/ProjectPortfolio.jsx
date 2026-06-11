@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MediaSlot } from "./MediaSlot";
 import AssemblyGuide from "./AssemblyGuide";
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 function Bullets({ items }) {
   return (
@@ -70,7 +70,7 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
           transition={{ duration: 0.2 }}
           className="text-gray-400 text-base flex-shrink-0 mt-0.5 leading-none"
         >
-          ▾
+          {'\u25BE'}
         </motion.span>
       </button>
       <AnimatePresence initial={false}>
@@ -275,9 +275,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
                 <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-gray-800 text-sm font-semibold tracking-wide">Inserts flushed in shell</p>
+                  <p className="text-white text-sm font-semibold tracking-wide">Inserts flushed in shell</p>
                 </div>
               </div>
             </div>
@@ -290,8 +290,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           <p className="text-sm text-gray-700 leading-relaxed">
            Without access to dynamic crash equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test measuring an average failure load of 6.11 kN across four samples. Which, together with published dynamic CFRP insert data, showed the design could credibly meet the required loads.
           </p>
-          <div className="relative group">
-            <div className="[&>div]:h-[320px] [&>div]:!p-1 [&>div]:shadow-md rounded-xl">
+          <div className="relative group [&>div]:shadow-md">
+            <div className="[&>div]:h-[320px] [&>div]:!p-1">
               <MediaSlot
                 src={'/images/insert testing jig picture.png'}
                 label="Inserts test set up"
@@ -299,16 +299,16 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
               />
             </div>
             <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-              <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-gray-800 text-sm font-semibold tracking-wide">insert testing jig</p>
+                <p className="text-white text-sm font-semibold tracking-wide">insert testing jig</p>
               </div>
             </div>
           </div>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'Relying on quasi-static tests and literature to argue dynamic performance is not fully satisfying for a critical part. Next time I would add an extra validation step (e.g. higher-rate testing or an alternate experimental setup directly checking target load)',
+              'Relying on quasi-static tests and literature to argue dynamic performance is not fully satisfying for a critical part. Next time I would add an extra validation step (e.g. higher-rate testing or an alternate experimental setup directly checking target load).',
               "The insert is still relatively bulky; given the multi-axis machining already required for its manufacturing it's possible to design complex shapes to shed more weight.",
             ]}
           />
@@ -326,7 +326,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             // CHANGE THIS LINE to swap the image:
             // Set src to "/images/<filename>.<ext>" for your image in public/images,
             // e.g. src="/images/shoulder-anchorage.jpg"
-            src={null}
+            src={'/images/shoulder-mount-calsol.png'}
             label="shoulder belt anchorage"
           />
           <p className="text-sm text-gray-700 leading-relaxed">
@@ -360,8 +360,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'This design is simple, reliable and cheap to manufacture; but there is likely more weight to be saved by exploring a single hollow wrap-around tube concept.',
-              'Validation of this design relies entirely on simulation; physical testing should be added to confirm the modeled behavior.',
+            'Validation of this design relies entirely on simulation; physical testing should be added to confirm the modeled behavior.',
             ]}
           />
         </Dropdown>
@@ -691,7 +690,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
             aria-label="Previous slide"
           >
-            ‹
+            {'\u2039'}
           </button>
 
           <div className="flex gap-2 items-center">
@@ -715,7 +714,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
             className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
             aria-label="Next slide"
           >
-            ›
+            {'\u203A'}
           </button>
         </div>
 
