@@ -202,8 +202,9 @@ export default function DinoGame({ height = 220, onExit }) {
       <canvas
         ref={canvasRef}
         className="block w-full cursor-pointer"
-        style={{ height }}
+        style={{ height, touchAction: 'none' }}
         onClick={() => jumpRef.current?.()}
+        onTouchStart={(e) => { e.preventDefault(); jumpRef.current?.(); }}
       />
       {dead && (
         <div className="absolute inset-0 flex items-center justify-center">

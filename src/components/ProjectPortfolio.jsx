@@ -101,6 +101,40 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
 // ── slide components ──────────────────────────────────────────────────────────
 
 function FeaturedProjectsSlide({ onDd, autoOpen }) {
+  const assemblyVideoRef = useRef(null);
+  const suctionDropdownRef = useRef(null);
+  const [assemblyPlaying, setAssemblyPlaying] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(hover: none)');
+    setIsMobile(mq.matches);
+    const handler = (e) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  const playAssembly = () => {
+    assemblyVideoRef.current?.play();
+    setAssemblyPlaying(true);
+    suctionDropdownRef.current?.querySelectorAll('video').forEach(v => {
+      if (v !== assemblyVideoRef.current) v.pause();
+    });
+  };
+
+  const pauseAssembly = () => {
+    assemblyVideoRef.current?.pause();
+    if (assemblyVideoRef.current) assemblyVideoRef.current.currentTime = 0;
+    setAssemblyPlaying(false);
+    suctionDropdownRef.current?.querySelectorAll('video').forEach(v => {
+      if (v !== assemblyVideoRef.current) v.play();
+    });
+  };
+
+  const handleAssemblyEnter = () => { if (!isMobile) playAssembly(); };
+  const handleAssemblyLeave = () => { if (!isMobile) pauseAssembly(); };
+  const handleAssemblyClick = () => { if (isMobile) assemblyPlaying ? pauseAssembly() : playAssembly(); };
+
   return (
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
 
@@ -399,7 +433,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
         {/* Full-width case-study dropdowns */}
         <Dropdown
           summaryTitle="An insight into my design process"
-          summarySubtitle="TL;DR Using stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
+          summarySubtitle="TL;DR Stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
         >
@@ -492,68 +526,122 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ EDG Lab" onOpenChange={onDd} scrollTargetId="project-edg">
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" onOpenChange={onDd} scrollTargetId="project-edg">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
               <MediaSlot
                 src={'/images/suction-cup-gif.gif'}
                 label="Suction cup overview"
+                height = "300px"
               />
-            </div>
-            <div className="flex-1 min-w-0">
-              <MediaSlot
-                src={'/images/capstone-on-robot.png'}
-                label="Suction cup picture 2"
-              />
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-[10%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-white text-sm font-semibold tracking-wide">Haptic following on the suction cup</p>
+                </div>
+              </div>
             </div>
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Lab website</a>
-              <a href="/pdfs/edg-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
+              <a href="/images/135_report_finaldraft_pdf.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
               <a href="/images/Smart Suction Cup Poster.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Poster</a>
             </div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              The Smart Suction Cup is a multi-chamber robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
+              <br />
+              <br /> I improved its manufacturability and robustness, standardizing the robot-arm interface, cutting the part count from 32 to 9, reducing setup time from 15 minutes to 1:45, and designing a custom PCB as we scaled from a research prototype to a production-ready run of over 1,000 units.
+            </p>
           </div>
         </div>
         {/* Full-width case-study dropdown */}
+        <div ref={suctionDropdownRef}>
         <Dropdown
           summaryTitle="An insight into how I design for manufacturability"
-          summarySubtitle="TL;DR I consolidated electronics into a custom PCB and redesigned the injection mold to achieve higher success rate in production"
+          summarySubtitle="TL;DR redesigned the injection mold for the suction cup to achieve higher success rate in production."
           onOpenChange={onDd}
           scrollTargetId="project-edg"
         >
           <div className="flex flex-col md:flex-row gap-4 items-start">
             <p className="text-sm text-gray-700 leading-relaxed md:order-2 md:mt-8">
-              An example I led is the silicone suction cup redesign. I switched to a three-chamber geometry and redesigned its mold. The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
+              An example I led is the silicone suction cup itself. I switched to a three-chamber geometry and redesigned its mold. The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
             </p>
-            <div className="w-full md:w-[57%] md:order-1 min-w-0 flex-shrink-0">
+            <div className="w-full md:w-[57%] md:order-1 min-w-0 flex-shrink-0 relative group">
               <div className="md:hidden">
                 <MediaSlot src={'/images/suction-cup-mold-mobile.png'} label="Suction cup mold" padded />
               </div>
               <div className="hidden md:block">
                 <MediaSlot src={'/images/suction-cup-mold.png'} label="Suction cup mold" padded />
               </div>
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-gray-800 text-sm font-semibold tracking-wide">Suction cup redesign</p>
+                </div>
+              </div>
             </div>
           </div>
-          <SideBySide picLeft={false} picWidth="w-1/3" pic={
-            <MediaSlot src={'/images/capstone-mount-cup.gif'} label="Suction cup toolless swap" />
+          <SideBySide picWidth="w-1/2" picLeft={false} pic={
+            <div
+              className="relative"
+              onMouseEnter={handleAssemblyEnter}
+              onMouseLeave={handleAssemblyLeave}
+              onClick={handleAssemblyClick}
+              style={isMobile ? {cursor: 'pointer'} : undefined}
+            >
+              <div className="w-full overflow-hidden rounded-xl my-3" style={{aspectRatio: '16/9'}}>
+                <video ref={assemblyVideoRef} src="/images/suction-cup-assembly.mp4" className="w-full h-full object-cover" loop muted playsInline />
+              </div>
+              <div className={`absolute inset-0 rounded-xl overflow-hidden transition-opacity duration-300 pointer-events-none ${assemblyPlaying ? 'opacity-0' : 'opacity-100'}`} style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3">
+                  <p className="text-white text-sm font-semibold tracking-wide">
+                    {isMobile ? 'Tap to watch assembly' : 'Hover to watch assembly'}
+                  </p>
+                </div>
+              </div>
+            </div>
           }>
-            Additionally, the new suction cup has a toolless mounting method through a compliant clip, reducing part count and enabling easier handling.
+            Additionally, the new suction cup has a strategically designed ridge. This interfaces with a compliant clamping mechanism, enabling toolless cup mounting for rapid deployment and maintenance.
+            <br />
+            <br />
+            Overall, design choices were made to reduce part count, enable easier handling and with high volume manufacturing in mind.
           </SideBySide>
           <SideBySide picWidth="w-1/2" pic={
-            <MediaSlot src={''} label="maximum payload suction cup" />
+            <div className="flex gap-2 md:w-4/5 md:mx-auto">
+              <div className="flex-1 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
+                <MediaSlot src={'/images/suction-cup-grab.mp4'} label="maximum payload suction cup" videoAspect="aspect-[45/64]" />
+                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white text-sm font-semibold tracking-wide">Maximum payload test</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
+                <MediaSlot src={'/images/suction-cup-grab-2.mp4'} label="transparent & oddly shaped object test" videoAspect="aspect-[45/64]" />
+                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white text-sm font-semibold tracking-wide">Transparent &amp; oddly shaped object test</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           }>
             After implementing the new geometry, I verified that suction performance and chamber-level sensing were unchanged. I ran maximum payload and varied object pick-and-place tests on representative items and observed similar performance to the prior prototype.
           </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'We kept the existing silicone formulation of the suction cup; exploring alternative mold materials could further improve yield and durability.',
+              'We kept the existing silicone formulation of the suction cup; exploring alternative materials could improve yield and durability.',
             ]}
           />
         </Dropdown>
+        </div>
       </Dropdown>
       </div>
 
