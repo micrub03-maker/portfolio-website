@@ -11,7 +11,7 @@ export default function AboutMe() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-stretch">
           {/* Picture */}
           <div className="order-1 h-full">
-            <div className="w-full h-64 sm:h-80 lg:h-full rounded-xl border border-gray-200 bg-white/60 overflow-hidden">
+            <div className="w-full h-64 sm:h-80 lg:h-full rounded-xl overflow-hidden">
               <img
                 src="/images/About-me.JPG"
                 alt="About me"

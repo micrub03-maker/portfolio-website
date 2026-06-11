@@ -18,6 +18,16 @@ function Bullets({ items }) {
   );
 }
 
+function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, children }) {
+  const imageCol = <div className={`${picWidth} flex-shrink-0`}>{pic}</div>;
+  const textCol = <p className="text-sm text-gray-700 leading-relaxed mt-8">{children}</p>;
+  return (
+    <div className="flex gap-4 items-start">
+      {picLeft ? <>{imageCol}{textCol}</> : <>{textCol}{imageCol}</>}
+    </div>
+  );
+}
+
 function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
@@ -146,13 +156,11 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           onOpenChange={onDd}
           scrollTargetId="project-luci"
         >
-          <div className="flex gap-4 items-start">
-            <div className="relative group w-[30%] flex-shrink-0">
-              <div className="[&>div]:h-[211px]">
-                <MediaSlot
-                  src={"/images/luci-build.jpg"}
-                  label="Luci build"
-                />
+          <SideBySide picWidth="w-[45%]" pic={
+            <div className="flex justify-center">
+            <div className="relative group w-[71%]">
+              <div className="[&>div]:h-auto [&_img]:!h-auto [&>div]:rounded-xl [&>div]:overflow-hidden">
+                <MediaSlot src={"/assets/29_jetson_3.jpg"} label="Luci build" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -161,33 +169,36 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand those issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
-            </p>
-          </div>
+            </div>
+          }>
+            I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand those issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
+          </SideBySide>
           <div className="flex gap-4 items-start">
-            <p className="text-sm text-gray-700 leading-relaxed">
+            <p className="text-sm text-gray-700 leading-relaxed mt-8">
               That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
+              <br />
+              <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. And doing this was the best way to get up to speed quickly!
             </p>
             <div className="w-[55%] flex-shrink-0">
               <AssemblyGuide />
             </div>
           </div>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues, which reflects my documentation discipline, attention to detail, and user-centered engineering approach. 
-            Having done this, I now feel confident I have enough context and I started addressing the issues by designing a simple mount for the camera that improves stability, and am working onincluding damping and an automated pan/tilt mechanism.
-          </p>
-          {/* {/* <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/pan-tilt-cad.jpg"
-            src={null}
-            label="pan/tilt mount" */}
-          />
-          <MediaSlot
-            src={'images/simple-mount-render-2.png'}
-            label="simple mount"
-          /> */}
+          <SideBySide picWidth="w-[45%]" pic={
+            <div className="relative group">
+              <div className="[&>div]:h-[208px]">
+                <MediaSlot src={'images/simple-mount-render-2.png'} label="simple mount" />
+              </div>
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-white text-sm font-semibold tracking-wide">Simple adjustable camera mount</p>
+                </div>
+              </div>
+            </div>
+          }>
+            This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
+            Having done this, I now feel confident I have enough context and I started addressing the issues by designing a simple mount for the camera that improves stability, and am working on including damping and an automated pan/tilt mechanism.
+          </SideBySide>
         </Dropdown>
       </Dropdown>
       </div>
@@ -457,7 +468,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           scrollTargetId="project-edg"
         >
           <div className="flex flex-col md:flex-row gap-4 items-start">
-            <p className="text-sm text-gray-700 leading-relaxed md:order-2">
+            <p className="text-sm text-gray-700 leading-relaxed md:order-2 md:mt-8">
               An example I led is the silicone suction cup redesign. I switched to a three-chamber geometry and redesigned its mold. The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
             </p>
             <div className="w-full md:w-[57%] md:order-1 min-w-0 flex-shrink-0">
@@ -469,31 +480,16 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
               </div>
             </div>
           </div>
-          <div className="flex gap-4 items-start">
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Additionally, the new suction cup has a toolless mounting method through a compliant clip, reducing part count and enabling easier handling.
-            </p>
-            <div className="w-1/3 min-w-0 flex-shrink-0">
-              <MediaSlot
-                src={'/images/capstone-mount-cup.gif'}
-                label="Suction cup toolless swap"
-              />
-            </div>
-          </div>
-          <div className="flex gap-4 items-start">
-            <div className="w-1/2 min-w-0 flex-shrink-0">
-              <MediaSlot
-                // CHANGE THIS LINE to swap the image:
-                // Set src to "/images/<filename>.<ext>" for your image in public/images,
-                // e.g. src="/images/suction-payload.jpg"
-                src={''}
-                label="maximum payload suction cup"
-              />
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              After implementing the new geometry, I verified that suction performance and chamber-level sensing were unchanged. I ran maximum payload and varied object pick-and-place tests on representative items and observed similar performance to the prior prototype.
-            </p>
-          </div>
+          <SideBySide picLeft={false} picWidth="w-1/3" pic={
+            <MediaSlot src={'/images/capstone-mount-cup.gif'} label="Suction cup toolless swap" />
+          }>
+            Additionally, the new suction cup has a toolless mounting method through a compliant clip, reducing part count and enabling easier handling.
+          </SideBySide>
+          <SideBySide picWidth="w-1/2" pic={
+            <MediaSlot src={''} label="maximum payload suction cup" />
+          }>
+            After implementing the new geometry, I verified that suction performance and chamber-level sensing were unchanged. I ran maximum payload and varied object pick-and-place tests on representative items and observed similar performance to the prior prototype.
+          </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
