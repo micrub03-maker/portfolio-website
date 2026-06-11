@@ -38,7 +38,8 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
     onOpenChange?.(true);
   }, [forceOpenTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const toggle = () => {
+  const toggle = (e) => {
+    e?.stopPropagation();
     const next = !open;
     setOpen(next);
     onOpenChange?.(next);
@@ -103,7 +104,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="project-luci">
+      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ MPC Lab" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="project-luci">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <div className="relative group flex flex-col">
@@ -208,7 +209,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="project-calsol">
+      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="project-calsol">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -268,27 +269,42 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           onOpenChange={onDd}
           scrollTargetId="project-calsol"
         >
+          <SideBySide picWidth="w-[45%]" pic={
+            <div className="relative group">
+              <div className="[&>div]:h-[240px]">
+                <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" />
+              </div>
+              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+                <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-gray-800 text-sm font-semibold tracking-wide">Inserts flushed in shell</p>
+                </div>
+              </div>
+            </div>
+          }>
+            To safely anchor the lap- and sub-belts into the thin carbon fiber cell, I designed bonded metal inserts that follow the shell curvature and sit sandwiched within the laminate. The belts clip into eyebolts threaded into these inserts.
+            <br />
+            <br />
+            I translated regulations into explicit load cases and analyzed the primary failure modes: thread stripping and laminate debonding.
+          </SideBySide>
           <p className="text-sm text-gray-700 leading-relaxed">
-            To safely anchor the lap and anti-submarine belts into a thin carbon fiber occupant cell, I designed bonded metal inserts that follow the shell curvature while maintaining proper belt geometry and load paths. The inserts are sandwiched within the laminate, with belts attaching via clips to eyebolts threaded into the inserts.
-            I translated regulation requirements into explicit load cases and analyzed two primary failure modes: thread stripping at the insert and debonding or pull-through at the laminate.
+           Without access to dynamic crash equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test measuring an average failure load of 6.11 kN across four samples. Which, together with published dynamic CFRP insert data, showed the design could credibly meet the required loads.
           </p>
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/inserts-calcs.jpg"
-            src={null}
-            label="inserts calcs and sketch"
-          />
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Without access to dynamic crash testing equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test to validate the concept. I fabricated flat inserts in-house and embedded them in CFRP panels for testing. Across four samples, the inserts failed at an average load of 6.11 kN. When combined with published data on dynamic CFRP insert performance, these results provided confidence that the final design could credibly meet the required load conditions.
-          </p>
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/inserts-test.jpg"
-            src={'/images/insert testing jig picture.png'}
-            label="Inserts test set up"
-          />
+          <div className="relative group">
+            <div className="[&>div]:h-[320px] [&>div]:!p-1 [&>div]:shadow-md rounded-xl">
+              <MediaSlot
+                src={'/images/insert testing jig picture.png'}
+                label="Inserts test set up"
+                padded
+              />
+            </div>
+            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+              <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                <p className="text-gray-800 text-sm font-semibold tracking-wide">insert testing jig</p>
+              </div>
+            </div>
+          </div>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -326,13 +342,21 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           <p className="text-sm text-gray-700 leading-relaxed">
             Once the baseline design cleared all load cases, I ran a SolidWorks topology optimization on the backplate to strip non-critical material while preserving manufacturability (uniform thickness, waterjet-friendly geometry, intact interfaces), ultimately cutting weight by roughly 40% while maintaining acceptable safety margins.
           </p>
-          <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/shoulder-topology.jpg"
-            src={'/images/calsol-topology.png'}
-            label="Shoulder belt CAD topology"
-          />
+          <div className="relative group [&>div]:shadow-md">
+            <MediaSlot
+              // CHANGE THIS LINE to swap the image:
+              // Set src to "/images/<filename>.<ext>" for your image in public/images,
+              // e.g. src="/images/shoulder-topology.jpg"
+              src={'/images/calsol-topology.png'}
+              label="Shoulder belt CAD topology"
+            />
+            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                <p className="text-white text-sm font-semibold tracking-wide">Topology optimization of the shoulder anchorage</p>
+              </div>
+            </div>
+          </div>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -346,7 +370,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} noClickClose forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="project-axiris">
+      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="project-axiris">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <MediaSlot
@@ -435,7 +459,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ EDG Lab" onOpenChange={onDd} noClickClose scrollTargetId="project-edg">
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ EDG Lab" onOpenChange={onDd} scrollTargetId="project-edg">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">

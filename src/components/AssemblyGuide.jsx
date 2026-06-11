@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -63,11 +63,14 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
   const [showError,     setShowError]     = useState(false);
   const [expanded,      setExpanded]      = useState(false);
 
+  // 'launch' = yellow button (doc → game), 'exit' = exit button (game → doc)
+  const desktopIntent = useRef('launch');
+
   // desktop animation
-  const [cursorPos,     setCursorPos]     = useState({ x: 22, y: 68 });
-  const [clicking,      setClicking]      = useState(false);
-  const [iconHighlight, setIconHighlight] = useState(false);
-  const [fading,        setFading]        = useState(false);
+  const [cursorPos,      setCursorPos]      = useState({ x: 22, y: 68 });
+  const [clicking,       setClicking]       = useState(false);
+  const [highlightedIcon, setHighlightedIcon] = useState(null); // null | 'dino' | 'projects'
+  const [fading,         setFading]         = useState(false);
 
   useEffect(() => {
     fetch(src)
@@ -76,26 +79,29 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
       .catch(() => setContent('_Could not load assembly guide._'));
   }, [src]);
 
-  // desktop cursor sequence
+  // desktop cursor sequence — branches on desktopIntent.current
   useEffect(() => {
     if (mode !== 'desktop') return;
 
-    setCursorPos({ x: 22, y: 68 });
+    const isExit   = desktopIntent.current === 'exit';
+    const startPos = isExit ? { x: 58, y: 62 } : { x: 22, y: 68 };
+    const endPos   = isExit ? { x: 21, y: 40 } : { x: 65, y: 42 };
+    const icon     = isExit ? 'projects' : 'dino';
+    const after    = isExit ? () => { setMode('doc'); setExpanded(false); } : () => setMode('game');
+
+    setCursorPos(startPos);
     setClicking(false);
-    setIconHighlight(false);
+    setHighlightedIcon(null);
     setFading(false);
 
-    // move cursor toward the dino icon (roughly 65%, 42%)
-    const t1 = setTimeout(() => setCursorPos({ x: 65, y: 42 }), 350);
-    // click
-    const t2 = setTimeout(() => setClicking(true),  1600);
-    const t3 = setTimeout(() => { setClicking(false); setIconHighlight(true); }, 1820);
-    // fade out desktop → launch game
-    const t4 = setTimeout(() => setFading(true),   2100);
-    const t5 = setTimeout(() => setMode('game'),   2550);
+    const t1 = setTimeout(() => setCursorPos(endPos),                             350);
+    const t2 = setTimeout(() => setClicking(true),                               1600);
+    const t3 = setTimeout(() => { setClicking(false); setHighlightedIcon(icon); }, 1820);
+    const t4 = setTimeout(() => setFading(true),                                 2100);
+    const t5 = setTimeout(after,                                                  2550);
 
     return () => [t1, t2, t3, t4, t5].forEach(clearTimeout);
-  }, [mode]);
+  }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const containerHeight = mode === 'game'
     ? (expanded ? 400 : 320)
@@ -129,7 +135,10 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
           <button
             aria-label="Minimize"
             className="w-2.5 h-2.5 rounded-full bg-yellow-400/70 hover:bg-yellow-500/80 transition-colors focus:outline-none"
-            onClick={() => setMode(m => m === 'doc' ? 'desktop' : 'doc')}
+            onClick={() => {
+              if (mode === 'doc') { desktopIntent.current = 'launch'; setMode('desktop'); }
+              else                { setMode('doc'); }
+            }}
           />
           {/* green — expand */}
           <button
@@ -197,10 +206,10 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
 
             {/* icons */}
             <div className="absolute" style={{ left: '20%', top: '40%', transform: 'translate(-50%,-50%)' }}>
-              <DesktopIcon emoji="📂" label="Projects" />
+              <DesktopIcon emoji="📂" label="Projects" highlighted={highlightedIcon === 'projects'} />
             </div>
             <div className="absolute" style={{ left: '64%', top: '42%', transform: 'translate(-50%,-50%)' }}>
-              <DesktopIcon emoji="🦕" label="T-Rex Runner" highlighted={iconHighlight} />
+              <DesktopIcon emoji="🦕" label="T-Rex Runner" highlighted={highlightedIcon === 'dino'} />
             </div>
 
             {/* slim taskbar */}
@@ -231,7 +240,7 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
         {mode === 'game' && (
           <DinoGame
             height={containerHeight - TITLE_H}
-            onExit={() => { setMode('doc'); setExpanded(false); }}
+            onExit={() => { desktopIntent.current = 'exit'; setMode('desktop'); }}
           />
         )}
       </div>
