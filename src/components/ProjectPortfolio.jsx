@@ -275,8 +275,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
                 <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
+                <div className="absolute top-0 left-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
                   <p className="text-white text-sm font-semibold tracking-wide">Inserts flushed in shell</p>
                 </div>
               </div>
@@ -290,18 +290,18 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
           <p className="text-sm text-gray-700 leading-relaxed">
            Without access to dynamic crash equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test measuring an average failure load of 6.11 kN across four samples. Which, together with published dynamic CFRP insert data, showed the design could credibly meet the required loads.
           </p>
-          <div className="relative group [&>div]:shadow-md">
-            <div className="[&>div]:h-[320px] [&>div]:!p-1">
+          <div className="relative group">
+            <div className="[&>div]:h-[320px] [&>div]:!p-1 [&>div]:my-0 overflow-hidden rounded-xl shadow-md my-3">
               <MediaSlot
                 src={'/images/insert testing jig picture.png'}
                 label="Inserts test set up"
                 padded
               />
             </div>
-            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white text-sm font-semibold tracking-wide">insert testing jig</p>
+            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
+              <div className="absolute top-0 left-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+                <p className="text-gray-300 text-sm font-semibold tracking-wide">insert testing jig</p>
               </div>
             </div>
           </div>
@@ -385,24 +385,21 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
               <a href="/pdfs/axiris-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              Axiris is a low-cost, handheld autorefractor for vision screening in low-resource settings, where conventional 5,000–30,000-dollar clinical systems are difficult to deploy. It uses a Scheiner-disk optical path with 850 nm near-infrared illumination, an external NIR camera, and a Python image-processing stack to estimate refractive error from −10 to +10 diopter. Over a 13-week development cycle, we iterated through six prototypes ending up at a 574-dollar BOM.
+              Axiris is a low-cost, handheld autorefractor for vision screening in low-resource settings, where conventional 5,000–30,000-dollar systems are hard to deploy. As optical lead, I chose a Scheiner-disk optical path with an external NIR camera and helped develop a Python image-processing stack to estimate refractive error, iterating through six prototypes over 13 weeks to reach a 574-dollar BOM.
             </p>
           </div>
         </div>
         {/* Full-width case-study dropdowns */}
         <Dropdown
           summaryTitle="An insight into my design process"
-          summarySubtitle="TL;DR Using stakeholder interviews, concept screening, and expert input allowed I found the best product format and designed a low-cost solution for vision screening."
+          summarySubtitle="TL;DR Using stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
         >
           <p className="text-sm text-gray-700 leading-relaxed">
-            Hundreds of millions of people live with avoidable vision loss, We started with a simple question: why? Through interviewing ophthalmologists, NGO screeners, and engineers, we realized this gap in care is due to current solution being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem before narrowing to ten concrete product formats.
+            Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why? Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root."
           </p>
           <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/axiris-sketches.jpg"
             src={'/images/Axiris-interviews.png'}
             label="Axiris market research"
           />
@@ -410,9 +407,6 @@ function FeaturedProjectsSlide({ onDd, autoOpen }) {
             Using a Pugh chart and expert feedback, we landed on a handheld device with dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
           </p>
           <MediaSlot
-            // CHANGE THIS LINE to swap the image:
-            // Set src to "/images/<filename>.<ext>" for your image in public/images,
-            // e.g. src="/images/axiris-optical.jpg"
             src={'/images/Axiris-optical.png'}
             label="Axiris optical path"
           />
