@@ -5,6 +5,7 @@ import { MediaSlot } from "./MediaSlot";
 import DoodleJump from './DoodleJump';
 import SpotifyPlaylistsAPI from './SpotifyPlaylistsAPI';
 import PhotographyShowcase from './PhotographyShowcase';
+import { outdoorsPhotos } from '../data/outdoorsManifest';
 
 const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 
@@ -15,7 +16,7 @@ const slides = [
     mediaLabel: 'TEMP: photography',
     mediaSrc: null,
     description:
-      'Attention to detail, different perspectives and patience. Everytime I spend time learning about photography (which is not enough) I always end up appreciating the world around me a little bit more.',
+      'Attention to detail, different perspectives and patience. Everytime I spend time learning about photography (which is not often enough) I end up appreciating the world around me a little bit more.',
   },
   {
     id: 'skateboarding',
@@ -39,15 +40,16 @@ const slides = [
     mediaLabel: 'TEMP: music',
     mediaSrc: null,
     description:
-      'I am a huge festival fan, will boogie to nearly any sound and have recently gotten into guitar. Here is a snapshot of what I listen to.',
+      'I am a huge festival fan, will boogie to nearly any sound and have recently gotten into playing guitar. Here is a snapshot of what I listen to.',
   },
   {
     id: 'winter-sports',
-    title: 'Winter sports',
-    mediaLabel: 'TEMP: winter sports',
+    title: 'Outdoors & winter sports',
+    mediaLabel: 'TEMP: outdoors',
     mediaSrc: null,
     description:
-      'I spent a whole season teaching kids on the snow, I feel the most free when I’m on the slopes or out touring.',},
+      "I spent a whole season teaching kids on the snow, I feel the most free when I’m on the slopes or out touring.",
+  },
   {
     id: 'random-skills',
     title: 'Picking up random new skills',

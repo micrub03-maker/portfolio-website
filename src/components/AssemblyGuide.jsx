@@ -116,7 +116,7 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden my-3 flex flex-col"
-      style={{ height: containerHeight, transition: 'height 0.35s ease' }}
+      style={{ height: containerHeight, transition: 'height 0.35s ease', clipPath: 'inset(0 round 0.75rem)' }}
       onClick={e => e.stopPropagation()}
     >
       {/* ── title bar ── */}
@@ -151,7 +151,7 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
       </div>
 
       {/* ── content ── */}
-      <div className="relative flex-1 min-h-0">
+      <div className="relative flex-1 min-h-0 overflow-hidden rounded-b-xl">
 
         {/* error dialog overlay */}
         {showError && (

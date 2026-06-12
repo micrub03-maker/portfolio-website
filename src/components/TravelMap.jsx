@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useMediaQuery } from 'react-responsive';
 import 'jsvectormap/dist/jsvectormap.min.css';
 import travelData from '../data/travel.json';
+import LifeStoryEasterEgg from './LifeStoryEasterEgg';
 
 const ZOOM_MAX = 8;
 
@@ -47,8 +48,8 @@ const TripDreamCard = ({ title }) => (
   </div>
 );
 
-const StatItem = ({ icon: Icon, label, value }) => (
-  <div className="flex flex-col items-center gap-0.5 flex-1">
+const StatItem = ({ icon: Icon, label, value, onClick }) => (
+  <div className="flex flex-col items-center gap-0.5 flex-1" onClick={onClick} style={onClick ? { cursor: 'pointer' } : {}}>
     <Icon className="w-3 h-3 text-white/60" />
     <span className="text-xs font-semibold text-white">{value}</span>
     <span className="text-[10px] text-white/60 text-center leading-tight">{label}</span>
@@ -282,6 +283,7 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX, isMobile = false }) {
 const TravelMap = ({ compact = false, onNavigate }) => {
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
   const mapRef = useRef(null);
+  const [lifeStoryOpen, setLifeStoryOpen] = useState(false);
 
   // Tooltip state: only visible/name trigger re-renders.
   // Position is written directly to the DOM element via tooltipElRef to avoid
@@ -393,7 +395,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
               {mapArea}
               <div className="flex justify-around border-t border-white/20 pt-2">
                 <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-                <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} />
+                <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
                 <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
               </div>
             </>
@@ -403,7 +405,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
             {mapArea}
             <div className="flex flex-col gap-3 justify-center w-20 shrink-0 border-l border-white/20 pl-3">
               <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} />
+              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
               <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
             </div>
             <div className="flex flex-col gap-1 w-36 shrink-0 border-l border-white/20 pl-3 justify-center">
@@ -424,11 +426,13 @@ const TravelMap = ({ compact = false, onNavigate }) => {
             {mapArea}
             <div className="flex divide-x divide-white/20">
               <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} />
+              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
             </div>
           </>
         )}
       </div>
+
+      {lifeStoryOpen && <LifeStoryEasterEgg onClose={() => setLifeStoryOpen(false)} />}
 
       {/* Country name tooltip — desktop only; not shown on touch devices */}
       {!isMobile && tooltipInfo.visible && createPortal(

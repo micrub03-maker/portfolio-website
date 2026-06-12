@@ -580,7 +580,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             <p className="text-sm text-gray-700 leading-relaxed">
               The Smart Suction Cup is a multi-chamber robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
               <br />
-              <br /> I improved its manufacturability and robustness, standardizing the robot-arm interface, cutting the part count from 32 to 9, reducing setup time from 15 minutes to 1:45, and designing a custom PCB as we scaled from a research prototype to a production-ready run of over 1,000 units.
+              <br /> For my graduate capstone, I improved its manufacturability and robustness, standardizing the robot-arm interface, cutting the part count from 32 to 9, reducing setup time from 15 minutes to 1:45, and designing a custom PCB as we scaled from a research prototype to a production-ready run of over 1,000 units.
             </p>
           </div>
         </div>
@@ -681,13 +681,25 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 const honourItems = [
   {
     id: 'adlap',
-    title: 'BSc Capstone: A Light Module for a Robotic Surgery System',
+    title: 'Capstone: A Light Module for a Robotic Surgery System',
     media: [
       { src: '/images/adlap-final-design-details.png', label: 'adlap rendering', imageAspect: 'h-[258px]' },
       { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action', imageAspect: 'h-[258px]' },
     ],
-    description: 'Developed a compact, detachable laparoscopic light module for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints.',
+    description: 'For my graduating project at TU Delft I developed a compact, detachable laparoscopic light module for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints.',
     links: [{ label: 'Paper', href: '/images/adlap-design-paper.pdf' }],
+  },
+  {
+    id: 'cnc',
+    title: 'Sophomore Project: Building a CNC Machine',
+    description: 'In a team of 5, we designed and built a CNC machine using an H-bot single-belt architecture, with cleverly integrated belt pre-tensioning and vibration damping. This is one of the coolest project from my undergrad!',
+    media: [
+      { src: '/images/full CNC render.jpg', label: 'CNC image 1', hoverLabel: 'CNC rendering', imageAspect: 'h-[260px]', hoverTextColor: 'text-gray-800' },
+      { src: '/images/full CNC physical.jpg', label: 'CNC image 2', hoverLabel: 'CNC fully assembled', imageAspect: 'h-[260px]' },
+      { src: '/images/CNC video.mp4', label: 'CNC video', hoverLabel: 'Aron 3000 in action', fluid: true, videoAspect: 'aspect-[8/9]' },
+    ],
+    mediaLayout: 'stack-left',
+    links: [],
   },
   {
     id: 'mpc-robot',
@@ -722,6 +734,24 @@ const honourItems = [
   },
 ];
 
+function MediaItemCell({ m, squareImages, outerClassName = 'flex-1 min-w-0' }) {
+  return (
+    <div className={outerClassName}>
+      <div className="relative group">
+        <MediaSlot src={m.src} label={m.label} square={!!squareImages} videoAspect={m.videoAspect} imageAspect={m.imageAspect} fluid={!!m.fluid} fit={m.fit} natural={!!m.natural} />
+        {m.hoverLabel && (
+          <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+              <p className={`${m.hoverTextColor || 'text-white'} ${m.hoverAlign === 'right' ? 'text-right' : ''} text-sm font-semibold tracking-wide`}>{m.hoverLabel}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function HonoursSlide({ onDd, closeSignal }) {
   return (
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
@@ -753,29 +783,29 @@ function HonoursSlide({ onDd, closeSignal }) {
           {item.description && (
             <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
           )}
-          <div className={`flex gap-4 items-start ${item.sideText ? '' : 'flex-wrap'}`}>
-            <div className={`flex gap-2 items-start ${item.sideText ? 'w-1/2 flex-shrink-0' : 'flex-1 min-w-0'}`}>
-              {item.media.map((m) => (
-                <div key={m.label} className="flex-1 min-w-0 relative group">
-                  <MediaSlot src={m.src} label={m.label} square={!!item.squareImages} videoAspect={m.videoAspect} imageAspect={m.imageAspect} fluid={!!m.fluid} fit={m.fit} natural={!!m.natural} />
-                  {m.hoverLabel && (
-                    <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                        <p className={`${m.hoverTextColor || 'text-white'} ${m.hoverAlign === 'right' ? 'text-right' : ''} text-sm font-semibold tracking-wide`}>{m.hoverLabel}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            {item.sideText && (
-              <div className="flex-1 min-w-0 mt-8">
-                <p className="text-sm font-semibold text-gray-800">{item.sideText.heading}</p>
-                <p className="text-sm text-gray-700 leading-relaxed mt-1">{item.sideText.body}</p>
+          {item.mediaLayout === 'stack-left' ? (
+            <div className="flex gap-2 items-start">
+              <div className="flex flex-col gap-0 flex-1 min-w-0">
+                <MediaItemCell m={item.media[0]} squareImages={item.squareImages} />
+                <MediaItemCell m={item.media[1]} squareImages={item.squareImages} />
               </div>
-            )}
-          </div>
+              <MediaItemCell m={item.media[2]} squareImages={item.squareImages} outerClassName="w-[53%] flex-shrink-0 min-w-0" />
+            </div>
+          ) : (
+            <div className={`flex gap-4 items-start ${item.sideText ? '' : 'flex-wrap'}`}>
+              <div className={`flex gap-2 items-start ${item.sideText ? 'w-1/2 flex-shrink-0' : 'flex-1 min-w-0'}`}>
+                {item.media.map((m) => (
+                  <MediaItemCell key={m.label} m={m} squareImages={item.squareImages} />
+                ))}
+              </div>
+              {item.sideText && (
+                <div className="flex-1 min-w-0 mt-8">
+                  <p className="text-sm font-semibold text-gray-800">{item.sideText.heading}</p>
+                  <p className="text-sm text-gray-700 leading-relaxed mt-1">{item.sideText.body}</p>
+                </div>
+              )}
+            </div>
+          )}
         </Dropdown>
       ))}
     </div>
@@ -804,7 +834,6 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
     if (!jumpToProject?.count) return;
     const projectsIdx = slides.findIndex(s => s.id === 'projects');
     setCurrentIndex(projectsIdx);
-    setOpenDropdownCount(0);
     if (jumpToProject.key) {
       setTimeout(() => {
         document.getElementById(`project-${jumpToProject.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

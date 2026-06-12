@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
-import { photos as ALL_PHOTOS } from '../data/photoManifest';
+import { photos as DEFAULT_PHOTOS } from '../data/photoManifest';
 
 // ─── RANDOM SELECTION ────────────────────────────────────────────────────────
 function pickPhotos(pool, count, excludeIds) {
@@ -9,12 +9,12 @@ function pickPhotos(pool, count, excludeIds) {
   return [...source].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
-function nextFrame(prevLayoutId, prevPhotoIds) {
+function nextFrame(pool, prevLayoutId, prevPhotoIds) {
   const candidates = LAYOUTS.filter(l => l.id !== prevLayoutId);
   const layout = candidates[Math.floor(Math.random() * candidates.length)];
   const range = layout.maxPhotos - layout.minPhotos;
   const count = layout.minPhotos + (range > 0 ? Math.floor(Math.random() * (range + 1)) : 0);
-  const photos = pickPhotos(ALL_PHOTOS, count, prevPhotoIds);
+  const photos = pickPhotos(pool, count, prevPhotoIds);
   return { layout, photos };
 }
 
@@ -167,18 +167,28 @@ const LAYOUTS = [
 ];
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
-export default function PhotographyShowcase() {
+export default function PhotographyShowcase({ photos: photoProp }) {
+  const pool = photoProp ?? DEFAULT_PHOTOS;
   const reduced = useReducedMotion();
 
   const [frame, setFrame] = useState(() => {
-    const initial = nextFrame(null, new Set());
+    const initial = nextFrame(pool, null, new Set());
     return { ...initial, tick: 0 };
   });
+
+  useEffect(() => {
+    setFrame(() => {
+      const initial = nextFrame(pool, null, new Set());
+      return { ...initial, tick: 0 };
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoProp]);
 
   useEffect(() => {
     const id = setInterval(() => {
       setFrame(prev => {
         const next = nextFrame(
+          pool,
           prev.layout.id,
           new Set(prev.photos.map(p => p.id))
         );
@@ -186,7 +196,8 @@ export default function PhotographyShowcase() {
       });
     }, 5000);
     return () => clearInterval(id);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [photoProp]);
 
   return (
     <div
