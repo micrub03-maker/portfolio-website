@@ -1,24 +1,20 @@
-// ─── PHOTO SOURCE ─────────────────────────────────────────────────────────────
-// PLACEHOLDER: using picsum.photos seeds until /public/photos is ready.
-//
-// TO SWITCH TO REAL PHOTOS:
-//   1. Drop your images into /public/photos/
-//   2. Replace each `src` below with the actual path, e.g. '/photos/shot.jpg'
-//   3. Update `alt` to something meaningful for each image
-//   4. No other file needs to change — PhotographyShowcase reads only this list
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const photos = [
-  { id: 1,  src: 'https://picsum.photos/seed/photo01/800/600', alt: 'Architecture study',   aspect: 'landscape' },
-  { id: 2,  src: 'https://picsum.photos/seed/photo02/600/900', alt: 'Street scene',         aspect: 'portrait'  },
-  { id: 3,  src: 'https://picsum.photos/seed/photo03/900/600', alt: 'Nature landscape',     aspect: 'landscape' },
-  { id: 4,  src: 'https://picsum.photos/seed/photo04/600/800', alt: 'Urban texture',        aspect: 'portrait'  },
-  { id: 5,  src: 'https://picsum.photos/seed/photo05/850/600', alt: 'Light and shadow',     aspect: 'landscape' },
-  { id: 6,  src: 'https://picsum.photos/seed/photo06/700/700', alt: 'Travel moment',        aspect: 'square'    },
-  { id: 7,  src: 'https://picsum.photos/seed/photo07/900/600', alt: 'Detail shot',          aspect: 'landscape' },
-  { id: 8,  src: 'https://picsum.photos/seed/photo08/600/900', alt: 'Portrait study',       aspect: 'portrait'  },
-  { id: 9,  src: 'https://picsum.photos/seed/photo09/800/550', alt: 'Sky at dusk',          aspect: 'landscape' },
-  { id: 10, src: 'https://picsum.photos/seed/photo10/650/650', alt: 'Geometric pattern',    aspect: 'square'    },
-  { id: 11, src: 'https://picsum.photos/seed/photo11/900/600', alt: 'Winter landscape',     aspect: 'landscape' },
-  { id: 12, src: 'https://picsum.photos/seed/photo12/600/900', alt: 'City life',            aspect: 'portrait'  },
+  { id: 1,  src: '/images/El Capitan, USA.JPG',          alt: 'El Capitan, USA',          aspect: 'landscape' },
+  { id: 2,  src: '/images/Yosemite, USA.JPG',            alt: 'Yosemite, USA',            aspect: 'landscape' },
+  { id: 3,  src: '/images/Banff, Canada.jpg',            alt: 'Banff, Canada',            aspect: 'portrait'  },
+  { id: 4,  src: '/images/Big White, Canada.png',        alt: 'Big White, Canada',        aspect: 'portrait'  },
+  { id: 5,  src: '/images/Cervinia, Italy.JPG',          alt: 'Cervinia, Italy',          aspect: 'landscape' },
+  { id: 6,  src: '/images/La Plagne, France.jpg',        alt: 'La Plagne, France',        aspect: 'landscape' },
+  { id: 7,  src: '/images/Seoul, South Korea.JPG',       alt: 'Seoul, South Korea',       aspect: 'portrait'  },
+  { id: 8,  src: '/images/Guangzhou, China.jpg',         alt: 'Guangzhou, China',         aspect: 'landscape' },
+  { id: 9,  src: '/images/Ha Giang, Vietnam.JPG',        alt: 'Ha Giang, Vietnam',        aspect: 'landscape' },
+  { id: 10, src: '/images/Ha Giang, Vietnam (2).JPG',    alt: 'Ha Giang, Vietnam (2)',    aspect: 'portrait'  },
+  { id: 11, src: '/images/Ha Giang,  Vietnam.JPG',       alt: 'Ha Giang, Vietnam (3)',    aspect: 'landscape' },
+  { id: 12, src: '/images/Ha Giang, Vietnam (3).JPG',    alt: 'Ha Giang, Vietnam (4)',    aspect: 'landscape' },
+  { id: 13, src: '/images/Hoa Lu, Vietnam.JPG',          alt: 'Hoa Lu, Vietnam',          aspect: 'portrait'  },
+  { id: 14, src: '/images/Mua Cave, Vietnam.JPG',        alt: 'Mua Cave, Vietnam',        aspect: 'portrait'  },
+  { id: 15, src: '/images/Tam Coc, Vietnam.JPG',         alt: 'Tam Coc, Vietnam',         aspect: 'landscape' },
+  { id: 16, src: '/images/Tam Coc, Vietnam (2).JPG',     alt: 'Tam Coc, Vietnam (2)',     aspect: 'landscape' },
+  { id: 17, src: '/images/Bang Kok, thailand.JPG',       alt: 'Bang Kok, Thailand',       aspect: 'landscape' },
+  { id: 18, src: '/images/DROP miniramp.jpg',            alt: 'DROP miniramp',            aspect: 'portrait'  },
 ];
