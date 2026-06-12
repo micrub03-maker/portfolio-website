@@ -11,20 +11,12 @@ const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRi
 
 const slides = [
   {
-    id: 'photography',
-    title: 'Photography',
-    mediaLabel: 'TEMP: photography',
-    mediaSrc: null,
-    description:
-      'Attention to detail, different perspectives and patience. Everytime I spend time learning about photography (which is not often enough) I end up appreciating the world around me a little bit more.',
-  },
-  {
     id: 'skateboarding',
     title: 'Skateboarding',
     mediaLabel: 'TEMP: skateboarding',
     mediaSrc: '/skate-videos.mp4',
     description:
-      'Creativity, community, challenging myself and overcoming fear. Skating has been a big part of my life since I was 16 years old.',
+      "Creativity, community, challenging myself, and overcoming fear. Skating has been a big part of my life since I was 16, and it’s shaped how I approach growth. Whether it’s practicing handstands, learning how to juggle, or any small challenge I set for myself, I love having something to work toward and skating has been a big driver behind that motivation.",
   },
   {
     id: 'traveling',
@@ -51,12 +43,12 @@ const slides = [
       "I spent a whole season teaching kids on the snow, I feel the most free when I’m on the slopes or out touring.",
   },
   {
-    id: 'random-skills',
-    title: 'Picking up random new skills',
-    mediaLabel: 'TEMP: random skills',
+    id: 'photography',
+    title: 'Photography',
+    mediaLabel: 'TEMP: photography',
     mediaSrc: null,
     description:
-      'From practicing handstand to learning how to juggle, I love setting small goals and challenges to overcome for myself. I do tend to hyperfocus on them for a little bit.',
+      'Attention to detail, different perspectives and patience. Everytime I spend time learning about photography (which is not often enough) I end up appreciating the world around me a little bit more.',
   },
 ];
 
@@ -201,6 +193,14 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                 <div className="mt-4 mb-4 w-full">
                   <SpotifyPlaylistsAPI />
                 </div>
+              </>
+            ) : active.id === 'winter-sports' ? (
+              <>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
+                <p className="mt-3 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                  {active.description}
+                </p>
+                <PhotographyShowcase photos={outdoorsPhotos} />
               </>
             ) : active.mediaSrc ? (
               <div className="flex gap-4 items-start">
