@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 export default function ResumePage() {
   useEffect(() => {
-    document.title = 'download-it-i-know-you-want-to.PlsHireMe';
+    document.title = 'Michael-Rubin-Resume.PlsHireMe';
   }, []);
 
   return (

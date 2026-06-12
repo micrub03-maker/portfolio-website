@@ -3,11 +3,11 @@ import { useMediaQuery } from "react-responsive";
 import emailjs from "@emailjs/browser";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBackground } from "../contexts/BackgroundContext";
-import links from "../config/links";
 import TableOfContents from "../components/TableOfContents";
 import TravelMap from "../components/TravelMap";
 import ProjectOverview from "../components/ProjectOverview";
 import AboutMe from "../components/AboutMe";
+import BreakoutGame from "../components/BreakoutGame";
 import Education from "../components/Education";
 import Experience from "../components/Experience";
 import ProjectPortfolio from "../components/ProjectPortfolio";
@@ -50,6 +50,83 @@ export default function About() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [travelJump, setTravelJump] = useState(0);
   const [projectJump, setProjectJump] = useState({ key: null, count: 0 });
+  const [breakoutActive, setBreakoutActive] = useState(false);
+  const [widgetsHiding, setWidgetsHiding] = useState(false);
+  const [widgetRects, setWidgetRects] = useState(null);
+  const [widgetSnapshots, setWidgetSnapshots] = useState(null);
+  const profileClickCount = useRef(0);
+  const profileClickTimer = useRef(null);
+  const profileCardRef = useRef(null);
+  const travelRef      = useRef(null);
+  const projectsRef    = useRef(null);
+  const tocRef         = useRef(null);
+  const readsRef       = useRef(null);
+
+  const handleProfileClick = () => {
+    profileClickCount.current += 1;
+    if (profileClickTimer.current) clearTimeout(profileClickTimer.current);
+    if (profileClickCount.current >= 5) {
+      profileClickCount.current = 0;
+
+      // Capture rects now, while widgets are still in position, so the fly animation knows where to start from.
+      setWidgetRects({
+        Profile:  profileCardRef.current?.getBoundingClientRect(),
+        Travel:   travelRef.current?.getBoundingClientRect(),
+        Projects: projectsRef.current?.getBoundingClientRect(),
+        Contents: tocRef.current?.getBoundingClientRect(),
+        Reads:    readsRef.current?.getBoundingClientRect(),
+      });
+      setWidgetSnapshots(null);
+      setWidgetsHiding(true);
+      setTimeout(() => {
+        setWidgetsHiding(false);
+        setBreakoutActive(true);
+      }, 350);
+
+      // Capture pixel snapshots async — game starts immediately and snapshots
+      // fill in when ready (typically before phase-2 bricks start flying).
+      const TARGETS = [
+        ['Profile',  profileCardRef],
+        ['Travel',   travelRef],
+        ['Projects', projectsRef],
+        ['Contents', tocRef],
+        ['Reads',    readsRef],
+      ];
+      (async () => {
+        try {
+          const html2canvas = await new Promise((resolve, reject) => {
+            if (window.html2canvas) { resolve(window.html2canvas); return; }
+            const s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+            s.onload = () => resolve(window.html2canvas);
+            s.onerror = reject;
+            document.head.appendChild(s);
+          });
+          const pairs = await Promise.all(
+            TARGETS.map(async ([label, ref]) => {
+              if (!ref.current) return [label, null];
+              try {
+                const canvas = await html2canvas(ref.current, {
+                  useCORS: true,
+                  backgroundColor: null,
+                  scale: 1,
+                  logging: false,
+                });
+                return [label, canvas];
+              } catch {
+                return [label, null];
+              }
+            })
+          );
+          setWidgetSnapshots(Object.fromEntries(pairs.filter(([, c]) => c !== null)));
+        } catch {
+          // html2canvas unavailable — game continues with glass-only bricks
+        }
+      })();
+    } else {
+      profileClickTimer.current = setTimeout(() => { profileClickCount.current = 0; }, 1500);
+    }
+  };
 
   useEffect(() => {
     if (profileLoaded) {
@@ -162,15 +239,21 @@ export default function About() {
         >
           {/* Hero Dashboard - Redesigned */}
           <div className="w-full h-full flex items-center justify-center px-4 md:px-8 py-4 md:py-6">
-            <div className="w-full max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3">
+            <div
+              className="w-full max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3 transition-opacity duration-300"
+              style={{ opacity: widgetsHiding ? 0 : 1 }}
+            >
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-all">
-                <div className="w-20 h-20 md:w-48 md:h-48 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-4 flex-shrink-0">
+              <div ref={profileCardRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-all">
+                <div
+                  className="w-20 h-20 md:w-48 md:h-48 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-4 flex-shrink-0 cursor-pointer select-none"
+                  onClick={handleProfileClick}
+                >
                   <img
                     src={profile}
                     alt="Portrait of Michael Rubin"
-                    className="block w-full h-full object-cover object-top"
+                    className="block w-full h-full object-cover object-top pointer-events-none"
                   />
                 </div>
                 <h1 className="text-base md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
@@ -185,11 +268,11 @@ export default function About() {
 
                 {/* Social Links */}
                 <div className="flex gap-1 md:gap-2 w-full mb-1 md:mb-4">
-                  <a href={links.github} target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
+                  <a href="https://github.com/micrub03-maker" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
                     <img className="h-4 w-4" src={github} alt="github" />
                     <span className="text-white text-xs font-medium">GitHub</span>
                   </a>
-                  <a href={links.linkedin} className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
+                  <a href="https://www.linkedin.com/in/-michael-rubin" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
                     <img className="h-4 w-4" src={linkedin} alt="linkedin" />
                     <span className="text-white text-xs font-medium">LinkedIn</span>
                   </a>
@@ -213,26 +296,26 @@ export default function About() {
 
               {/* Travel Map widget — desktop only */}
               {!isMobile && (
-                <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
+                <div ref={travelRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
                   <TravelMap onNavigate={handleTravelNavigate} />
                 </div>
               )}
 
               {/* A.3 Project Overview */}
-              <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-52 md:h-full">
+              <div ref={projectsRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-52 md:h-full">
                 <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} onNavigate={handleProjectsNavigate} />
               </div>
 
               {/* Table of Contents - Bottom left widget — desktop only */}
               {!isMobile && (
-                <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+                <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
                   <TableOfContents isWidget={true} />
                 </div>
               )}
 
               {/* Recent Reads - Bottom right widget — desktop only */}
               {!isMobile && (
-                <div className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+                <div ref={readsRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
                   <RecentReads />
                 </div>
               )}
@@ -327,7 +410,7 @@ export default function About() {
 
               {/* Resume */}
               <a
-                href="/download-it-i-know-you-want-to.PlsHireMe"
+                href="/Michael-Rubin-Resume.PlsHireMe"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"
@@ -443,6 +526,14 @@ export default function About() {
           </button>
         </div>
       </div>
+
+      {breakoutActive && (
+        <BreakoutGame
+          onClose={() => setBreakoutActive(false)}
+          widgetRects={widgetRects}
+          widgetSnapshots={widgetSnapshots}
+        />
+      )}
     </main>
   );
 }

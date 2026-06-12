@@ -201,14 +201,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
               Development of an all-terrain unmanned autonomous reconnaissance rover. 
-              Currently redesigning the 3D-printed chassis to improve structural robustness and serviceability, while supporting navigation and autonomy integration
+              Currently redesigning the 3D-printed chassis to improve structural robustness and serviceability, while supporting navigation and autonomy integration.
             </p>
             <div>
               <p className="text-sm font-semibold text-gray-800">Upcoming tasks:</p>
               <Bullets
                 items={[
-                  'Designing a Model Predictive Control (MPC) controller from scratch to compare against the existing PID controller',
-                  'Scaling the vehicle up, to use for solar plant inspections',
+                  'Designing a Model Predictive Control (MPC) controller from scratch to compare against the existing PID controller.',
+                  'Scaling the vehicle up, to use for solar plant inspections.',
                 ]}
               />
             </div>
@@ -217,7 +217,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         {/* Full-width case-study dropdown */}
         <Dropdown
           summaryTitle="An insight into how I start new projects"
-          summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration"
+          summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
@@ -681,12 +681,13 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 const honourItems = [
   {
     id: 'adlap',
-    title: 'BSc capstone: designing a detachable light module for a robotic surgery system',
+    title: 'BSc Capstone: A Light Module for a Robotic Surgery System',
     media: [
-      { src: '/images/adlap-final-design.jpg', label: 'adlap rendering', hoverLabel: 'Detailed design' },
-      { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action' },
+      { src: '/images/adlap-final-design-details.png', label: 'adlap rendering', imageAspect: 'h-[258px]' },
+      { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action', imageAspect: 'h-[258px]' },
     ],
-    links: [{ label: 'Paper', href: '/pdfs/adlap-design-paper.pdf' }],
+    description: 'Developed a compact, detachable laparoscopic light module for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints.',
+    links: [{ label: 'Paper', href: '/images/adlap-design-paper.pdf' }],
   },
   {
     id: 'mpc-robot',
@@ -697,7 +698,7 @@ const honourItems = [
   },
   {
     id: 'pcm',
-    title: 'Phase change materials based cooling in solar panels',
+    title: 'Phase Change Materials Based Cooling in Solar Panels',
     description: 'Built a Python model of a solar panel system with phase-change material cooling to analyze efficiency trends under varying environmental conditions.',
     media: [
       { src: '/images/PCM-schema.png', label: 'PCM schema', hoverLabel: 'PCM-PV cell interactions', natural: true, hoverTextColor: 'text-gray-800' },
@@ -707,7 +708,7 @@ const honourItems = [
   },
   {
     id: 'sproutup',
-    title: 'SproutUp: an assistive standing device',
+    title: 'SproutUp: An Assistive Standing Device',
     squareImages: true,
     description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance.',
     media: [
@@ -761,7 +762,7 @@ function HonoursSlide({ onDd, closeSignal }) {
                     <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                       <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                        <p className={`${m.hoverTextColor || 'text-white'} text-sm font-semibold tracking-wide`}>{m.hoverLabel}</p>
+                        <p className={`${m.hoverTextColor || 'text-white'} ${m.hoverAlign === 'right' ? 'text-right' : ''} text-sm font-semibold tracking-wide`}>{m.hoverLabel}</p>
                       </div>
                     </div>
                   )}

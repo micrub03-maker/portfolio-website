@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import TravelMap from './TravelMap';
 import { MediaSlot } from "./MediaSlot";
 import DoodleJump from './DoodleJump';
+import SpotifyPlaylistsAPI from './SpotifyPlaylistsAPI';
 
 const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 
@@ -37,7 +38,7 @@ const slides = [
     mediaLabel: 'TEMP: music',
     mediaSrc: null,
     description:
-      'Trying to learn guitar, will boogie to nearly any sound and understand why music is so awesome!\nCheck out my top artists --> Spotify API.',
+      'Trying to learn guitar, will boogie to nearly any sound and understand why music is so awesome!',
   },
   {
     id: 'winter-sports',
@@ -63,6 +64,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const [showGame, setShowGame] = useState(false);
   const skateClicks = useRef(0);
   const konamiBuffer = useRef([]);
+  const sectionRef = useRef(null);
 
   useEffect(() => {
     if (jumpToTravel === 0) return;
@@ -78,11 +80,20 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
     return () => clearInterval(t);
   }, [isHovered, currentIndex]);
 
+  const openGame = () => {
+    const idx = slides.findIndex(s => s.id === 'skateboarding');
+    if (idx !== -1) setCurrentIndex(idx);
+    setShowGame(true);
+    setTimeout(() => {
+      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   useEffect(() => {
     const handler = (e) => {
       konamiBuffer.current = [...konamiBuffer.current, e.key].slice(-KONAMI.length);
       if (konamiBuffer.current.join(',') === KONAMI.join(',')) {
-        setShowGame(true);
+        openGame();
         konamiBuffer.current = [];
       }
     };
@@ -94,7 +105,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
     skateClicks.current += 1;
     if (skateClicks.current >= 5) {
       skateClicks.current = 0;
-      setShowGame(true);
+      openGame();
     }
   };
 
@@ -115,7 +126,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const active = slides[currentIndex];
 
   return (
-    <section>
+    <section ref={sectionRef}>
       <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">interests</h2>
 
       <div
@@ -182,16 +193,29 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                   <TravelMap compact />
                 </div>
               </>
+            ) : active.id === 'music' ? (
+              <>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
+                <p className="mt-3 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                  {active.description}
+                </p>
+                <div className="mt-4 mb-4 w-full h-64">
+                  <SpotifyPlaylistsAPI />
+                </div>
+              </>
             ) : active.mediaSrc ? (
               <div className="flex gap-4 items-start">
                 <div
                   className="w-2/5 flex-shrink-0"
-                  onClick={active.id === 'skateboarding' ? handleSkateClick : undefined}
-                  style={active.id === 'skateboarding' ? { cursor: 'pointer' } : undefined}
+                  onClick={active.id === 'skateboarding' && !showGame ? handleSkateClick : undefined}
+                  style={active.id === 'skateboarding' && !showGame ? { cursor: 'pointer' } : undefined}
                 >
-                  <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
+                  {active.id === 'skateboarding' && showGame
+                    ? <DoodleJump inline onClose={() => setShowGame(false)} />
+                    : <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
+                  }
                 </div>
-                <div className="aspect-square flex-1 overflow-hidden flex flex-col">
+                <div className="flex-1 flex flex-col justify-end pb-2">
                   <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
                   <p className="mt-2 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
                     {active.description}
@@ -211,7 +235,6 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
         </AnimatePresence>
       </div>
 
-      {showGame && <DoodleJump onClose={() => setShowGame(false)} />}
     </section>
   );
 }

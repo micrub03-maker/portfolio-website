@@ -21,7 +21,7 @@ function AppContent() {
         <Route path="/home" element={<About />} />
         <Route path="/3d" element={<Home />} />
         <Route path="/about" element={<About />} />
-        <Route path="/download-it-i-know-you-want-to.PlsHireMe" element={<ResumePage />} />
+        <Route path="/Michael-Rubin-Resume.PlsHireMe" element={<ResumePage />} />
       </Routes>
     </main>
   );
