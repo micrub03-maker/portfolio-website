@@ -225,13 +225,12 @@ export default function About() {
 
   return (
     <main className="h-auto top-0 left-0">
-      <TableOfContents />
-
       <div
         className={`flex flex-col items-center transition-opacity duration-300 ${
           fadeIn ? "opacity-100" : "opacity-0"
         }`}
       >
+      <TableOfContents />
         <div
           id="home"
           className="w-full min-h-screen md:h-screen flex flex-col bg-cover bg-center relative overflow-hidden"
@@ -410,7 +409,7 @@ export default function About() {
 
               {/* Resume */}
               <a
-                href="/Michael-Rubin-Resume.PlsHireMe"
+                href="/Michael_Rubin_Resume (General).pdf"
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all"

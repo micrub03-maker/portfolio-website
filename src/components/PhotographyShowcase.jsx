@@ -109,7 +109,7 @@ const LAYOUTS = [
           {photos.map((p, i) => (
             <div
               key={p.id}
-              className="bg-white shadow-md flex flex-col flex-shrink-0"
+              className="bg-white shadow-md flex flex-col flex-shrink-0 rounded-lg overflow-hidden"
               style={{
                 transform: `rotate(${rotations[i]}deg) translateY(${yOffsets[i]}px)`,
                 padding: '5px 5px 18px',
@@ -184,7 +184,7 @@ export default function PhotographyShowcase() {
         );
         return { ...next, tick: prev.tick + 1 };
       });
-    }, 2000);
+    }, 5000);
     return () => clearInterval(id);
   }, []);
 

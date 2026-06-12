@@ -4,6 +4,7 @@ import TravelMap from './TravelMap';
 import { MediaSlot } from "./MediaSlot";
 import DoodleJump from './DoodleJump';
 import SpotifyPlaylistsAPI from './SpotifyPlaylistsAPI';
+import PhotographyShowcase from './PhotographyShowcase';
 
 const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 
@@ -38,7 +39,7 @@ const slides = [
     mediaLabel: 'TEMP: music',
     mediaSrc: null,
     description:
-      'I am an huge festival fan, will boogie to nearly any sound and have recently gotten into guitar. Here is a snapshot of what I listen to.',
+      'I am a huge festival fan, will boogie to nearly any sound and have recently gotten into guitar. Here is a snapshot of what I listen to.',
   },
   {
     id: 'winter-sports',
@@ -46,21 +47,19 @@ const slides = [
     mediaLabel: 'TEMP: winter sports',
     mediaSrc: null,
     description:
-      ' Snowboarding and skiing, spent a whole season teaching on snow. \n Also overcoming fear and perseverance.',
-  },
+      'I spent a whole season teaching kids on the snow, I feel the most free when I’m on the slopes or out touring.',},
   {
     id: 'random-skills',
     title: 'Picking up random new skills',
     mediaLabel: 'TEMP: random skills',
     mediaSrc: null,
     description:
-      ' From practicing handstand to learning how to juggle, I love setting small goals and challenges to overcome for myself. I do tend to hyperfocus on them for a little bit.',
+      'From practicing handstand to learning how to juggle, I love setting small goals and challenges to overcome for myself. I do tend to hyperfocus on them for a little bit.',
   },
 ];
 
 export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const [showGame, setShowGame] = useState(false);
   const skateClicks = useRef(0);
   const konamiBuffer = useRef([]);
@@ -71,14 +70,6 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
     const idx = slides.findIndex(s => s.id === 'traveling');
     if (idx !== -1) setCurrentIndex(idx);
   }, [jumpToTravel]);
-
-  useEffect(() => {
-    if (isHovered) return;
-    const t = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
-    }, 6000);
-    return () => clearInterval(t);
-  }, [isHovered, currentIndex]);
 
   const openGame = () => {
     const idx = slides.findIndex(s => s.id === 'skateboarding');
@@ -131,8 +122,6 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
 
       <div
         className="max-w-3xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -183,7 +172,15 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
             transition={{ duration: 0.3 }}
             className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4"
           >
-            {active.id === 'traveling' ? (
+            {active.id === 'photography' ? (
+              <>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
+                <p className="mt-3 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                  {active.description}
+                </p>
+                <PhotographyShowcase />
+              </>
+            ) : active.id === 'traveling' ? (
               <>
                 <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
                 <p className="mt-3 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">

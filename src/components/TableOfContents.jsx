@@ -118,6 +118,7 @@ const TableOfContents = ({ isWidget = false }) => {
     <>
       {/* Arrow tab — persistent hint when not on home and panel is collapsed */}
       <motion.div
+        initial={{ opacity: 0, x: 16 }}
         animate={{ opacity: !isOnHome && !isHovered ? 1 : 0, x: !isOnHome && !isHovered ? 0 : 16 }}
         transition={{ duration: 0.2 }}
         style={{ pointerEvents: !isOnHome && !isHovered ? 'auto' : 'none' }}
