@@ -51,6 +51,7 @@ const MD_COMPONENTS = {
   li:     ({ children }) => <li     className="text-xs text-gray-600 leading-relaxed [&>p]:inline [&>p]:m-0">{children}</li>,
   strong: ({ children }) => <strong className="font-semibold text-gray-800">{children}</strong>,
   code:   ({ children }) => <code   className="bg-gray-200 text-gray-700 text-[10px] px-1 rounded font-mono">{children}</code>,
+  pre:    ({ children }) => <pre    className="overflow-x-auto my-1">{children}</pre>,
   hr:     ()             => <hr     className="border-gray-200 my-2" />,
   img: ({ src, alt }) => (
     <img src={src} alt={alt} className="w-full rounded-lg my-1.5 border border-gray-200" />

@@ -4,8 +4,14 @@ import TravelMap from './TravelMap';
 import { MediaSlot } from "./MediaSlot";
 import DoodleJump from './DoodleJump';
 import SpotifyPlaylistsAPI from './SpotifyPlaylistsAPI';
+import SpotifyPlaylists from './SpotifyPlaylists';
 import PhotographyShowcase from './PhotographyShowcase';
 import { outdoorsPhotos } from '../data/outdoorsManifest';
+
+const hasSpotifyCredentials =
+    !!import.meta.env?.VITE_SPOTIFY_CLIENT_ID &&
+    !!import.meta.env?.VITE_SPOTIFY_CLIENT_SECRET;
+const SpotifyWidget = hasSpotifyCredentials ? SpotifyPlaylistsAPI : SpotifyPlaylists;
 
 const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 
@@ -58,6 +64,14 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const skateClicks = useRef(0);
   const konamiBuffer = useRef([]);
   const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'video';
+    link.href = '/skate-videos.mp4';
+    document.head.appendChild(link);
+  }, []);
 
   useEffect(() => {
     if (jumpToTravel === 0) return;
@@ -191,7 +205,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                   {active.description}
                 </p>
                 <div className="mt-4 mb-4 w-full">
-                  <SpotifyPlaylistsAPI />
+                  <SpotifyWidget />
                 </div>
               </>
             ) : active.id === 'winter-sports' ? (
@@ -216,9 +230,11 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                 </div>
                 <div className="flex-1 flex flex-col justify-end pb-2">
                   <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
-                  <p className="mt-2 text-sm md:text-base text-gray-700 leading-relaxed whitespace-pre-line">
-                    {active.description}
-                  </p>
+                  {active.description.split('\n \n').map((para, i) => (
+                    <p key={i} className={`mt-2 text-sm md:text-base text-gray-700 leading-relaxed${i > 0 ? ' hidden md:block' : ''}`}>
+                      {para.trim()}
+                    </p>
+                  ))}
                 </div>
               </div>
             ) : (

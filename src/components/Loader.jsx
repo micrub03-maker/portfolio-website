@@ -42,6 +42,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
   const rampRef = useRef(null);
   const svgRef = useRef(null);
   const isExitingRef = useRef(false);
+  const touchStartRef = useRef(null);
   const skaterRef = useRef({ x: 140, y: 78, angle: 0 });
   const [isExiting, setIsExiting] = useState(false);
   const [skater, setSkater] = useState({ x: 140, y: 78, angle: 0 });
@@ -190,6 +191,55 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
     };
   }, []);
 
+  // Non-passive touchmove so we can preventDefault and prevent page scroll
+  useEffect(() => {
+    const onTouchMove = (e) => {
+      e.preventDefault();
+      if (isExitingRef.current || handstandActiveRef.current) return;
+      const touch = e.touches[0];
+      const path = rampRef.current;
+      const svg = svgRef.current;
+      if (!path || !svg) return;
+
+      const rect = svg.getBoundingClientRect();
+      const vbX = ((touch.clientX - rect.left) * 360) / rect.width - 40;
+      const clamped = Math.max(12, Math.min(268, vbX));
+      const t = (clamped - 10) / 260;
+      positionTRef.current = t;
+
+      const totalLen = path.getTotalLength();
+      const pt = path.getPointAtLength(t * totalLen);
+      const pt2 = path.getPointAtLength(Math.min(t * totalLen + 2, totalLen));
+      const angle = (Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180) / Math.PI;
+      updateSkater({ x: pt.x, y: pt.y, angle });
+    };
+
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => window.removeEventListener("touchmove", onTouchMove);
+  }, []);
+
+  const handleTouchStart = (e) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!touchStartRef.current) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartRef.current.x;
+    const dy = touch.clientY - touchStartRef.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    touchStartRef.current = null;
+
+    if (dist > 15) {
+      // Suppress the synthetic click so a drag doesn't trigger navigation
+      e.preventDefault();
+      if (dy < -40 && Math.abs(dy) > Math.abs(dx) * 1.2) playKickflipOnly();
+      else if (dy > 40 && Math.abs(dy) > Math.abs(dx) * 1.2) playHandstand();
+    }
+    // dist <= 15 → it was a tap; let the click fire normally for navigation
+  };
+
   const handleClick = () => {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
@@ -237,6 +287,8 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
         pointerEvents: isExiting ? "none" : "auto",
       }}
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="absolute inset-0 bg-black/40 pointer-events-none" />
 

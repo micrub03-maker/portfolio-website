@@ -33,6 +33,13 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const touchStartX = useRef(null);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, [activeIndex]);
 
   useEffect(() => {
     if (isHovered) return;
@@ -120,10 +127,10 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
           <div
             key={slide.projectKey}
             className="absolute inset-0 transition-opacity duration-300"
-            style={{ opacity: idx === activeIndex ? 1 : 0, zIndex: idx === activeIndex ? 1 : 0 }}
+            style={{ opacity: idx === activeIndex ? 1 : 0, zIndex: idx === activeIndex ? 1 : 0, willChange: 'opacity' }}
           >
             {slide.src?.endsWith('.mp4') ? (
-              <video src={slide.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline preload="auto" />
+              <video ref={idx === 0 ? videoRef : null} src={slide.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline preload="auto" />
             ) : slide.src ? (
               <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
             ) : (

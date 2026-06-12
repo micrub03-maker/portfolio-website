@@ -14,7 +14,7 @@ export function MediaImage({ src, alt, tall = false, fill = false, fit = 'object
   return (
     <div className={containerClass} style={height ? { height } : undefined}>
       {video
-        ? <video src={src} className={mediaClass} autoPlay loop muted playsInline />
+        ? <video src={src} className={mediaClass} autoPlay loop muted playsInline preload="auto" />
         : <img src={src} alt={alt} className={mediaClass} />
       }
     </div>

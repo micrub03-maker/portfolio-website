@@ -196,7 +196,9 @@
   * CAN ID 4 = REAR RIGHT
 * Solder the wires to the moteus board as shown:
 
-  <img src="assets/36_motor_7.jpg" width="500">   <img src="assets/37_motor_8.jpg" width="500">
+  <img src="assets/36_motor_7.jpg" width="500">
+
+  <img src="assets/37_motor_8.jpg" width="500">
 
 * Plug in the power and CAN wires to the moteus board. It does not matter which ports you use.
 
@@ -216,7 +218,9 @@
 
 * Hold the moteus board on the bolts and screw/unscrew the bolts so there are just a few threads extending beyond the board as shown:
 
-  <img src="assets/42_motor_13.jpg" width="500">   <img src="assets/43_motor_14.jpg" width="500">
+  <img src="assets/42_motor_13.jpg" width="500">
+
+  <img src="assets/43_motor_14.jpg" width="500">
 
 * Line up the two halves of the box, close, and tighten the bolts to secure. Make sure the tubing is secure.
 
@@ -305,3 +309,42 @@
 * Best results when wheel is on the motor, motor orientation is horizontal (car is on its side, wheels face up).
 * Use the power supply, not battery power.
 * Update your moteus packages – MJBots keeps changing the calibration routine.
+
+---
+
+<br>
+<br>
+
+```
+╔═══════════════════════════════════════════╗
+║  * * *  YOU SCROLLED ALL THE WAY?  WOAH!  ║
+║                                           ║
+║        H E R E   I S   A   G I F T        ║
+╚═══════════════════════════════════════════╝
+
+               ▄███▄
+             ▄███████▄
+            ███ ◉  ◉ ███
+            ██    ▼    ██
+            ████▓▓▓████
+            ██▓▓▓▓▓▓▓██     <- legendary beard
+           ████▓▓▓▓▓████
+       ██  ██  █████████  ██
+      ████ ████████████████ ████
+       ██  ██  █████████  ██
+            ██       ██
+            ██       ██
+          ████       ████
+
+                   ✦
+             ╔══════════╗
+             ║ ★  $  ★  ║
+             ║  $ ☆ $   ║
+             ║ ★  $  ★  ║
+             ╠══════════╣
+             ╚══════════╝
+
+    +9999 GOLD     XP: ████████████ MAX
+
+    >> ACHIEVEMENT UNLOCKED: "THE PATIENT ONE" <<
+```

@@ -390,13 +390,23 @@ const TravelMap = ({ compact = false, onNavigate }) => {
 
         {compact ? (
           isMobile ? (
-            /* Mobile compact: full-width map, stats row below */
+            /* Mobile compact: full-width map, stats row, then trip highlights stacked */
             <>
               {mapArea}
               <div className="flex justify-around border-t border-white/20 pt-2">
                 <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
                 <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
                 <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
+              </div>
+              <div className="flex flex-col gap-1 border-t border-white/20 pt-2">
+                <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mb-0.5">favourite trips</p>
+                {travelData.trip_highlights.filter(h => h.type === 'highlight').map((h, i) => (
+                  <TripHighlightCard key={i} title={h.title} year={h.year} />
+                ))}
+                <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mt-1.5 mb-0.5">dream trips</p>
+                {travelData.trip_highlights.filter(h => h.type === 'dream').map((h, i) => (
+                  <TripDreamCard key={i} title={h.title} />
+                ))}
               </div>
             </>
           ) : (

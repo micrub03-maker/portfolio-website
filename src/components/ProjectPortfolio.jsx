@@ -18,19 +18,16 @@ function Bullets({ items }) {
   );
 }
 
-function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, textWidth, centered, children }) {
-  const imageCol = <div className={`${picWidth} flex-shrink-0`}>{pic}</div>;
-  const textCol = textWidth
-    ? <div className={`${textWidth} flex-shrink-0 self-start mt-8`}><p className="text-sm text-gray-700 leading-relaxed">{children}</p></div>
-    : <p className="text-sm text-gray-700 leading-relaxed mt-8">{children}</p>;
+function SideBySide({ pic, children }) {
   return (
-    <div className={`flex gap-4 items-start${centered ? ' justify-center' : ''}`}>
-      {picLeft ? <>{imageCol}{textCol}</> : <>{textCol}{imageCol}</>}
+    <div className="flex flex-col gap-4">
+      {pic}
+      <p className="text-sm text-gray-700 leading-relaxed">{children}</p>
     </div>
   );
 }
 
-function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
+function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
@@ -93,7 +90,10 @@ function Dropdown({ summaryTitle, summarySubtitle, onOpenChange, noClickClose, f
         className="w-full text-left px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 transition-colors"
       >
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 text-sm">{summaryTitle}</p>
+          <p className="font-semibold text-gray-800 text-sm">
+              {summaryTitle}
+              {summaryDate && <span className="ml-2 font-normal text-gray-400 text-xs">{summaryDate}</span>}
+            </p>
           {summarySubtitle && (
             <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{summarySubtitle}</p>
           )}
@@ -164,14 +164,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
   const handleAssemblyEnter = () => { if (!isMobile) playAssembly(); };
   const handleAssemblyLeave = () => { if (!isMobile) pauseAssembly(); };
-  const handleAssemblyClick = () => { if (isMobile) assemblyPlaying ? pauseAssembly() : playAssembly(); };
+  const handleAssemblyClick = (e) => { e.stopPropagation(); if (isMobile) assemblyPlaying ? pauseAssembly() : playAssembly(); };
 
   return (
     <div className="px-6 pb-5 pt-3 md:px-8 md:pb-6 md:pt-4">
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <div className="relative group flex flex-col">
@@ -238,15 +238,13 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           }>
             I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand these issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
           </SideBySide>
-          <div className="flex gap-4 items-start">
-            <p className="text-sm text-gray-700 leading-relaxed mt-8">
+          <div className="flex flex-col gap-4">
+            <AssemblyGuide />
+            <p className="text-sm text-gray-700 leading-relaxed">
               That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
               <br />
               <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
             </p>
-            <div className="w-[55%] flex-shrink-0">
-              <AssemblyGuide />
-            </div>
           </div>
           <SideBySide picWidth="w-[45%]" pic={
             <div className="relative group">
@@ -272,7 +270,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown summaryTitle="Seatbelts Development @ CalSol" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -334,7 +332,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         >
           <SideBySide picWidth="w-[45%]" pic={
             <div className="relative group">
-              <div className="[&>div]:h-[240px]">
+              <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[240px]">
                 <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
@@ -384,8 +382,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         >
           <SideBySide picWidth="w-1/2" pic={
             <div className="flex justify-center">
-              <div className="relative group w-[73%]">
-                <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" height="202px" />
+              <div className="relative group w-full md:w-[73%]">
+                <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[202px]">
+                  <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" />
+                </div>
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
@@ -399,8 +399,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           </SideBySide>
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
             <div className="flex justify-center">
-              <div className="relative group w-[73%]">
-                <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" height="202px" />
+              <div className="relative group w-full md:w-[73%]">
+                <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[202px]">
+                  <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" />
+                </div>
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   <div className="absolute bottom-[15%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
@@ -418,7 +420,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <MediaSlot
             src={'/images/calsol-topology.png'}
             label="Shoulder belt CAD topology"
-            height="245px"
+            imageAspect="h-auto md:h-[245px]"
           />
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
@@ -432,13 +434,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <div className="relative group">
             <MediaSlot
               src={'/images/Axiris-final-design.png'}
               label="Axiris final design"
+              imageAspect="h-auto md:h-[184px]"
             />
             <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -464,12 +467,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
-          <div className="flex flex-row gap-4 items-start">
-            <div className="relative group w-[54%] flex-shrink-0">
+          <div className="flex flex-col gap-4">
+            <div className="relative group">
               <MediaSlot
                 src={'/images/Axiris-interviews.png'}
                 label="Axiris market research"
-                height="227px"
+                imageAspect="h-auto md:h-[227px]"
               />
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -478,25 +481,19 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed flex-1 mt-8">
-              Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why? 
-              <br /> 
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why?
+              <br />
               <br />
               Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root.
             </p>
           </div>
-          <div className="flex flex-row gap-4 items-start">
-            <p className="text-sm text-gray-700 leading-relaxed flex-[1.1] mt-8">
-              Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
-              <br />
-              <br />
-              I then started speccing the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
-            </p>
-            <div className="relative group flex-[0.9]">
+          <div className="flex flex-col gap-4">
+            <div className="relative group">
               <MediaSlot
                 src={'/images/Axiris-optical.png'}
                 label="Axiris optical path"
-                height="329px"
+                imageAspect="h-auto md:h-[329px]"
               />
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -505,6 +502,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
+              <br />
+              <br />
+              I then started speccing the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
+            </p>
           </div>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
@@ -520,12 +523,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
-          <div className="flex flex-row gap-4 items-start">
-            <div className="relative group w-[54%] flex-shrink-0">
+          <div className="flex flex-col gap-4">
+            <div className="relative group">
               <MediaSlot
                 src={'/images/Axiris-model-eye.png'}
                 label="model eye Axiris"
-                height="320px"
+                imageAspect="h-auto md:h-[320px]"
               />
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -534,7 +537,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed flex-1 mt-8">
+            <p className="text-sm text-gray-700 leading-relaxed">
               Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state. This allowed us to tune the image-processing pipeline and guide mechanical changes.
               <br />
               <br />
@@ -553,7 +556,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" summaryDate="Sept 2025 – May 2026" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
@@ -591,14 +594,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
-          <div className="flex flex-col md:flex-row gap-4 items-start">
-            <p className="text-sm text-gray-700 leading-relaxed md:order-2 md:mt-8">
-              To improve the manufacturability of the silicone suction cup, I switched to a three-chamber geometry and redesigned its mold. 
-              <br/>
-              <br />
-              The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
-            </p>
-            <div className="w-full md:w-[57%] md:order-1 min-w-0 flex-shrink-0 relative group">
+          <div className="flex flex-col gap-4">
+            <div className="relative group">
               <div className="md:hidden">
                 <MediaSlot src={'/images/suction-cup-mold-mobile.png'} label="Suction cup mold" padded />
               </div>
@@ -612,6 +609,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              To improve the manufacturability of the silicone suction cup, I switched to a three-chamber geometry and redesigned its mold.
+              <br/>
+              <br />
+              The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
+            </p>
           </div>
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
             <div
@@ -622,7 +625,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               style={isMobile ? {cursor: 'pointer'} : undefined}
             >
               <div className="w-full overflow-hidden rounded-xl my-3" style={{aspectRatio: '16/9'}}>
-                <video ref={assemblyVideoRef} src="/images/suction-cup-assembly.mp4" className="w-full h-full object-cover" loop muted playsInline />
+                <video ref={assemblyVideoRef} src="/images/suction-cup-assembly.mp4" className="w-full h-full object-cover" loop muted playsInline preload="auto" />
               </div>
               <div className={`absolute inset-0 rounded-xl overflow-hidden transition-opacity duration-300 pointer-events-none ${assemblyPlaying ? 'opacity-0' : 'opacity-100'}`} style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -639,8 +642,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             <br />
             Overall, design choices were made to reduce part count, enable easier handling and with high volume manufacturing in mind.
           </SideBySide>
-          <SideBySide picWidth="w-1/2" pic={
-            <div className="flex gap-2 md:w-4/5 md:mx-auto">
+          <SideBySide pic={
+            <div className="flex flex-col gap-2">
               <div className="flex-1 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
                 <MediaSlot src={'/images/suction-cup-grab.mp4'} label="maximum payload suction cup" videoAspect="aspect-[45/64]" />
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
@@ -682,36 +685,42 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
 const honourItems = [
   {
-    id: 'adlap',
-    title: 'Capstone: A Light Module for a Robotic Surgery System',
-    media: [
-      { src: '/images/adlap-final-design-details.png', label: 'adlap rendering', imageAspect: 'h-[258px]' },
-      { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action', imageAspect: 'h-[258px]' },
-    ],
-    description: 'For my graduating project at TU Delft I developed a compact, detachable laparoscopic light module for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints.',
-    links: [{ label: 'Paper', href: '/images/adlap-design-paper.pdf' }],
-  },
-  {
-    id: 'cnc',
-    title: 'Sophomore Project: Building a CNC Machine',
-    description: 'In a team of 5, we designed and built a CNC machine using an H-bot single-belt architecture, with cleverly integrated belt pre-tensioning and vibration damping. This is one of the coolest project from my undergrad!',
-    media: [
-      { src: '/images/full CNC render.jpg', label: 'CNC image 1', hoverLabel: 'CNC rendering', imageAspect: 'h-[260px]', hoverTextColor: 'text-gray-800' },
-      { src: '/images/full CNC physical.jpg', label: 'CNC image 2', hoverLabel: 'CNC fully assembled', imageAspect: 'h-[260px]' },
-      { src: '/images/CNC video.mp4', label: 'CNC video', hoverLabel: 'Aron 3000 in action', fluid: true, videoAspect: 'aspect-[8/9]' },
-    ],
-    mediaLayout: 'stack-left',
-    links: [],
-  },
-  {
     id: 'mpc-robot',
+    date: 'Sept 2025 – Dec 2025',
     title: 'Model Predictive Torque Control for a Balancing Robot',
     media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot', videoAspect: 'aspect-[10/7]', fluid: true, hoverLabel: 'Circle steering control on robot' }],
     sideText: { heading: 'Why not PID?', body: 'We used MPC as a research tool to evaluate whether it could outperform a simpler controller on a self-balancing two-wheeled robot with slope and steering dynamics.' },
     links: [{ label: 'Paper', href: '/images/C231A_project.pdf' }],
   },
   {
+    id: 'sproutup',
+    date: 'Sept 2025 – Dec 2025',
+    title: 'SproutUp: An Assistive Standing Device',
+    squareImages: true,
+    description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance. A bit on the bulky side, because our budget had strong opinions.',
+    media: [
+      { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp' },
+      { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', hoverLabel: 'SproutUp deep dive', natural: true, hoverTextColor: 'text-gray-800' },
+    ],
+    links: [
+      { label: 'Paper', href: '/images/SproutUp-paper.pdf' },
+      { label: 'Poster', href: '/images/SproutUp-poster.pdf' },
+    ],
+  },
+  {
+    id: 'adlap',
+    date: 'Feb 2024 – May 2024',
+    title: 'Capstone: A Light Module for a Robotic Surgery System',
+    media: [
+      { src: '/images/adlap-final-design-details.png', label: 'adlap rendering', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' },
+      { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' },
+    ],
+    description: 'For my graduating project at TU Delft I developed a compact, detachable laparoscopic light module for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints.',
+    links: [{ label: 'Paper', href: '/images/adlap-design-paper.pdf' }],
+  },
+  {
     id: 'pcm',
+    date: 'Nov 2022 – Jan 2023',
     title: 'Phase Change Materials Based Cooling in Solar Panels',
     description: 'Built a Python model of a solar panel system with phase-change material cooling to analyze efficiency trends under varying environmental conditions.',
     media: [
@@ -721,18 +730,17 @@ const honourItems = [
     links: [{ label: 'Paper', href: '/images/PCM_FINALREPORT.pdf' }],
   },
   {
-    id: 'sproutup',
-    title: 'SproutUp: An Assistive Standing Device',
-    squareImages: true,
-    description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance. A bit on the bulky side, because our budget had strong opinions.',
+    id: 'cnc',
+    date: 'Sept 2022 – Nov 2022',
+    title: 'Sophomore Project: Building a CNC Machine',
+    description: 'In a team of 5, we designed and built a CNC machine using an H-bot single-belt architecture, with cleverly integrated belt pre-tensioning and vibration damping. This is one of the coolest project from my undergrad!',
     media: [
-      { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp' },
-      { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', hoverLabel: 'SproutUp electrical diagram and working', natural: true },
+      { src: '/images/full CNC render.jpg', label: 'CNC image 1', hoverLabel: 'CNC rendering', imageAspect: 'h-[226px] md:h-[260px]', hoverTextColor: 'text-gray-800' },
+      { src: '/images/full CNC physical.jpg', label: 'CNC image 2', hoverLabel: 'CNC fully assembled', imageAspect: 'h-[260px]' },
+      { src: '/images/CNC video.mp4', label: 'CNC video', hoverLabel: 'Aron 3000 in action', fluid: true, videoAspect: 'aspect-[8/9]' },
     ],
-    links: [
-      { label: 'Paper', href: '/images/SproutUp-paper.pdf' },
-      { label: 'Poster', href: '/images/SproutUp-poster.pdf' },
-    ],
+    mediaLayout: 'stack-left',
+    links: [],
   },
 ];
 
@@ -762,6 +770,7 @@ function HonoursSlide({ onDd, closeSignal }) {
         <Dropdown
           key={item.id}
           summaryTitle={item.title}
+          summaryDate={item.date}
           onOpenChange={onDd}
           scrollTargetId="projects"
           closeSignal={closeSignal}
@@ -785,29 +794,17 @@ function HonoursSlide({ onDd, closeSignal }) {
           {item.description && (
             <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
           )}
-          {item.mediaLayout === 'stack-left' ? (
-            <div className="flex gap-2 items-start">
-              <div className="flex flex-col gap-0 flex-1 min-w-0">
-                <MediaItemCell m={item.media[0]} squareImages={item.squareImages} />
-                <MediaItemCell m={item.media[1]} squareImages={item.squareImages} />
+          <div className="flex flex-col gap-4">
+            {item.media.map((m) => (
+              <MediaItemCell key={m.label} m={m} squareImages={item.squareImages} />
+            ))}
+            {item.sideText && (
+              <div>
+                <p className="text-sm font-semibold text-gray-800">{item.sideText.heading}</p>
+                <p className="text-sm text-gray-700 leading-relaxed mt-1">{item.sideText.body}</p>
               </div>
-              <MediaItemCell m={item.media[2]} squareImages={item.squareImages} outerClassName="w-[53%] flex-shrink-0 min-w-0" />
-            </div>
-          ) : (
-            <div className={`flex gap-4 items-start ${item.sideText ? '' : 'flex-wrap'}`}>
-              <div className={`flex gap-2 items-start ${item.sideText ? 'w-1/2 flex-shrink-0' : 'flex-1 min-w-0'}`}>
-                {item.media.map((m) => (
-                  <MediaItemCell key={m.label} m={m} squareImages={item.squareImages} />
-                ))}
-              </div>
-              {item.sideText && (
-                <div className="flex-1 min-w-0 mt-8">
-                  <p className="text-sm font-semibold text-gray-800">{item.sideText.heading}</p>
-                  <p className="text-sm text-gray-700 leading-relaxed mt-1">{item.sideText.body}</p>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </Dropdown>
       ))}
     </div>
@@ -831,6 +828,22 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
   const [currentIndex, setCurrentIndex] = useState(getInitialIndex);
   const [closeSignal, setCloseSignal] = useState(0);
   const touchStartX = useRef(null);
+
+  useEffect(() => {
+    [
+      '/images/suction-cup-assembly.mp4',
+      '/images/suction-cup-grab.mp4',
+      '/images/suction-cup-grab-2.mp4',
+      '/images/CNC video.mp4',
+      '/images/MPC-twowheeledrobot.mp4',
+    ].forEach(url => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'video';
+      link.href = url;
+      document.head.appendChild(link);
+    });
+  }, []);
 
   useEffect(() => {
     if (!jumpToProject?.count) return;

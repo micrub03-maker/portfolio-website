@@ -162,10 +162,10 @@ export default function SpotifyPlaylistsAPI() {
                 <span className="text-xs font-semibold text-white uppercase tracking-wide">Spotify</span>
             </div>
 
-            {/* Two-column body */}
-            <div className="flex gap-3">
-                {/* Left: 2x2 playlist grid */}
-                <div className="w-[40%] flex-shrink-0">
+            {/* Body: stacked on mobile, side-by-side on desktop */}
+            <div className="flex flex-col gap-3 md:flex-row">
+                {/* Playlists: 2x2 grid */}
+                <div className="w-full md:w-[40%] md:flex-shrink-0">
                     <p className="text-[11px] uppercase tracking-wide text-white/40 font-semibold mb-1.5">playlists</p>
                     <div className="grid grid-cols-2 gap-1.5">
                         {playlists.map((playlist) => (
@@ -192,10 +192,10 @@ export default function SpotifyPlaylistsAPI() {
                     </div>
                 </div>
 
-                {/* Right two columns wrapped together */}
-                <div className="flex-1 flex gap-1 min-w-0">
+                {/* Artists + tracks: side by side in their own row */}
+                {(topArtists.length > 0 || topTracks.length > 0) && (
+                <div className="flex gap-3 md:flex-1 min-w-0">
 
-                {/* Middle: ranked artist list */}
                 {topArtists.length > 0 && (
                     <div className="flex-1 min-w-0">
                         <p className="text-[11px] uppercase tracking-wide text-white/40 font-semibold mb-1.5">top artists</p>
@@ -206,8 +206,8 @@ export default function SpotifyPlaylistsAPI() {
                                     className="flex items-center gap-2 cursor-pointer group"
                                     onClick={() => artist.url && window.open(artist.url, '_blank')}
                                 >
-                                    <span className="text-[12px] text-white/30 w-4 text-right flex-shrink-0">{i + 1}</span>
-                                    <div className="w-[60px] h-[60px] rounded-full overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
+                                    <span className="text-[11px] text-white/30 w-3 text-right flex-shrink-0">{i + 1}</span>
+                                    <div className="w-8 h-8 md:w-[60px] md:h-[60px] rounded-full overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
                                         {artist.image ? (
                                             <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
                                         ) : (
@@ -218,14 +218,13 @@ export default function SpotifyPlaylistsAPI() {
                                             </div>
                                         )}
                                     </div>
-                                    <p className="text-[13px] text-white/70 truncate leading-tight">{artist.name}</p>
+                                    <p className="text-[11px] md:text-[13px] text-white/70 truncate leading-tight">{artist.name}</p>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
 
-                {/* Right: top tracks this week */}
                 {topTracks.length > 0 && (
                     <div className="flex-1 min-w-0">
                         <p className="text-[11px] uppercase tracking-wide text-white/40 font-semibold mb-1.5">top tracks</p>
@@ -236,8 +235,8 @@ export default function SpotifyPlaylistsAPI() {
                                     className="flex items-center gap-2 cursor-pointer group"
                                     onClick={() => track.url && window.open(track.url, '_blank')}
                                 >
-                                    <span className="text-[12px] text-white/30 w-4 text-right flex-shrink-0">{i + 1}</span>
-                                    <div className="w-[60px] h-[60px] rounded-lg overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
+                                    <span className="text-[11px] text-white/30 w-3 text-right flex-shrink-0">{i + 1}</span>
+                                    <div className="w-8 h-8 md:w-[60px] md:h-[60px] rounded-lg overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
                                         {track.image ? (
                                             <img src={track.image} alt={track.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
                                         ) : (
@@ -249,7 +248,7 @@ export default function SpotifyPlaylistsAPI() {
                                         )}
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                        <p className="text-[13px] text-white/70 truncate leading-tight">{track.name}</p>
+                                        <p className="text-[11px] md:text-[13px] text-white/70 truncate leading-tight">{track.name}</p>
                                         <p className="text-[10px] text-white/40 truncate leading-tight">{track.artist}</p>
                                     </div>
                                 </div>
@@ -258,6 +257,7 @@ export default function SpotifyPlaylistsAPI() {
                     </div>
                 )}
                 </div>
+                )}
             </div>
         </div>
     );
