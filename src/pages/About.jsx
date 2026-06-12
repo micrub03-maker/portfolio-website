@@ -50,6 +50,7 @@ export default function About() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [travelJump, setTravelJump] = useState(0);
   const [projectJump, setProjectJump] = useState({ key: null, count: 0 });
+  const [resumeOpen, setResumeOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
   const [widgetsHiding, setWidgetsHiding] = useState(false);
   const [widgetRects, setWidgetRects] = useState(null);
@@ -61,6 +62,7 @@ export default function About() {
   const projectsRef    = useRef(null);
   const tocRef         = useRef(null);
   const readsRef       = useRef(null);
+  const resumeSectionRef = useRef(null);
 
   const handleProfileClick = () => {
     profileClickCount.current += 1;
@@ -141,6 +143,31 @@ export default function About() {
   useEffect(() => {
     handleProfileLoad();
   }, []);
+
+  useEffect(() => {
+    if (!resumeOpen) return;
+    const el = resumeSectionRef.current;
+    if (!el) return;
+    let observer = null;
+    let hasBeenVisible = false;
+    const timeout = setTimeout(() => {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            hasBeenVisible = true;
+          } else if (hasBeenVisible) {
+            setResumeOpen(false);
+          }
+        },
+        { threshold: 0 }
+      );
+      observer.observe(el);
+    }, 700);
+    return () => {
+      clearTimeout(timeout);
+      observer?.disconnect();
+    };
+  }, [resumeOpen]);
 
 
   const handleProfileLoad = () => {
@@ -230,7 +257,7 @@ export default function About() {
           fadeIn ? "opacity-100" : "opacity-0"
         }`}
       >
-      <TableOfContents />
+      <TableOfContents onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); }} />
         <div
           id="home"
           className="w-full min-h-screen md:h-screen flex flex-col bg-cover bg-center relative overflow-hidden"
@@ -246,7 +273,7 @@ export default function About() {
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
               <div ref={profileCardRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-all">
                 <div
-                  className="w-20 h-20 md:w-48 md:h-48 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-4 flex-shrink-0 cursor-pointer select-none"
+                  className="w-16 h-16 md:w-36 md:h-36 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
                   onClick={handleProfileClick}
                 >
                   <img
@@ -255,7 +282,7 @@ export default function About() {
                     className="block w-full h-full object-cover object-top pointer-events-none"
                   />
                 </div>
-                <h1 className="text-base md:text-3xl font-bold text-white mb-1">Michael Rubin</h1>
+                <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
                 <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
                 <div className="flex items-center gap-2 mb-1">
                   <img src={berkeley} alt="UC Berkeley" className="h-5 md:h-11 w-auto opacity-80" />
@@ -266,7 +293,7 @@ export default function About() {
                 </p>
 
                 {/* Social Links */}
-                <div className="flex gap-1 md:gap-2 w-full mb-1 md:mb-4">
+                <div className="flex gap-1 md:gap-2 w-full mb-1 md:mb-1.5">
                   <a href="https://github.com/micrub03-maker" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
                     <img className="h-4 w-4" src={github} alt="github" />
                     <span className="text-white text-xs font-medium">GitHub</span>
@@ -277,6 +304,19 @@ export default function About() {
                   </a>
                 </div>
 
+                {/* Resume link */}
+                <a
+                  href="/Michael_Rubin_Resume (General).pdf"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all hover:scale-105 w-full mb-3 md:mb-4"
+                >
+                  <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="text-white text-xs font-medium">Resume</span>
+                </a>
+
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-1 md:gap-2 w-full">
                   <button className="text-black bg-white hover:bg-gray-100 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 shadow-lg text-xs md:text-sm"
@@ -284,7 +324,7 @@ export default function About() {
                   >
                     Learn More
                   </button>
-                  <button 
+                  <button
                     onClick={handleScrollGetInTouch}
                     className="text-white bg-white/20 hover:bg-white/30 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 border border-white/30 text-xs md:text-sm"
                   >
@@ -308,7 +348,7 @@ export default function About() {
               {/* Table of Contents - Bottom left widget — desktop only */}
               {!isMobile && (
                 <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                  <TableOfContents isWidget={true} />
+                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); }} />
                 </div>
               )}
 
@@ -342,13 +382,38 @@ export default function About() {
         <div id="interests" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <InterestsCarousel jumpToTravel={travelJump} />
         </div>
-        <div id="resume" className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <h2 className="text-center mb-8 text-2xl md:text-3xl font-bold text-gray-400">resume overview</h2>
-          <div className="flex flex-col gap-10">
-            <Skills />
-            <Experience />
-            <Education />
-          </div>
+        <div id="resume" ref={resumeSectionRef} className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
+          <button
+            onClick={() => setResumeOpen((o) => !o)}
+            className="w-full flex items-center justify-center gap-3 mb-8 group"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors">resume overview</h2>
+            <motion.span
+              animate={{ rotate: resumeOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-gray-400 group-hover:text-gray-300 transition-colors text-xl leading-none mt-1"
+            >
+              ▾
+            </motion.span>
+          </button>
+          <AnimatePresence initial={false}>
+            {resumeOpen && (
+              <motion.div
+                key="resume-content"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.35, ease: "easeInOut" }}
+                style={{ overflow: "hidden" }}
+              >
+                <div className="flex flex-col gap-10">
+                  <Skills />
+                  <Experience />
+                  <Education />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
         <div id="getInTouch" className="flex flex-col items-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">contact</h2>

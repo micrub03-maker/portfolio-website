@@ -129,7 +129,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
       <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">interests</h2>
 
       <div
-        className="max-w-3xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
+        className="max-w-5xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >

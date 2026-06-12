@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useMediaQuery } from 'react-responsive';
 
-const TableOfContents = ({ isWidget = false }) => {
+const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
   const isDesktop = useMediaQuery({ query: '(min-width: 768px)' });
   const [activeSection, setActiveSection] = useState('home');
   const [isHovered, setIsHovered] = useState(false);
@@ -63,14 +63,22 @@ const TableOfContents = ({ isWidget = false }) => {
   }, []);
 
   const scrollToSection = (sectionId) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      const yOffset = sectionId === 'projects' ? 30
-                    : (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10
-                    : -80;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
+    onSectionNavigate?.(sectionId);
+    // Defer scroll past two animation frames so React flushes the accordion
+    // state change and the browser lays out before we measure + scroll. This
+    // prevents the concurrent layout shift from cancelling the smooth scroll.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const yOffset = sectionId === 'projects' ? 30
+                        : (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10
+                        : -80;
+          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      })
+    );
   };
 
   // Widget version

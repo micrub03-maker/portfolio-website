@@ -18,11 +18,13 @@ function Bullets({ items }) {
   );
 }
 
-function SideBySide({ pic, children }) {
+function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, children }) {
+  // tw: md:w-1/2 md:w-[45%] md:w-[55%]
+  const imageCol = <div className={`w-full md:${picWidth} flex-shrink-0`}>{pic}</div>;
+  const textCol = <p className="text-sm text-gray-700 leading-relaxed md:mt-8">{children}</p>;
   return (
-    <div className="flex flex-col gap-4">
-      {pic}
-      <p className="text-sm text-gray-700 leading-relaxed">{children}</p>
+    <div className="flex flex-col md:flex-row gap-4 md:items-start">
+      {picLeft ? <>{imageCol}{textCol}</> : <>{textCol}{imageCol}</>}
     </div>
   );
 }
@@ -43,6 +45,27 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
     setOpen(false);
     onOpenChange?.(false);
   }, [closeSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!open) return;
+    let observer = null;
+    let hasBeenVisible = false;
+    const timeout = setTimeout(() => {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            hasBeenVisible = true;
+          } else if (hasBeenVisible) {
+            setOpen(false);
+            onOpenChange?.(false);
+          }
+        },
+        { threshold: 0 }
+      );
+      if (containerRef.current) observer.observe(containerRef.current);
+    }, 700);
+    return () => { clearTimeout(timeout); observer?.disconnect(); };
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = (e) => {
     e?.stopPropagation();
@@ -238,13 +261,15 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           }>
             I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand these issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
           </SideBySide>
-          <div className="flex flex-col gap-4">
-            <AssemblyGuide />
-            <p className="text-sm text-gray-700 leading-relaxed">
+          <div className="flex flex-col md:flex-row gap-4 md:items-start">
+            <p className="text-sm text-gray-700 leading-relaxed md:mt-8">
               That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
               <br />
               <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
             </p>
+            <div className="w-full md:w-[55%] flex-shrink-0">
+              <AssemblyGuide />
+            </div>
           </div>
           <SideBySide picWidth="w-[45%]" pic={
             <div className="relative group">
@@ -400,7 +425,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
             <div className="flex justify-center">
               <div className="relative group w-full md:w-[73%]">
-                <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[202px]">
+                <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[240px]">
                   <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" />
                 </div>
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
@@ -467,12 +492,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
-          <div className="flex flex-col gap-4">
+          <SideBySide pic={
             <div className="relative group">
               <MediaSlot
                 src={'/images/Axiris-interviews.png'}
                 label="Axiris market research"
-                imageAspect="h-auto md:h-[227px]"
+                natural
               />
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -481,14 +506,13 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why?
-              <br />
-              <br />
-              Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root.
-            </p>
-          </div>
-          <div className="flex flex-col gap-4">
+          }>
+            Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why?
+            <br />
+            <br />
+            Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root.
+          </SideBySide>
+          <SideBySide picLeft={false} pic={
             <div className="relative group">
               <MediaSlot
                 src={'/images/Axiris-optical.png'}
@@ -502,13 +526,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
-              <br />
-              <br />
-              I then started speccing the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
-            </p>
-          </div>
+          }>
+            Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
+            <br />
+            <br />
+            I then started speccing the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
+          </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -523,7 +546,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
-          <div className="flex flex-col gap-4">
+          <SideBySide pic={
             <div className="relative group">
               <MediaSlot
                 src={'/images/Axiris-model-eye.png'}
@@ -537,13 +560,12 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 </div>
               </div>
             </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state. This allowed us to tune the image-processing pipeline and guide mechanical changes.
-              <br />
-              <br />
-              We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment.
-            </p>
-          </div>
+          }>
+            Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state. This allowed us to tune the image-processing pipeline and guide mechanical changes.
+            <br />
+            <br />
+            We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment.
+          </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
           <Bullets
             items={[
@@ -643,7 +665,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             Overall, design choices were made to reduce part count, enable easier handling and with high volume manufacturing in mind.
           </SideBySide>
           <SideBySide pic={
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col md:flex-row gap-2">
               <div className="flex-1 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
                 <MediaSlot src={'/images/suction-cup-grab.mp4'} label="maximum payload suction cup" videoAspect="aspect-[45/64]" />
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
@@ -697,9 +719,10 @@ const honourItems = [
     date: 'Sept 2025 – Dec 2025',
     title: 'SproutUp: An Assistive Standing Device',
     squareImages: true,
+    mediaLayout: 'text-above',
     description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance. A bit on the bulky side, because our budget had strong opinions.',
     media: [
-      { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp' },
+      { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp', imageAspect: 'aspect-[20/19]' },
       { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', hoverLabel: 'SproutUp deep dive', natural: true, hoverTextColor: 'text-gray-800' },
     ],
     links: [
@@ -711,6 +734,7 @@ const honourItems = [
     id: 'adlap',
     date: 'Feb 2024 – May 2024',
     title: 'Capstone: A Light Module for a Robotic Surgery System',
+    mediaLayout: 'text-above',
     media: [
       { src: '/images/adlap-final-design-details.png', label: 'adlap rendering', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' },
       { src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' },
@@ -722,10 +746,11 @@ const honourItems = [
     id: 'pcm',
     date: 'Nov 2022 – Jan 2023',
     title: 'Phase Change Materials Based Cooling in Solar Panels',
+    mediaLayout: 'text-above',
     description: 'Built a Python model of a solar panel system with phase-change material cooling to analyze efficiency trends under varying environmental conditions.',
     media: [
-      { src: '/images/PCM-schema.png', label: 'PCM schema', hoverLabel: 'PCM-PV cell interactions', natural: true, hoverTextColor: 'text-gray-800' },
-      { src: '/images/PCM-results.png', label: 'PCM results', hoverLabel: 'PV cell efficiency simulation results', imageAspect: 'aspect-[10/4.8]', hoverTextColor: 'text-gray-800' },
+      { src: '/images/PCM-results.png', label: 'PCM results', hoverLabel: 'PV cell efficiency simulation results', imageAspect: 'aspect-[10/4.8]', hoverTextColor: 'text-gray-800', outerClassName: 'w-full md:w-[70%] flex-shrink-0' },
+      { src: '/images/PCM-schema.png', label: 'PCM schema', hoverLabel: 'PCM-PV cell interactions', natural: true, hoverTextColor: 'text-gray-800', outerClassName: 'w-full md:w-[30%] flex-shrink-0' },
     ],
     links: [{ label: 'Paper', href: '/images/PCM_FINALREPORT.pdf' }],
   },
@@ -739,7 +764,7 @@ const honourItems = [
       { src: '/images/full CNC physical.jpg', label: 'CNC image 2', hoverLabel: 'CNC fully assembled', imageAspect: 'h-[260px]' },
       { src: '/images/CNC video.mp4', label: 'CNC video', hoverLabel: 'Aron 3000 in action', fluid: true, videoAspect: 'aspect-[8/9]' },
     ],
-    mediaLayout: 'stack-left',
+    mediaLayout: 'text-above',
     links: [],
   },
 ];
@@ -791,20 +816,33 @@ function HonoursSlide({ onDd, closeSignal }) {
               ))}
             </div>
           )}
-          {item.description && (
-            <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>
-          )}
-          <div className="flex flex-col gap-4">
-            {item.media.map((m) => (
-              <MediaItemCell key={m.label} m={m} squareImages={item.squareImages} />
-            ))}
-            {item.sideText && (
-              <div>
-                <p className="text-sm font-semibold text-gray-800">{item.sideText.heading}</p>
-                <p className="text-sm text-gray-700 leading-relaxed mt-1">{item.sideText.body}</p>
+          {item.mediaLayout === 'text-above' ? (
+            <>
+              {item.description && <p className="text-sm text-gray-700 leading-relaxed">{item.description}</p>}
+              <div className="flex flex-col md:flex-row gap-2">
+                {item.media.map((m) => (
+                  <MediaItemCell key={m.label} m={m} squareImages={item.squareImages} outerClassName={m.outerClassName} />
+                ))}
               </div>
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="flex flex-col md:flex-row gap-4 md:items-start">
+              <div className="w-full md:w-1/2 flex-shrink-0 flex flex-col gap-2">
+                {item.media.map((m) => (
+                  <MediaItemCell key={m.label} m={m} squareImages={item.squareImages} />
+                ))}
+              </div>
+              <div className="text-sm text-gray-700 leading-relaxed md:mt-8">
+                {item.description && <p>{item.description}</p>}
+                {item.sideText && (
+                  <div className={item.description ? 'mt-2' : undefined}>
+                    <p className="font-semibold text-gray-800">{item.sideText.heading}</p>
+                    <p className="mt-1">{item.sideText.body}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </Dropdown>
       ))}
     </div>

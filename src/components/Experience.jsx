@@ -7,7 +7,7 @@ const mainEntries = [
     key: 'luci',
     logoLabel: 'MPC logo',
     logoSrc: '/images/MPC-logo.png',
-    role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2025 – Present',
+    role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2026 – Present',
     bullets: [
       'Developing an all-terrain autonomous surveillance rover in collaboration with NIWC Pacific',
       'Redesigning 3D-printed chassis for improved structural integrity, manufacturability, and field usability',
@@ -179,6 +179,26 @@ export default function Experience() {
   const toggleRef = useRef(null);
   const sectionRef = useRef(null);
 
+  React.useEffect(() => {
+    if (!showMore) return;
+    let observer = null;
+    let hasBeenVisible = false;
+    const timeout = setTimeout(() => {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            hasBeenVisible = true;
+          } else if (hasBeenVisible) {
+            setShowMore(false);
+          }
+        },
+        { threshold: 0 }
+      );
+      if (sectionRef.current) observer.observe(sectionRef.current);
+    }, 700);
+    return () => { clearTimeout(timeout); observer?.disconnect(); };
+  }, [showMore]);
+
   return (
     <div ref={sectionRef} onClick={() => { if (showMore && window.innerWidth >= 768) { setShowMore(false); sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
@@ -196,7 +216,7 @@ export default function Experience() {
           aria-controls="more-experience"
           className="flex items-center justify-between w-full rounded-2xl bg-white/50 backdrop-blur-md border border-gray-100 shadow-sm px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-white/70 hover:shadow-md transition-all"
         >
-          <span>{showMore ? 'Less Experience' : 'More Experience'}</span>
+          <span>{showMore ? 'Okay, that\'s everything — show less' : 'More experience — the full picture'}</span>
           <motion.span
             animate={{ rotate: showMore ? 180 : 0 }}
             transition={{ duration: 0.25 }}
@@ -212,19 +232,38 @@ export default function Experience() {
             <motion.div
               id="more-experience"
               key="more"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
-              className="flex flex-col gap-4"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
             >
-              {moreEntries.map((entry, i) => (
-                <ExperienceCard key={entry.key} entry={entry} index={i} />
-              ))}
+              <div className="flex flex-col gap-4">
+                {moreEntries.map((entry, i) => (
+                  <ExperienceCard key={entry.key} entry={entry} index={i} />
+                ))}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+
+      {/* Sticky collapse chip */}
+      <AnimatePresence>
+        {showMore && (
+          <motion.button
+            key="sticky-collapse"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.25 }}
+            onClick={(e) => { e.stopPropagation(); setShowMore(false); toggleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-white/85 backdrop-blur-md border border-gray-200 shadow-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:shadow-xl transition-all"
+          >
+            ↑ show less
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

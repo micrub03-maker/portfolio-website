@@ -1,35 +1,85 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { photos as DEFAULT_PHOTOS } from '../data/photoManifest';
 
-// ─── RANDOM SELECTION ────────────────────────────────────────────────────────
+const GAP = 6;
+const MAX_H = 420;
+const MIN_H = 180;
+const MIN_TWO_ROW_H = 140;
+const DEFAULT_W = 520;
+
+// ─── PHOTO SELECTION ──────────────────────────────────────────────────────────
 function pickPhotos(pool, count, excludeIds) {
   const available = excludeIds?.size ? pool.filter(p => !excludeIds.has(p.id)) : pool;
   const source = available.length >= count ? available : pool;
   return [...source].sort(() => Math.random() - 0.5).slice(0, count);
 }
 
-function nextFrame(pool, prevLayoutId, prevPhotoIds) {
-  const candidates = LAYOUTS.filter(l => l.id !== prevLayoutId);
-  const layout = candidates[Math.floor(Math.random() * candidates.length)];
-  const range = layout.maxPhotos - layout.minPhotos;
-  const count = layout.minPhotos + (range > 0 ? Math.floor(Math.random() * (range + 1)) : 0);
-  const photos = pickPhotos(pool, count, prevPhotoIds);
-  return { layout, photos };
+// ─── LAYOUT SELECTION ─────────────────────────────────────────────────────────
+// Called after photos are chosen. Returns 'row' | 'two-row' | 'mosaic'.
+//
+// row:     single flex row; each cell width = h * ar, h uniform.
+//          Natural h = (w - gaps) / Σar. Valid when MIN_H ≤ natural_h ≤ MAX_H.
+//          When natural_h > MAX_H the row shrinks and centers (portrait-heavy sets).
+//
+// two-row: two independent rows, each capped at half MAX_H. Good for many/wide photos.
+//
+// mosaic:  portrait hero | stacked column. Column width derived so both sides share
+//          exactly the same height with no empty space anywhere.
+function chooseLayout(photos, w) {
+  const n = photos.length;
+  const sumAr = photos.reduce((s, p) => s + p.ar, 0);
+  const rowH = (w - GAP * (n - 1)) / sumAr;
+  const avgAr = sumAr / n;
+  const hasPortrait = photos.some(p => p.ar < 0.9);
+
+  const opts = [];
+  if (rowH >= MIN_H) opts.push('row');
+
+  // Two-row: verify each actual sub-row will be tall enough
+  if ((n >= 4 || rowH < MIN_H) && avgAr > 0.85) {
+    const mid = Math.round(n / 2);
+    const maxRowH = Math.floor((MAX_H - GAP) / 2);
+    const h1 = Math.min(maxRowH, (w - GAP * (mid - 1)) / photos.slice(0, mid).reduce((s, p) => s + p.ar, 0));
+    const h2 = Math.min(maxRowH, (w - GAP * (n - mid - 1)) / photos.slice(mid).reduce((s, p) => s + p.ar, 0));
+    if (Math.min(h1, h2) >= MIN_TWO_ROW_H) opts.push('two-row');
+  }
+
+  // Mosaic: cap at 4 photos (1 hero + max 3 sidebar) and verify sidebar cells are big enough
+  if (n >= 3 && n <= 4 && hasPortrait) {
+    const heroIdx = photos.reduce((mi, p, i) => (p.ar < photos[mi].ar ? i : mi), 0);
+    const hero = photos[heroIdx];
+    const rest = photos.filter((_, i) => i !== heroIdx);
+    const nR = rest.length;
+    const sumInvAr = rest.reduce((s, p) => s + 1 / p.ar, 0);
+    const H = Math.min(MAX_H, (w - GAP + GAP * (nR - 1) / sumInvAr) / (hero.ar + 1 / sumInvAr));
+    const sideW = (H - GAP * (nR - 1)) / sumInvAr;
+    const minCellH = Math.min(...rest.map(p => sideW / p.ar));
+    if (minCellH >= MIN_TWO_ROW_H) opts.push('mosaic');
+  }
+  if (opts.length === 0) opts.push('row');
+  return opts[Math.floor(Math.random() * opts.length)];
 }
 
-// ─── UNCROPPED IMAGE CELL ─────────────────────────────────────────────────────
-// object-contain ensures the full image is always visible — never cropped.
-function Cell({ photo, className = '', style = {} }) {
+// ─── CELL ─────────────────────────────────────────────────────────────────────
+// width and height are pre-computed to exactly match the photo's aspect ratio,
+// so no objectFit trick is needed — the image fills the cell with zero distortion.
+function ImgCell({ photo, width, height }) {
   return (
     <div
-      className={`bg-slate-100 border border-slate-200/60 rounded-lg overflow-hidden flex items-center justify-center ${className}`}
-      style={style}
+      style={{
+        width,
+        height,
+        borderRadius: 8,
+        overflow: 'hidden',
+        flexShrink: 0,
+        backgroundColor: '#e2e8f0',
+      }}
     >
       <img
         src={photo.src}
         alt={photo.alt}
-        className="w-full h-full object-contain"
+        style={{ width: '100%', height: '100%', display: 'block' }}
         draggable={false}
         loading="lazy"
       />
@@ -37,185 +87,143 @@ function Cell({ photo, className = '', style = {} }) {
   );
 }
 
-// ─── LAYOUTS ─────────────────────────────────────────────────────────────────
-// Each layout: { id, minPhotos, maxPhotos, render(photos, reducedMotion) }
-// All paths use object-contain — zero cropping guaranteed.
-const LAYOUTS = [
-  {
-    // 1 large hero left + 2–4 stacked right
-    id: 'mosaic',
-    minPhotos: 4,
-    maxPhotos: 5,
-    render(photos) {
-      const [hero, ...stack] = photos;
-      return (
-        <div className="h-full grid gap-1.5" style={{ gridTemplateColumns: '3fr 2fr' }}>
-          <Cell photo={hero} />
-          <div
-            className="grid gap-1.5"
-            style={{ gridTemplateRows: `repeat(${stack.length}, 1fr)` }}
-          >
-            {stack.map(p => <Cell key={p.id} photo={p} />)}
-          </div>
-        </div>
-      );
-    },
-  },
-  {
-    // 2 stacked left + 1 tall right
-    id: 'asymmetric',
-    minPhotos: 3,
-    maxPhotos: 3,
-    render(photos) {
-      const [a, b, hero] = photos;
-      return (
-        <div className="h-full grid gap-1.5" style={{ gridTemplateColumns: '2fr 3fr' }}>
-          <div className="grid gap-1.5" style={{ gridTemplateRows: '1fr 1fr' }}>
-            <Cell photo={a} />
-            <Cell photo={b} />
-          </div>
-          <Cell photo={hero} />
-        </div>
-      );
-    },
-  },
-  {
-    // Narrow | Wide | Narrow horizontal strip
-    id: 'strip',
-    minPhotos: 3,
-    maxPhotos: 3,
-    render(photos) {
-      const [a, b, c] = photos;
-      return (
-        <div className="h-full grid gap-1.5" style={{ gridTemplateColumns: '1fr 2fr 1fr' }}>
-          <Cell photo={a} />
-          <Cell photo={b} />
-          <Cell photo={c} />
-        </div>
-      );
-    },
-  },
-  {
-    // Polaroid fan — rotated cards with white borders
-    id: 'postcard',
-    minPhotos: 3,
-    maxPhotos: 4,
-    render(photos, reduced) {
-      const rotations = reduced ? [0, 0, 0, 0] : [-6, 4, -3, 7];
-      const yOffsets  = reduced ? [0, 0, 0, 0] : [-8, 6, -5, 8];
-      const maxW = photos.length <= 3 ? '32%' : '26%';
-      return (
-        <div className="h-full flex items-center justify-center gap-2 px-3">
-          {photos.map((p, i) => (
-            <div
-              key={p.id}
-              className="bg-white shadow-md flex flex-col flex-shrink-0 rounded-lg overflow-hidden"
-              style={{
-                transform: `rotate(${rotations[i]}deg) translateY(${yOffsets[i]}px)`,
-                padding: '5px 5px 18px',
-                width: maxW,
-                height: '80%',
-              }}
-            >
-              <img
-                src={p.src}
-                alt={p.alt}
-                style={{ flex: 1, minHeight: 0, objectFit: 'contain', width: '100%' }}
-                draggable={false}
-                loading="lazy"
-              />
-            </div>
+// ─── LAYOUT RENDERERS ─────────────────────────────────────────────────────────
+
+// Single proportional row. h = min(MAX_H, (w - gaps) / Σar).
+// When h < natural, row is narrower than container and centers itself.
+function RowLayout({ photos, maxH, minH = MIN_H, w }) {
+  const n = photos.length;
+  const sumAr = photos.reduce((s, p) => s + p.ar, 0);
+  const h = Math.min(maxH, Math.max(minH, (w - GAP * (n - 1)) / sumAr));
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: GAP }}>
+        {photos.map(p => (
+          <ImgCell key={p.id} photo={p} width={h * p.ar} height={h} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Two independent rows. Each row gets half the available height.
+function TwoRowLayout({ photos, w }) {
+  const mid = Math.round(photos.length / 2);
+  const rowMaxH = Math.floor((MAX_H - GAP) / 2);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
+      <RowLayout photos={photos.slice(0, mid)} maxH={rowMaxH} minH={MIN_TWO_ROW_H} w={w} />
+      <RowLayout photos={photos.slice(mid)} maxH={rowMaxH} minH={MIN_TWO_ROW_H} w={w} />
+    </div>
+  );
+}
+
+// Portrait hero left + stacked column right.
+// Math: hero occupies heroW = H * hero.ar.
+// Sidebar: each cell width = sideW, height = sideW / ar_i.
+// For sidebar total height = H:  sideW * Σ(1/ar_i) + GAP*(n-1) = H
+//                                sideW = (H - GAP*(n-1)) / Σ(1/ar_i)
+// For heroW + sideW + GAP = w:  H is solved from the combined equation.
+// When H_raw > MAX_H the layout is narrower than w and centers.
+function MosaicLayout({ photos, w }) {
+  const heroIdx = photos.reduce((mi, p, i) => (p.ar < photos[mi].ar ? i : mi), 0);
+  const hero = photos[heroIdx];
+  const rest = photos.filter((_, i) => i !== heroIdx);
+  const nR = rest.length;
+  const sumInvAr = rest.reduce((s, p) => s + 1 / p.ar, 0);
+
+  const H_raw = (w - GAP + GAP * (nR - 1) / sumInvAr) / (hero.ar + 1 / sumInvAr);
+  const H = Math.min(MAX_H, Math.max(MIN_H, H_raw));
+  const heroW = H * hero.ar;
+  const sideW = Math.max(40, (H - GAP * (nR - 1)) / sumInvAr);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', gap: GAP }}>
+        <ImgCell photo={hero} width={heroW} height={H} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: GAP }}>
+          {rest.map(p => (
+            <ImgCell key={p.id} photo={p} width={sideW} height={sideW / p.ar} />
           ))}
         </div>
-      );
-    },
-  },
-  {
-    // Equal 2×2 grid
-    id: 'grid',
-    minPhotos: 4,
-    maxPhotos: 4,
-    render(photos) {
-      return (
-        <div className="h-full grid grid-cols-2 grid-rows-2 gap-1.5">
-          {photos.map(p => <Cell key={p.id} photo={p} />)}
-        </div>
-      );
-    },
-  },
-  {
-    // Wide hero on top + smaller images in a bottom row
-    id: 'featured-strip',
-    minPhotos: 3,
-    maxPhotos: 5,
-    render(photos) {
-      const [hero, ...rest] = photos;
-      return (
-        <div className="h-full flex flex-col gap-1.5">
-          <div style={{ flex: 2 }}>
-            <Cell photo={hero} style={{ height: '100%', width: '100%' }} />
-          </div>
-          <div className="flex gap-1.5" style={{ flex: 1 }}>
-            {rest.map(p => (
-              <Cell key={p.id} photo={p} className="flex-1" style={{ height: '100%' }} />
-            ))}
-          </div>
-        </div>
-      );
-    },
-  },
-];
+      </div>
+    </div>
+  );
+}
 
-// ─── COMPONENT ───────────────────────────────────────────────────────────────
+// ─── COMPONENT ────────────────────────────────────────────────────────────────
 export default function PhotographyShowcase({ photos: photoProp }) {
   const pool = photoProp ?? DEFAULT_PHOTOS;
   const reduced = useReducedMotion();
+  const containerRef = useRef(null);
+  const wRef = useRef(DEFAULT_W);
+  const [containerW, setContainerW] = useState(DEFAULT_W);
+  const isFirstPhotoPropRun = useRef(true);
 
   const [frame, setFrame] = useState(() => {
-    const initial = nextFrame(pool, null, new Set());
-    return { ...initial, tick: 0 };
+    const photos = pickPhotos(pool, 3 + Math.floor(Math.random() * 3), new Set());
+    return { photos, layoutType: chooseLayout(photos, DEFAULT_W), tick: 0 };
   });
 
+  // Measure container width and keep it current
   useEffect(() => {
-    setFrame(() => {
-      const initial = nextFrame(pool, null, new Set());
-      return { ...initial, tick: 0 };
-    });
+    const el = containerRef.current;
+    if (!el) return;
+    const sync = (w) => { wRef.current = w; setContainerW(w); };
+    const obs = new ResizeObserver(([e]) => sync(e.contentRect.width));
+    obs.observe(el);
+    const initial = el.getBoundingClientRect().width;
+    if (initial > 0) sync(initial);
+    return () => obs.disconnect();
+  }, []);
+
+  // Reset when the photo pool prop changes (skip first mount)
+  useEffect(() => {
+    if (isFirstPhotoPropRun.current) { isFirstPhotoPropRun.current = false; return; }
+    const photos = pickPhotos(pool, 3 + Math.floor(Math.random() * 3), new Set());
+    setFrame({ photos, layoutType: chooseLayout(photos, wRef.current), tick: 0 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoProp]);
 
+  // Rotation interval
   useEffect(() => {
     const id = setInterval(() => {
       setFrame(prev => {
-        const next = nextFrame(
-          pool,
-          prev.layout.id,
-          new Set(prev.photos.map(p => p.id))
-        );
-        return { ...next, tick: prev.tick + 1 };
+        const count = 3 + Math.floor(Math.random() * 3);
+        const photos = pickPhotos(pool, count, new Set(prev.photos.map(p => p.id)));
+        return { photos, layoutType: chooseLayout(photos, wRef.current), tick: prev.tick + 1 };
       });
     }, 5000);
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoProp]);
 
+  const w = Math.max(containerW, 200);
+
   return (
     <div
-      className="w-full rounded-xl overflow-hidden my-3"
-      style={{ height: '240px' }}
+      ref={containerRef}
+      className="w-full my-3"
       role="img"
       aria-label="Photography showcase — rotating photo collage"
     >
       <AnimatePresence mode="wait">
         <motion.div
           key={frame.tick}
-          className="h-full w-full"
           initial={{ opacity: 0, scale: reduced ? 1 : 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: reduced ? 1 : 0.97 }}
           transition={{ duration: reduced ? 0.12 : 0.32 }}
         >
-          {frame.layout.render(frame.photos, !!reduced)}
+          {frame.layoutType === 'two-row' && (
+            <TwoRowLayout photos={frame.photos} w={w} />
+          )}
+          {frame.layoutType === 'mosaic' && (
+            <MosaicLayout photos={frame.photos} w={w} />
+          )}
+          {frame.layoutType === 'row' && (
+            <RowLayout photos={frame.photos} maxH={MAX_H} w={w} />
+          )}
         </motion.div>
       </AnimatePresence>
     </div>
