@@ -217,7 +217,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         {/* Full-width case-study dropdown */}
         <Dropdown
           summaryTitle="An insight into how I start new projects"
-          summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
+          summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own robot from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
@@ -236,13 +236,13 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             </div>
             </div>
           }>
-            I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand those issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
+            I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand these issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
           </SideBySide>
           <div className="flex gap-4 items-start">
             <p className="text-sm text-gray-700 leading-relaxed mt-8">
               That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
               <br />
-              <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. Doing this was the best way to get up to speed quickly!
+              <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
             </p>
             <div className="w-[55%] flex-shrink-0">
               <AssemblyGuide />
@@ -261,11 +261,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               </div>
             </div>
           }>
-            This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
-            After I now feel confident I have enough context to start the fun part! 
+            Doing all of this was the best way to get up to speed quickly. I now feel confident I have enough context to start the fun part! 
             <br />
             <br />
-             First solve: I designed a simple mount for the camera improving stability and crash resilience, and am working on including damping and an automated pan/tilt mechanism.
+            First solve: I designed a simple mount for the camera improving stability and crash resilience, and am working on including damping and an automated pan/tilt mechanism.
           </SideBySide>
         </Dropdown>
       </Dropdown>
@@ -273,7 +272,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown summaryTitle="Seatbelts Development @ CALSOL" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Seatbelts Development @ CalSol" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -319,7 +318,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               </a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              As Driver Safety Lead for the Berkeley Solar car student team, I owned the design, analysis, and validation of the five-point seatbelt harness mounting system CalSol's for our GenXI solar vehicle. I oversaw the full process from regulation interpretation and design through physical testing and manufacturing handoff. 
+              As Driver Safety Lead for the Berkeley Solar car student team, I owned the design, analysis, and validation of the five-point seatbelt harness mounting system for CalSol's GenXI solar vehicle. I oversaw the full process from regulation interpretation and design through physical testing and manufacturing handoff. 
               <br /> 
               < br/>
               Our seatbelt system was the first mechanical subsystem to pass scrutineering for the 2026 race cycle.
@@ -329,7 +328,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         {/* Full-width case-study dropdowns */}
         <Dropdown
           summaryTitle="An insight into lap-belt insert design and validation"
-          summarySubtitle="TL;DR I designed bonded metal inserts for the lap and sub-belts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
+          summarySubtitle="TL;DR I designed bonded metal inserts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
@@ -488,10 +487,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           </div>
           <div className="flex flex-row gap-4 items-start">
             <p className="text-sm text-gray-700 leading-relaxed flex-[1.1] mt-8">
-              Using a Pugh chart and expert feedback, we landed on a handheld device with dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
+              Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
               <br />
               <br />
-              I then tackled the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
+              I then started speccing the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
             </p>
             <div className="relative group flex-[0.9]">
               <MediaSlot
@@ -510,7 +509,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'Today’s design measures sphere only. Future versions should add cylinder and axis so the device can capture astigmatism and higher-order aberrations without losing affordability.',
+              'Today’s design measures near/farsightedness only. Future versions should capture astigmatism and higher-order aberrations too without losing affordability.',
               'The current prototype has not been tested for durability. I would add accelerated life testing to future iterations.',
             ]}
           />
@@ -545,7 +544,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
           <Bullets
             items={[
-              'A more realistic model eye would be needed for precise calibration in future. However, the simplicity and high reflectance of the current model eye was intentional, as it was ideal for early, rough validation.',
+              'A more realistic model eye is needed for precise calibration in future. However, the simplicity and high reflectance of the current model eye was intentional, as it was ideal for early, rough validation.',
             ]}
           />
         </Dropdown>
@@ -578,9 +577,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               <a href="/images/135_report_finaldraft_pdf.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              The Smart Suction Cup is a multi-chamber robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
+              The Smart Suction Cup is a multi-chamber, vacuum-based robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
               <br />
-              <br /> For my graduate capstone, I improved its manufacturability and robustness, standardizing the robot-arm interface, cutting the part count from 32 to 9, reducing setup time from 15 minutes to 1:45, and designing a custom PCB as we scaled from a research prototype to a production-ready run of over 1,000 units.
+              <br /> For my graduate capstone, I improved its manufacturability and robustness:designing a custom PCB, standardizing the robot-arm interface, cutting the part count from 32 to 9 and reducing setup time from 15 minutes to 1:45 as we scaled from a research prototype to a production-ready run of over 1,000 units.
             </p>
           </div>
         </div>
@@ -588,13 +587,16 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         <div ref={suctionDropdownRef}>
         <Dropdown
           summaryTitle="An insight into how I design for manufacturability"
-          summarySubtitle="TL;DR redesigned the injection mold for the suction cup to achieve higher success rate in production."
+          summarySubtitle="TL;DR I redesigned the injection mold for the suction cup to achieve higher success rate in production."
           onOpenChange={onDd}
           scrollTargetId="projects"
         >
           <div className="flex flex-col md:flex-row gap-4 items-start">
             <p className="text-sm text-gray-700 leading-relaxed md:order-2 md:mt-8">
-              An example I led is the silicone suction cup itself. I switched to a three-chamber geometry and redesigned its mold. The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
+              To improve the manufacturability of the silicone suction cup, I switched to a three-chamber geometry and redesigned its mold. 
+              <br/>
+              <br />
+              The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
             </p>
             <div className="w-full md:w-[57%] md:order-1 min-w-0 flex-shrink-0 relative group">
               <div className="md:hidden">
@@ -722,7 +724,7 @@ const honourItems = [
     id: 'sproutup',
     title: 'SproutUp: An Assistive Standing Device',
     squareImages: true,
-    description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance.',
+    description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance. A bit on the bulky side, because our budget had strong opinions.',
     media: [
       { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp' },
       { src: '/images/Sprout-up-deep-dive.png', label: 'sproutup picture 2', hoverLabel: 'SproutUp electrical diagram and working', natural: true },

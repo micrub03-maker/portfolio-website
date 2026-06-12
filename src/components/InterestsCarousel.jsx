@@ -16,7 +16,7 @@ const slides = [
     mediaLabel: 'TEMP: skateboarding',
     mediaSrc: '/skate-videos.mp4',
     description:
-      "Creativity, community, challenging myself, and overcoming fear. Skating has been a big part of my life since I was 16, and it’s shaped how I approach growth. Whether it’s practicing handstands, learning how to juggle, or any small challenge I set for myself, I love having something to work toward and skating has been a big driver behind that motivation.",
+      "Creativity, community, challenging myself, and overcoming fear. Skating has been a big part of my life since I was 16, and it’s shaped how I approach growth. \n \n I love having something to work toward, whether it’s practicing handstands or learning how to juggle, any small challenge I set for myself is satisfying, and skating has been a big driver behind that motivation.",
   },
   {
     id: 'traveling',

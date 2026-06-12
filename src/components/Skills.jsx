@@ -6,7 +6,7 @@ const cards = [
     lines: [
       {
         label: 'Mechanical:',
-        rest: ' CAD & Drawing (SolidWorks CSWA certified, OnShape, fusion), FMEA, GD&T (ASME Y14.5-2018), DFx, RCA, V&V, Material Selection (Granta), BOM Management, Motor & Sensor Selection, Thermal optimization, Control Systems (PID, MPC)',
+        rest: ' CAD & Drawing (SolidWorks CSWA certified, OnShape, Fusion), FMEA, GD&T (ASME Y14.5-2018), DFx, Root Cause Analysis, Validation & Verification, Material Selection (Granta), BOM Management, Motor & Sensor Selection, Thermal Optimization, Control Systems (PID, MPC)',
       },
     ],
   },
@@ -15,7 +15,7 @@ const cards = [
     lines: [
       {
         label: 'Software:',
-        rest: ' FEA (Abaqus, Ansys, COMSOL), Programming (Python, MATLAB, C++, G-Code),Tools & Platforms (VSCode, Linux, Git, Ros2, Docker, Raspberry Pi), Microsoft Office (VBA, PivotTables)',
+        rest: ' FEA (Abaqus, Ansys, COMSOL), Programming (Python, MATLAB, C++, G-Code), Tools & Platforms (VSCode, Linux, Git, Ros2, Docker, Raspberry Pi), Microsoft Office (VBA, PivotTables)',
       },
     ],
   },
@@ -24,7 +24,7 @@ const cards = [
     lines: [
       {
         label: 'Manufacturing:',
-        rest: ' CNC, Additive (FFF, DLP, Cura), Injection Molding, Sheet metal fabrication, Bench Tests, Machine Shop Trained',
+        rest: ' CNC, Additive (FFF, DLP, I own a Bambulab P1S!), Injection Molding, Sheet Metal Fabrication, Bench Tests (Instron, Thermal, Calibration), Machine Shop & Lab Equipment Trained',
       },
     ]
   },
@@ -33,7 +33,7 @@ const cards = [
     lines: [
       {
         label: 'Languages & Soft Skills:',
-        rest: ' English (near-native, TOEFL 114/120), French (native), Dutch (native), Spanish (fluent), Hebrew (elementary), Adaptability, Reporting & Documentation, Collaboration, Task Prioritization, Creativity',
+        rest: ' English (Near-Native, TOEFL 114/120), French (Native), Spanish (Fluent), Hebrew (Elementary), Adaptability, Reporting & Documentation, Collaboration, Task Prioritization, Creativity',
       },
     ],
   },

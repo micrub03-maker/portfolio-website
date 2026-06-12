@@ -22,8 +22,8 @@ const mainEntries = [
     role: 'Chassis Engineer – Driver Safety Lead (CALSOL Solar Vehicle Team) · Sept 2025 – Present',
     bullets: [
       'Led seatbelt system design to meet ASC and World Solar Challenge safety regulations',
-      'Reduced belt-mount weight by 15% while validating crash-load performance (FOS 1.6)',
-      'Simplified shoulder anchor design for efficient in-house manufacturing',
+      'Reduced lap belt-mount weight by 15% while validating crash-load performance (FOS 1.6)',
+      'Topology optimized shoulder anchor designed for efficient in-house manufacturing',
     ],
   },
   {
@@ -57,7 +57,8 @@ const moreEntries = [
     logoPlain: true,
     role: 'CERN Science Gateway Summer Program (CERN IdeaSquare) · May 2024 – Aug 2024',
     bullets: [
-      'Visiting student at CERN Ideasquare; Explored innovation and design methods to turn Big Science technologies into real-world applications',
+      'Visiting student at CERN Ideasquare',
+      'Explored innovation and design methods to turn Big Science technologies into real-world applications',
       'Part of the Honours program at TU Delft',
     ],
   },
@@ -109,7 +110,8 @@ const moreEntries = [
     logoSrcsHeight: 'h-[80px]',
     role: 'Hospitality & Events (Antwerp, Belgium) · July 2019 – July 2025',
     bullets: [
-      'Worked part-time in restaurants and at events, handling floor operations, bar service, and customer-facing responsibilities',
+      'Worked part-time in restaurants and at events',
+      'Handled floor operations, bar service, and customer-facing responsibilities',
     ],
   },
   {
