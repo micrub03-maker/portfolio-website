@@ -37,22 +37,22 @@ const HouseIcon = ({ className }) => (
 
 const TripHighlightCard = ({ title, year }) => (
   <div className="bg-white/10 border border-white/10 rounded-lg px-2 py-1.5">
-    <p className="text-[10px] text-white leading-tight">{title}</p>
-    {year && <p className="text-[9px] text-white/40 mt-0.5">{year}</p>}
+    <p className="text-base text-white leading-tight">{title}</p>
+    {year && <p className="text-sm text-white/40 mt-0.5">{year}</p>}
   </div>
 );
 
 const TripDreamCard = ({ title }) => (
   <div className="bg-amber-500/15 border border-amber-400/20 rounded-lg px-2 py-1.5">
-    <p className="text-[10px] text-amber-100 leading-tight">{title}</p>
+    <p className="text-base text-amber-100 leading-tight">{title}</p>
   </div>
 );
 
 const StatItem = ({ icon: Icon, label, value, onClick }) => (
   <div className="flex flex-col items-center gap-0.5 flex-1" onClick={onClick} style={onClick ? { cursor: 'pointer' } : {}}>
     <Icon className="w-3 h-3 text-white/60" />
-    <span className="text-xs font-semibold text-white">{value}</span>
-    <span className="text-[10px] text-white/60 text-center leading-tight">{label}</span>
+    <span className="text-lg font-semibold text-white">{value}</span>
+    <span className="text-base text-white/60 text-center leading-tight">{label}</span>
   </div>
 );
 
@@ -413,17 +413,17 @@ const TravelMap = ({ compact = false, onNavigate }) => {
           /* Desktop compact: map | stats | trip highlights */
           <div className="flex flex-row gap-2">
             {mapArea}
-            <div className="flex flex-col gap-3 justify-center w-20 shrink-0 border-l border-white/20 pl-3">
+            <div className="flex flex-col gap-3 justify-center w-36 shrink-0 border-l border-white/20 pl-3">
               <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
               <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
               <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
             </div>
-            <div className="flex flex-col gap-1 w-36 shrink-0 border-l border-white/20 pl-3 justify-center">
-              <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mb-0.5">favourite trips</p>
+            <div className="flex flex-col gap-1 w-56 shrink-0 border-l border-white/20 pl-3 justify-center">
+              <p className="text-sm uppercase tracking-wide text-white/40 font-semibold mb-0.5">favourite trips</p>
               {travelData.trip_highlights.filter(h => h.type === 'highlight').map((h, i) => (
                 <TripHighlightCard key={i} title={h.title} year={h.year} />
               ))}
-              <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mt-1.5 mb-0.5">dream trips</p>
+              <p className="text-sm uppercase tracking-wide text-white/40 font-semibold mt-1.5 mb-0.5">dream trips</p>
               {travelData.trip_highlights.filter(h => h.type === 'dream').map((h, i) => (
                 <TripDreamCard key={i} title={h.title} />
               ))}

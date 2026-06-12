@@ -63,6 +63,27 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
   }, []);
 
   const scrollToSection = (sectionId) => {
+    if (sectionId === 'projects') {
+      // Scroll first with no concurrent state changes — firing the close signal
+      // simultaneously would trigger dropdown exit animations whose scroll-
+      // anchoring compensation cancels the smooth scroll. Instead, fire
+      // onSectionNavigate (which closes dropdowns) only after the scroll ends.
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const y = element.getBoundingClientRect().top + window.pageYOffset + 30;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+        let notified = false;
+        const notify = () => {
+          if (notified) return;
+          notified = true;
+          window.removeEventListener('scrollend', notify);
+          onSectionNavigate?.('projects');
+        };
+        window.addEventListener('scrollend', notify, { once: true });
+        setTimeout(notify, 800);
+      }
+      return;
+    }
     onSectionNavigate?.(sectionId);
     // Defer scroll past two animation frames so React flushes the accordion
     // state change and the browser lays out before we measure + scroll. This
@@ -71,9 +92,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
       requestAnimationFrame(() => {
         const element = document.getElementById(sectionId);
         if (element) {
-          const yOffset = sectionId === 'projects' ? 30
-                        : (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10
-                        : -80;
+          const yOffset = (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10 : -80;
           const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
           window.scrollTo({ top: y, behavior: 'smooth' });
         }

@@ -238,8 +238,7 @@ function repaint(canvas, map, accRoutes, avatarNat) {
 
 function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) {
   return (
-    <div style={{
-      padding: '20px 28px 18px',
+    <div className="ls-card-inner" style={{
       height: '100%',
       boxSizing: 'border-box',
       display: 'flex',
@@ -258,12 +257,12 @@ function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) 
 
       {/* Year + transport + counter */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexShrink: 0 }}>
-        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+        <span style={{ fontSize: 'clamp(11px, 2.8vw, 14px)', color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
           {chapter.year}
         </span>
         {chapter.transport && (
           <span style={{
-            fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em',
+            fontSize: 'clamp(9px, 2vw, 11px)', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em',
             textTransform: 'uppercase', fontFamily: 'monospace',
             background: 'rgba(255,255,255,0.07)', padding: '2px 8px',
             borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)',
@@ -271,16 +270,16 @@ function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) 
             {TRANSPORT_LABEL[chapter.transport] ?? chapter.transport}
           </span>
         )}
-        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', marginLeft: 'auto', fontFamily: 'monospace' }}>
+        <span style={{ fontSize: 'clamp(10px, 2vw, 12px)', color: 'rgba(255,255,255,0.28)', marginLeft: 'auto', fontFamily: 'monospace' }}>
           {chapterIndex + 1} / {total}
         </span>
       </div>
 
       {/* Title */}
       <p style={{
-        fontSize: 24, fontWeight: 700,
+        fontSize: 'clamp(16px, 4.5vw, 24px)', fontWeight: 700,
         color: 'rgba(255,255,255,0.97)',
-        margin: '0 0 12px',
+        margin: '0 0 8px',
         lineHeight: 1.2,
         flexShrink: 0,
       }}>
@@ -289,10 +288,10 @@ function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) 
 
       {/* Caption */}
       <p style={{
-        fontSize: 16,
+        fontSize: 'clamp(12px, 3.5vw, 18px)',
         color: 'rgba(255,255,255,0.72)',
         margin: 0,
-        lineHeight: 1.7,
+        lineHeight: 1.65,
         flex: 1,
         overflowY: 'auto',
         paddingRight: 4,
@@ -310,7 +309,7 @@ function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) 
             border: '1px solid rgba(255,255,255,0.15)',
             background: chapterIndex === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)',
             color: chapterIndex === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)',
-            fontSize: 14, cursor: chapterIndex === 0 ? 'default' : 'pointer',
+            fontSize: 'clamp(12px, 2.5vw, 14px)', cursor: chapterIndex === 0 ? 'default' : 'pointer',
             fontFamily: 'monospace',
           }}
         >
@@ -324,7 +323,7 @@ function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) 
               border: '1px solid rgba(255,255,255,0.25)',
               background: 'rgba(255,255,255,0.12)',
               color: 'rgba(255,255,255,0.9)',
-              fontSize: 14, cursor: 'pointer',
+              fontSize: 'clamp(12px, 2.5vw, 14px)', cursor: 'pointer',
               fontFamily: 'monospace', fontWeight: 600,
             }}
           >
@@ -338,7 +337,7 @@ function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) 
               border: '1px solid rgba(85,128,113,0.6)',
               background: 'rgba(85,128,113,0.25)',
               color: 'rgba(255,255,255,0.9)',
-              fontSize: 14, cursor: 'pointer',
+              fontSize: 'clamp(12px, 2.5vw, 14px)', cursor: 'pointer',
               fontFamily: 'monospace', fontWeight: 600,
             }}
           >
@@ -471,8 +470,8 @@ export default function LifeStoryEasterEgg({ onClose }) {
       const duration   = isMultileg
         ? Math.max(6000, Math.min(11000, dist * 12))
         : isTrain
-          ? Math.max(7000, Math.min(14000, dist * 35))
-          : Math.max(isCarLike ? 5000 : 1800, Math.min(isCarLike ? 9000 : 4000, dist * (isCarLike ? 40 : 12)));
+          ? Math.max(4900, Math.min(9800, dist * 24.5))
+          : Math.max(isCarLike ? 3500 : 1800, Math.min(isCarLike ? 6300 : 4000, dist * (isCarLike ? 28 : 12)));
 
       const fromScale = map.scale;
       const startTime = performance.now();
@@ -560,6 +559,10 @@ export default function LifeStoryEasterEgg({ onClose }) {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        .ls-card-inner { padding: 20px 28px 18px; }
+        @media (max-width: 600px) {
+          .ls-card-inner { padding: 12px 16px 12px; }
+        }
       `}</style>
       <div
         style={{
@@ -589,7 +592,7 @@ export default function LifeStoryEasterEgg({ onClose }) {
 
         {/* Map — always full height; story panel overlays from bottom */}
         <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}>
-          <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
+          <div ref={mountRef} style={{ width: '100%', height: '100%', pointerEvents: isAnimating ? 'none' : 'auto' }} />
           <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
           {!mapReady && (
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'monospace' }}>

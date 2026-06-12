@@ -94,7 +94,9 @@ function ImgCell({ photo, width, height }) {
 function RowLayout({ photos, maxH, minH = MIN_H, w }) {
   const n = photos.length;
   const sumAr = photos.reduce((s, p) => s + p.ar, 0);
-  const h = Math.min(maxH, Math.max(minH, (w - GAP * (n - 1)) / sumAr));
+  const naturalH = (w - GAP * (n - 1)) / sumAr;
+  // Don't enforce minH when it would push images wider than the container
+  const h = naturalH < minH ? naturalH : Math.min(maxH, naturalH);
   return (
     <div style={{ display: 'flex', justifyContent: 'center' }}>
       <div style={{ display: 'flex', gap: GAP }}>
@@ -133,7 +135,8 @@ function MosaicLayout({ photos, w }) {
   const sumInvAr = rest.reduce((s, p) => s + 1 / p.ar, 0);
 
   const H_raw = (w - GAP + GAP * (nR - 1) / sumInvAr) / (hero.ar + 1 / sumInvAr);
-  const H = Math.min(MAX_H, Math.max(MIN_H, H_raw));
+  // Don't enforce MIN_H when it would push total width beyond container
+  const H = H_raw < MIN_H ? H_raw : Math.min(MAX_H, H_raw);
   const heroW = H * hero.ar;
   const sideW = Math.max(40, (H - GAP * (nR - 1)) / sumInvAr);
 
@@ -152,6 +155,10 @@ function MosaicLayout({ photos, w }) {
 }
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
+function pickCount(w) {
+  return w < 500 ? 2 + Math.floor(Math.random() * 2) : 3 + Math.floor(Math.random() * 3);
+}
+
 export default function PhotographyShowcase({ photos: photoProp }) {
   const pool = photoProp ?? DEFAULT_PHOTOS;
   const reduced = useReducedMotion();
@@ -161,7 +168,7 @@ export default function PhotographyShowcase({ photos: photoProp }) {
   const isFirstPhotoPropRun = useRef(true);
 
   const [frame, setFrame] = useState(() => {
-    const photos = pickPhotos(pool, 3 + Math.floor(Math.random() * 3), new Set());
+    const photos = pickPhotos(pool, pickCount(DEFAULT_W), new Set());
     return { photos, layoutType: chooseLayout(photos, DEFAULT_W), tick: 0 };
   });
 
@@ -180,7 +187,7 @@ export default function PhotographyShowcase({ photos: photoProp }) {
   // Reset when the photo pool prop changes (skip first mount)
   useEffect(() => {
     if (isFirstPhotoPropRun.current) { isFirstPhotoPropRun.current = false; return; }
-    const photos = pickPhotos(pool, 3 + Math.floor(Math.random() * 3), new Set());
+    const photos = pickPhotos(pool, pickCount(wRef.current), new Set());
     setFrame({ photos, layoutType: chooseLayout(photos, wRef.current), tick: 0 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoProp]);
@@ -189,8 +196,7 @@ export default function PhotographyShowcase({ photos: photoProp }) {
   useEffect(() => {
     const id = setInterval(() => {
       setFrame(prev => {
-        const count = 3 + Math.floor(Math.random() * 3);
-        const photos = pickPhotos(pool, count, new Set(prev.photos.map(p => p.id)));
+        const photos = pickPhotos(pool, pickCount(wRef.current), new Set(prev.photos.map(p => p.id)));
         return { photos, layoutType: chooseLayout(photos, wRef.current), tick: prev.tick + 1 };
       });
     }, 5000);

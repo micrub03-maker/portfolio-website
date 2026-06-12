@@ -18,10 +18,12 @@ function Bullets({ items }) {
   );
 }
 
-function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, children }) {
+function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, mobileImageBelow = false, children }) {
   // tw: md:w-1/2 md:w-[45%] md:w-[55%]
-  const imageCol = <div className={`w-full md:${picWidth} flex-shrink-0`}>{pic}</div>;
-  const textCol = <p className="text-sm text-gray-700 leading-relaxed md:mt-8">{children}</p>;
+  const imageOrder = mobileImageBelow && picLeft ? 'order-last md:order-first' : '';
+  const textOrder = mobileImageBelow && picLeft ? 'order-first md:order-last' : '';
+  const imageCol = <div className={`w-full md:${picWidth} flex-shrink-0 ${imageOrder}`}>{pic}</div>;
+  const textCol = <p className={`text-sm text-gray-700 leading-relaxed md:mt-8 ${textOrder}`}>{children}</p>;
   return (
     <div className="flex flex-col md:flex-row gap-4 md:items-start">
       {picLeft ? <>{imageCol}{textCol}</> : <>{textCol}{imageCol}</>}
@@ -176,11 +178,11 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
       <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-          <div className="relative group flex flex-col">
+          <div className="relative group">
             <MediaSlot
               src={"/images/LUCI-CAD.png"}
               label="ONR Luci CAD"
-              fill
+              imageAspect="aspect-[16/9] md:aspect-auto md:h-[260px]"
             />
             <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -250,9 +252,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               <AssemblyGuide />
             </div>
           </div>
-          <SideBySide picWidth="w-[45%]" pic={
+          <SideBySide picWidth="w-[45%]" mobileImageBelow pic={
             <div className="relative group">
-              <div className="[&>div]:h-[208px]">
+              <div className="[&>div]:aspect-[4/3] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[208px]">
                 <MediaSlot src={'images/simple-mount-render-2.png'} label="simple mount" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
@@ -387,8 +389,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <SideBySide picWidth="w-1/2" pic={
             <div className="flex justify-center">
               <div className="relative group w-full md:w-[73%]">
-                <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[202px]">
-                  <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" />
+                <div className="md:[&>div]:h-[202px]">
+                  <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" padded />
                 </div>
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -404,8 +406,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
             <div className="flex justify-center">
               <div className="relative group w-full md:w-[73%]">
-                <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[240px]">
-                  <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" />
+                <div className="md:[&>div]:h-[240px]">
+                  <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" padded />
                 </div>
                 <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
@@ -889,7 +891,16 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
   const handleTouchEnd = (e) => {
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 40) diff > 0 ? goNext() : goPrev();
+    if (Math.abs(diff) > 40) {
+      diff > 0 ? goNext() : goPrev();
+      const section = document.getElementById('projects');
+      if (section) {
+        setTimeout(() => {
+          const y = section.getBoundingClientRect().top + window.pageYOffset - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }, 50);
+      }
+    }
     touchStartX.current = null;
   };
 

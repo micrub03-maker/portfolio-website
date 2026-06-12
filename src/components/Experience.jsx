@@ -7,6 +7,8 @@ const mainEntries = [
     key: 'luci',
     logoLabel: 'MPC logo',
     logoSrc: '/images/MPC-logo.png',
+    logoHeight: 'h-[80px]',
+    logoFit: 'object-contain',
     role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2026 – Present',
     bullets: [
       'Developing an all-terrain autonomous surveillance rover in collaboration with NIWC Pacific',
@@ -50,7 +52,7 @@ const mainEntries = [
 ];
 
 const moreEntries = [
-  {
+    {
     key: 'cern',
     logoLabel: 'CERN logo',
     logoSrc: '/images/CERN_logo.png',
@@ -122,7 +124,7 @@ const moreEntries = [
     logoHeight: 'h-[95px]',
     logoFit: 'object-cover',
     logoPadding: 'py-[2.5px]',
-    role: 'Sales Assistant (Filigranes Bookshop, Antwerp) · July 2020 – Aug 2022',
+    role: 'Sales Assistant (Filigranes Bookshop) · July 2020 – Aug 2022',
     bullets: [
       'Books, books, books !! The best first job one could wish for',
       'Supported front-of-house sales, inventory, and customer service in a high-traffic retail environment',
@@ -178,6 +180,13 @@ export default function Experience() {
   const [showMore, setShowMore] = useState(false);
   const toggleRef = useRef(null);
   const sectionRef = useRef(null);
+  const isAutoClosingRef = useRef(false);
+
+  React.useEffect(() => {
+    if (!showMore) {
+      isAutoClosingRef.current = false;
+    }
+  }, [showMore]);
 
   React.useEffect(() => {
     if (!showMore) return;
@@ -189,6 +198,7 @@ export default function Experience() {
           if (entry.isIntersecting) {
             hasBeenVisible = true;
           } else if (hasBeenVisible) {
+            isAutoClosingRef.current = true;
             setShowMore(false);
           }
         },
@@ -200,7 +210,7 @@ export default function Experience() {
   }, [showMore]);
 
   return (
-    <div ref={sectionRef} onClick={() => { if (showMore && window.innerWidth >= 768) { setShowMore(false); sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
+    <div ref={sectionRef} onClick={() => { if (showMore && window.innerWidth >= 768) { if (isAutoClosingRef.current) return; setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } }}>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
 
       <div className="flex flex-col gap-4">
@@ -211,7 +221,7 @@ export default function Experience() {
         {/* More Experience toggle */}
         <button
           ref={toggleRef}
-          onClick={(e) => { e.stopPropagation(); setShowMore((v) => !v); }}
+          onClick={(e) => { e.stopPropagation(); if (showMore) { setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } else { setShowMore(true); } }}
           aria-expanded={showMore}
           aria-controls="more-experience"
           className="flex items-center justify-between w-full rounded-2xl bg-white/50 backdrop-blur-md border border-gray-100 shadow-sm px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-white/70 hover:shadow-md transition-all"
@@ -257,7 +267,7 @@ export default function Experience() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.25 }}
-            onClick={(e) => { e.stopPropagation(); setShowMore(false); toggleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}
+            onClick={(e) => { e.stopPropagation(); if (isAutoClosingRef.current) return; setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); }}
             className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-white/85 backdrop-blur-md border border-gray-200 shadow-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:shadow-xl transition-all"
           >
             ↑ show less

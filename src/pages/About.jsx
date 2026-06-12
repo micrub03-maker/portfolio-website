@@ -44,6 +44,7 @@ const roarCar = "/images/roarcar.png";
 export default function About() {
   const isDesktop = useMediaQuery({ query: "(min-width: 768px)" });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
+  const isLandscapeMobile = useMediaQuery({ query: "(max-height: 500px) and (orientation: landscape) and (max-width: 900px)" });
   const { setAboutContentLoaded } = useBackground();
 
   const [fadeIn, setFadeIn] = useState(false);
@@ -219,6 +220,15 @@ export default function About() {
   const [formData, setFormData] = useState({ firstName: "", email: "", message: "" });
   const [submitStatus, setSubmitStatus] = useState(null); // null | "sending" | "success" | "error"
   const formRef = useRef(null);
+  const noteAccordionRef = useRef(null);
+
+  useEffect(() => {
+    if (noteOpen && noteAccordionRef.current) {
+      setTimeout(() => {
+        noteAccordionRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 320); // wait for the expand animation to finish
+    }
+  }, [noteOpen]);
 
   const allFilled = formData.firstName.trim() && formData.email.trim() && formData.message.trim();
 
@@ -261,102 +271,146 @@ export default function About() {
       <TableOfContents onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
         <div
           id="home"
-          className="w-full min-h-screen md:h-screen flex flex-col bg-cover bg-center relative overflow-hidden"
+          className={`w-full flex flex-col bg-cover bg-center relative overflow-hidden ${isLandscapeMobile ? 'h-screen' : 'min-h-screen md:h-screen'}`}
           style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/sunset.jpg')" }}
         >
           {/* Hero Dashboard - Redesigned */}
-          <div className="w-full h-full flex items-center justify-center px-4 md:px-8 py-4 md:py-6">
+          <div className={`w-full h-full flex items-center justify-center ${isLandscapeMobile ? 'px-2 py-1' : 'px-4 md:px-8 py-4 md:py-6'}`}>
             <div
-              className="w-full max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3 transition-opacity duration-300"
+              className={`w-full transition-opacity duration-300 ${isLandscapeMobile ? 'grid grid-cols-2 h-full gap-2' : 'max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3'}`}
               style={{ opacity: widgetsHiding ? 0 : 1 }}
             >
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
-              <div ref={profileCardRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-all">
-                <div
-                  className="w-24 h-24 md:w-44 md:h-44 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
-                  style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
-                  onClick={handleProfileClick}
-                >
-                  <img
-                    src={profile}
-                    alt="Portrait of Michael Rubin"
-                    className="block w-full h-full object-cover object-top pointer-events-none"
-                    style={{ imageRendering: 'auto' }}
-                  />
-                </div>
-                <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
-                <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
-                <div className="flex items-center gap-2 mb-1">
-                  <img src={berkeley} alt="UC Berkeley" className="h-5 md:h-11 w-auto opacity-80" />
-                  <img src={Delft} alt="TU Delft" className="h-5 md:h-11 w-auto opacity-80" />
-                </div>
-                <p className="text-white/70 text-xs md:text-sm mt-1 mb-1 md:mb-4 leading-relaxed">
-                  From Antwerp, Belgium
-                </p>
+              <div ref={profileCardRef} className={`bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 transition-all ${isLandscapeMobile ? 'col-span-1 row-span-1 p-2 flex items-center' : 'col-span-1 md:col-span-4 row-span-1 md:row-span-6 p-3 md:p-4 flex flex-col items-center justify-center text-center active:scale-[0.98] [@media(hover:hover)]:hover:scale-105'}`}>
+                {isLandscapeMobile ? (
+                  /* Landscape mobile: compact horizontal layout */
+                  <div className="flex flex-row items-center gap-3 w-full h-full">
+                    <div
+                      className="w-14 h-14 rounded-full overflow-hidden border border-white/20 flex-shrink-0 cursor-pointer select-none"
+                      style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+                      onClick={handleProfileClick}
+                    >
+                      <img src={profile} alt="Portrait of Michael Rubin" className="block w-full h-full object-cover object-top pointer-events-none" style={{ imageRendering: 'auto' }} />
+                    </div>
+                    <div className="flex flex-col gap-1 flex-1 min-w-0 text-left">
+                      <h1 className="text-xs font-bold text-white leading-none">Michael Rubin</h1>
+                      <p className="text-white/80 text-[10px] leading-tight">Mechanical/Controls Engineer @ MPC lab</p>
+                      <div className="flex items-center gap-1">
+                        <img src={berkeley} alt="UC Berkeley" className="h-3 w-auto opacity-80" />
+                        <img src={Delft} alt="TU Delft" className="h-3 w-auto opacity-80" />
+                      </div>
+                      <div className="flex gap-1 flex-wrap">
+                        <a href="https://github.com/micrub03-maker" target="_blank" rel="noreferrer" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all">
+                          <img className="h-2.5 w-2.5" src={github} alt="github" />
+                          <span className="text-white text-[10px] font-medium">GitHub</span>
+                        </a>
+                        <a href="https://www.linkedin.com/in/-michael-rubin" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all">
+                          <img className="h-2.5 w-2.5" src={linkedin} alt="linkedin" />
+                          <span className="text-white text-[10px] font-medium">LinkedIn</span>
+                        </a>
+                        <a href="/Michael_Rubin_Resume (General).pdf" target="_blank" rel="noreferrer" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all">
+                          <svg className="h-2.5 w-2.5 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span className="text-white text-[10px] font-medium">Resume</span>
+                        </a>
+                      </div>
+                      <div className="flex gap-1">
+                        <button className="flex-1 text-black bg-white font-semibold rounded px-2 py-0.5 transition-all shadow text-[10px]" onClick={handleScrollAbout}>Learn More</button>
+                        <button onClick={handleScrollGetInTouch} className="flex-1 text-white bg-white/20 font-semibold rounded px-2 py-0.5 transition-all border border-white/30 text-[10px]">Get in Touch</button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Portrait / desktop: original layout */
+                  <>
+                    <div
+                      className="w-32 h-32 md:w-52 md:h-52 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
+                      style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+                      onClick={handleProfileClick}
+                    >
+                      <img
+                        src={profile}
+                        alt="Portrait of Michael Rubin"
+                        className="block w-full h-full object-cover object-top pointer-events-none"
+                        style={{ imageRendering: 'auto' }}
+                      />
+                    </div>
+                    <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
+                    <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
+                    <div className="flex items-center gap-2 mb-1">
+                      <img src={berkeley} alt="UC Berkeley" className="h-5 md:h-11 w-auto opacity-80" />
+                      <img src={Delft} alt="TU Delft" className="h-5 md:h-11 w-auto opacity-80" />
+                    </div>
+                    <p className="text-white/70 text-xs md:text-sm mt-1 mb-1 md:mb-4 leading-relaxed">
+                      From Antwerp, Belgium
+                    </p>
 
-                {/* Social Links */}
-                <div className="flex gap-1 md:gap-2 w-full mb-1 md:mb-1.5">
-                  <a href="https://github.com/micrub03-maker" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
-                    <img className="h-4 w-4" src={github} alt="github" />
-                    <span className="text-white text-xs font-medium">GitHub</span>
-                  </a>
-                  <a href="https://www.linkedin.com/in/-michael-rubin" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
-                    <img className="h-4 w-4" src={linkedin} alt="linkedin" />
-                    <span className="text-white text-xs font-medium">LinkedIn</span>
-                  </a>
-                </div>
+                    {/* Social Links */}
+                    <div className="flex gap-1 md:gap-2 w-full mb-1 md:mb-1.5">
+                      <a href="https://github.com/micrub03-maker" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
+                        <img className="h-4 w-4" src={github} alt="github" />
+                        <span className="text-white text-xs font-medium">GitHub</span>
+                      </a>
+                      <a href="https://www.linkedin.com/in/-michael-rubin" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
+                        <img className="h-4 w-4" src={linkedin} alt="linkedin" />
+                        <span className="text-white text-xs font-medium">LinkedIn</span>
+                      </a>
+                    </div>
 
-                {/* Resume link */}
-                <a
-                  href="/Michael_Rubin_Resume (General).pdf"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all hover:scale-105 w-full mb-3 md:mb-4"
-                >
-                  <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  <span className="text-white text-xs font-medium">Resume</span>
-                </a>
+                    {/* Resume link */}
+                    <a
+                      href="/Michael_Rubin_Resume (General).pdf"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all active:scale-95 [@media(hover:hover)]:hover:scale-105 w-full mb-3 md:mb-4"
+                    >
+                      <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-white text-xs font-medium">Resume</span>
+                    </a>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-1 md:gap-2 w-full">
-                  <button className="text-black bg-white hover:bg-gray-100 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 shadow-lg text-xs md:text-sm"
-                    onClick={handleScrollAbout}
-                  >
-                    Learn More
-                  </button>
-                  <button
-                    onClick={handleScrollGetInTouch}
-                    className="text-white bg-white/20 hover:bg-white/30 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 border border-white/30 text-xs md:text-sm"
-                  >
-                    Get in Touch
-                  </button>
-                </div>
+                    {/* Action Buttons */}
+                    <div className="flex flex-col gap-1 md:gap-2 w-full">
+                      <button className="text-black bg-white hover:bg-gray-100 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 shadow-lg text-xs md:text-sm"
+                        onClick={handleScrollAbout}
+                      >
+                        Learn More
+                      </button>
+                      <button
+                        onClick={handleScrollGetInTouch}
+                        className="text-white bg-white/20 hover:bg-white/30 font-semibold rounded-lg px-3 md:px-4 py-1 md:py-2 transition-all hover:scale-105 border border-white/30 text-xs md:text-sm"
+                      >
+                        Get in Touch
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Travel Map widget — desktop only */}
-              {!isMobile && (
+              {!isMobile && !isLandscapeMobile && (
                 <div ref={travelRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
                   <TravelMap onNavigate={handleTravelNavigate} />
                 </div>
               )}
 
               {/* A.3 Project Overview */}
-              <div ref={projectsRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-52 md:h-full">
+              <div ref={projectsRef} className={isLandscapeMobile ? "col-span-1 row-span-1 h-full" : "col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-52 md:h-full"}>
                 <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} onNavigate={handleProjectsNavigate} />
               </div>
 
               {/* Table of Contents - Bottom left widget — desktop only */}
-              {!isMobile && (
+              {!isMobile && !isLandscapeMobile && (
                 <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
                   <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
                 </div>
               )}
 
               {/* Recent Reads - Bottom right widget — desktop only */}
-              {!isMobile && (
+              {!isMobile && !isLandscapeMobile && (
                 <div ref={readsRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
                   <RecentReads />
                 </div>
@@ -493,7 +547,7 @@ export default function About() {
             </div>
 
             {/* Drop me a note accordion */}
-            <div className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden">
+            <div ref={noteAccordionRef} className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden">
               <button
                 onClick={() => { setNoteOpen((o) => !o); setSubmitStatus(null); }}
                 className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left"
