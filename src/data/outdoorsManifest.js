@@ -1,24 +1,14 @@
-// ─── OUTDOORS PHOTO SOURCE ────────────────────────────────────────────────────
-// PLACEHOLDER: using picsum.photos seeds until /public/outdoors is ready.
-//
-// TO SWITCH TO REAL PHOTOS:
-//   1. Drop your images into /public/outdoors/
-//   2. Replace each `src` below with the actual path, e.g. '/outdoors/shot.jpg'
-//   3. Update `alt` to something meaningful for each image
-//   4. No other file needs to change — OutdoorsShowcase reads only this list
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const outdoorsPhotos = [
-  { id: 1,  src: 'https://picsum.photos/seed/out01/800/600', alt: 'Mountain slope',       aspect: 'landscape' },
-  { id: 2,  src: 'https://picsum.photos/seed/out02/600/900', alt: 'Powder turn',          aspect: 'portrait'  },
-  { id: 3,  src: 'https://picsum.photos/seed/out03/900/600', alt: 'Alpine panorama',      aspect: 'landscape' },
-  { id: 4,  src: 'https://picsum.photos/seed/out04/600/800', alt: 'Ski touring',          aspect: 'portrait'  },
-  { id: 5,  src: 'https://picsum.photos/seed/out05/850/600', alt: 'Snowy forest',         aspect: 'landscape' },
-  { id: 6,  src: 'https://picsum.photos/seed/out06/700/700', alt: 'Summit view',          aspect: 'square'    },
-  { id: 7,  src: 'https://picsum.photos/seed/out07/900/600', alt: 'Trail run',            aspect: 'landscape' },
-  { id: 8,  src: 'https://picsum.photos/seed/out08/600/900', alt: 'Splitboard hike',      aspect: 'portrait'  },
-  { id: 9,  src: 'https://picsum.photos/seed/out09/800/550', alt: 'Sunset on the slopes', aspect: 'landscape' },
-  { id: 10, src: 'https://picsum.photos/seed/out10/650/650', alt: 'Frozen lake',          aspect: 'square'    },
-  { id: 11, src: 'https://picsum.photos/seed/out11/900/600', alt: 'Backcountry line',     aspect: 'landscape' },
-  { id: 12, src: 'https://picsum.photos/seed/out12/600/900', alt: 'Chairlift view',       aspect: 'portrait'  },
+  { id: 1,  src: '/images/Bessegen ridge, Norway.jpg',  alt: 'Bessegen ridge, Norway',  aspect: 'landscape' },
+  { id: 2,  src: '/images/South of Norway.jpg',         alt: 'South of Norway',         aspect: 'portrait'  },
+  { id: 3,  src: '/images/Zermatt, Swiss.JPG',          alt: 'Zermatt, Swiss',          aspect: 'landscape' },
+  { id: 4,  src: '/images/Zermatt, Swiss (2).JPG',      alt: 'Zermatt, Swiss (2)',      aspect: 'landscape' },
+  { id: 5,  src: '/images/Alberta, Canada.jpg',         alt: 'Alberta, Canada',         aspect: 'portrait'  },
+  { id: 6,  src: '/images/Banff, Canada (2).jpg',       alt: 'Banff, Canada',           aspect: 'portrait'  },
+  { id: 7,  src: '/images/Canada.jpg',                  alt: 'Canada',                  aspect: 'portrait'  },
+  { id: 8,  src: '/images/Lake Louise, Canada.jpg',     alt: 'Lake Louise, Canada',     aspect: 'landscape' },
+  { id: 9,  src: '/images/Waterton Park, Canada.jpg',   alt: 'Waterton Park, Canada',   aspect: 'portrait'  },
+  { id: 10, src: '/images/Camping, Yosemite 21k.JPG',   alt: 'Camping, Yosemite 21k',   aspect: 'landscape' },
+  { id: 11, src: '/images/Yosemite, CA, USA.jpg',       alt: 'Yosemite, CA, USA',       aspect: 'square'    },
+  { id: 12, src: '/images/Phuket, Thailand.jpg',        alt: 'Phuket, Thailand',        aspect: 'landscape' },
 ];

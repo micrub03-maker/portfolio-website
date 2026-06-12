@@ -116,26 +116,23 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
         className="relative z-10 mx-3 rounded-xl overflow-hidden flex-1 min-h-0 select-none bg-white/5 border border-white/10"
         onClick={() => onProjectClick?.(active.projectKey)}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={active.projectKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="absolute inset-0"
+        {slides.map((slide, idx) => (
+          <div
+            key={slide.projectKey}
+            className="absolute inset-0 transition-opacity duration-300"
+            style={{ opacity: idx === activeIndex ? 1 : 0, zIndex: idx === activeIndex ? 1 : 0 }}
           >
-            {active.src?.endsWith('.mp4') ? (
-              <video src={active.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline />
-            ) : active.src ? (
-              <img src={active.src} alt={active.title} className="w-full h-full object-cover" />
+            {slide.src?.endsWith('.mp4') ? (
+              <video src={slide.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline preload="auto" />
+            ) : slide.src ? (
+              <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-white/50 text-xs font-medium">{active.title}</span>
+                <span className="text-white/50 text-xs font-medium">{slide.title}</span>
               </div>
             )}
-          </motion.div>
-        </AnimatePresence>
+          </div>
+        ))}
 
         {/* Left click zone */}
         <button

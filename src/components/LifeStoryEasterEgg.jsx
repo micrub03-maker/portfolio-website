@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { LIFE_STORY_CHAPTERS } from '../data/lifeStory';
+import { _pendingReinit } from './TravelMap';
 
 // ── World map projection (Miller cylindrical, jsvectormap world.js constants) ─
 
@@ -321,9 +322,13 @@ export default function LifeStoryEasterEgg({ onClose }) {
     return () => {
       destroyed = true;
       cancelRef.current?.();
+      const survivors = new Set(_pendingReinit);
       try { overlayMapRef.current?.destroy?.(); } catch {}
       overlayMapRef.current = null;
       if (mountRef.current) { mountRef.current.innerHTML = ''; mountRef.current.classList.remove('jvm-container'); }
+      if (survivors.size > 0) {
+        setTimeout(() => survivors.forEach(fn => fn()), 0);
+      }
     };
   }, []);
 

@@ -40,7 +40,7 @@ const slides = [
     mediaLabel: 'TEMP: outdoors',
     mediaSrc: null,
     description:
-      "I spent a whole season teaching kids on the snow, I feel the most free when I’m on the slopes or out touring.",
+      "From hiking to scubadiving to snowboarding to running, I try to spend as much time as possible outdoors. Especially in the winter, because I feel the best when I’m on the slopes.",
   },
   {
     id: 'photography',

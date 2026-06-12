@@ -65,7 +65,7 @@ const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
 // map.destroy() calls EventHandler.flush() which removes ALL registered
 // listeners globally — killing any other live map instances on the same page.
 // This set lets surviving WorldMap instances reinitialize after a flush.
-const _pendingReinit = new Set();
+export const _pendingReinit = new Set();
 
 // mapRef is owned by TravelMap and passed down so zoom handlers and
 // the WorldMap init share a single, stable reference.
