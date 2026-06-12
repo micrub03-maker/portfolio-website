@@ -12,8 +12,6 @@ const BX0 = -20004297.151525836, BX1 = 20026572.39474939;
 const BY0 = -12671671.123330014, BY1 = 6930392.025135122;
 const NAT_W = 900, NAT_H = 440.70631074413296;
 
-// Convert lat/lng → jsvectormap "natural" coordinate space (0–900 × 0–440).
-// This matches Proj.mill() in jsvectormap/src/js/projection.js exactly.
 const CENTRAL_MERIDIAN = 11.5;
 
 function toNat(lat, lng) {
@@ -25,12 +23,10 @@ function toNat(lat, lng) {
   };
 }
 
-// From coordsToPoint.js: screenX = (naturalX + transX) * scale  (inset.left = 0)
 function natToScreen(n, map) {
   return { x: (n.x + map.transX) * map.scale, y: (n.y + map.transY) * map.scale };
 }
 
-// Center the camera on a natural-coordinate point at a given scale.
 function centerOn(nat, scale, map) {
   map.scale = scale;
   map.transX = map._width  / (2 * scale) - nat.x;
@@ -230,7 +226,6 @@ function drawAvatar(ctx, nat, map) {
   ctx.restore();
 }
 
-// Repaint everything in static (non-animating) state.
 function repaint(canvas, map, accRoutes, avatarNat) {
   if (!canvas || !map) return;
   const ctx = canvas.getContext('2d');
@@ -239,39 +234,132 @@ function repaint(canvas, map, accRoutes, avatarNat) {
   if (avatarNat) drawAvatar(ctx, avatarNat, map);
 }
 
-// ── Chapter card ───────────────────────────────────────────────────────────────
+// ── Chapter card (story panel) ─────────────────────────────────────────────────
 
 function ChapterCard({ chapter, chapterIndex, total, onNext, onPrev, onClose }) {
   return (
-    <div style={{ position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)', width: 'min(420px, 90vw)', zIndex: 10, pointerEvents: 'auto' }}>
-      <div style={{ background: 'rgba(10,14,20,0.88)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 16, padding: '16px 20px', backdropFilter: 'blur(12px)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
-        {/* Progress */}
-        <div style={{ display: 'flex', gap: 3, marginBottom: 12 }}>
-          {LIFE_STORY_CHAPTERS.map((_, i) => (
-            <div key={i} style={{ flex: 1, height: 2, borderRadius: 2, background: i <= chapterIndex ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.15)', transition: 'background 0.4s' }} />
-          ))}
-        </div>
-        {/* Year + transport */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>{chapter.year}</span>
-          {chapter.transport && (
-            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'monospace', background: 'rgba(255,255,255,0.07)', padding: '1px 5px', borderRadius: 3, border: '1px solid rgba(255,255,255,0.1)' }}>
-              {TRANSPORT_LABEL[chapter.transport] ?? chapter.transport}
-            </span>
-          )}
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginLeft: 'auto', fontFamily: 'monospace' }}>{chapterIndex + 1} / {total}</span>
-        </div>
-        <p style={{ fontSize: 15, fontWeight: 600, color: 'rgba(255,255,255,0.95)', margin: '0 0 6px', lineHeight: 1.3 }}>{chapter.title}</p>
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', margin: '0 0 14px', lineHeight: 1.55 }}>{chapter.caption}</p>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button onClick={onPrev} disabled={chapterIndex === 0} style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.15)', background: chapterIndex === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)', color: chapterIndex === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)', fontSize: 12, cursor: chapterIndex === 0 ? 'default' : 'pointer', fontFamily: 'monospace' }}>← prev</button>
-          {chapterIndex < total - 1 ? (
-            <button onClick={onNext} style={{ flex: 2, padding: '7px 0', borderRadius: 8, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.9)', fontSize: 12, cursor: 'pointer', fontFamily: 'monospace', fontWeight: 600 }}>next →</button>
-          ) : (
-            <button onClick={onClose} style={{ flex: 2, padding: '7px 0', borderRadius: 8, border: '1px solid rgba(85,128,113,0.6)', background: 'rgba(85,128,113,0.25)', color: 'rgba(255,255,255,0.9)', fontSize: 12, cursor: 'pointer', fontFamily: 'monospace', fontWeight: 600 }}>close ✦</button>
-          )}
-          <button onClick={onClose} aria-label="Close" style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>✕</button>
-        </div>
+    <div style={{
+      padding: '20px 28px 18px',
+      height: '100%',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      {/* Progress bars */}
+      <div style={{ display: 'flex', gap: 3, marginBottom: 14, flexShrink: 0 }}>
+        {LIFE_STORY_CHAPTERS.map((_, i) => (
+          <div key={i} style={{
+            flex: 1, height: 3, borderRadius: 2,
+            background: i <= chapterIndex ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.13)',
+            transition: 'background 0.4s',
+          }} />
+        ))}
+      </div>
+
+      {/* Year + transport + counter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexShrink: 0 }}>
+        <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+          {chapter.year}
+        </span>
+        {chapter.transport && (
+          <span style={{
+            fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em',
+            textTransform: 'uppercase', fontFamily: 'monospace',
+            background: 'rgba(255,255,255,0.07)', padding: '2px 8px',
+            borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)',
+          }}>
+            {TRANSPORT_LABEL[chapter.transport] ?? chapter.transport}
+          </span>
+        )}
+        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)', marginLeft: 'auto', fontFamily: 'monospace' }}>
+          {chapterIndex + 1} / {total}
+        </span>
+      </div>
+
+      {/* Title */}
+      <p style={{
+        fontSize: 24, fontWeight: 700,
+        color: 'rgba(255,255,255,0.97)',
+        margin: '0 0 12px',
+        lineHeight: 1.2,
+        flexShrink: 0,
+      }}>
+        {chapter.title}
+      </p>
+
+      {/* Caption */}
+      <p style={{
+        fontSize: 16,
+        color: 'rgba(255,255,255,0.72)',
+        margin: 0,
+        lineHeight: 1.7,
+        flex: 1,
+        overflowY: 'auto',
+        paddingRight: 4,
+      }}>
+        {chapter.caption}
+      </p>
+
+      {/* Navigation */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 14, flexShrink: 0 }}>
+        <button
+          onClick={onPrev}
+          disabled={chapterIndex === 0}
+          style={{
+            flex: 1, padding: '9px 0', borderRadius: 8,
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: chapterIndex === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.08)',
+            color: chapterIndex === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.7)',
+            fontSize: 14, cursor: chapterIndex === 0 ? 'default' : 'pointer',
+            fontFamily: 'monospace',
+          }}
+        >
+          ← prev
+        </button>
+        {chapterIndex < total - 1 ? (
+          <button
+            onClick={onNext}
+            style={{
+              flex: 2, padding: '9px 0', borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.25)',
+              background: 'rgba(255,255,255,0.12)',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: 14, cursor: 'pointer',
+              fontFamily: 'monospace', fontWeight: 600,
+            }}
+          >
+            next →
+          </button>
+        ) : (
+          <button
+            onClick={onClose}
+            style={{
+              flex: 2, padding: '9px 0', borderRadius: 8,
+              border: '1px solid rgba(85,128,113,0.6)',
+              background: 'rgba(85,128,113,0.25)',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: 14, cursor: 'pointer',
+              fontFamily: 'monospace', fontWeight: 600,
+            }}
+          >
+            close ✦
+          </button>
+        )}
+        <button
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            width: 36, height: 36, borderRadius: 8,
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.06)',
+            color: 'rgba(255,255,255,0.4)',
+            fontSize: 15, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          ✕
+        </button>
       </div>
     </div>
   );
@@ -284,12 +372,13 @@ export default function LifeStoryEasterEgg({ onClose }) {
   const mountRef       = useRef(null);
   const containerRef   = useRef(null);
   const canvasRef      = useRef(null);
-  const cancelRef      = useRef(null);   // cancel fn for current animation rAF
-  const accRoutesRef   = useRef([]);     // completed routes, in forward-visit order
-  const chIdxRef       = useRef(0);      // sync copy of chapterIndex for closures
+  const cancelRef      = useRef(null);
+  const accRoutesRef   = useRef([]);
+  const chIdxRef       = useRef(0);
 
-  const [mapReady,      setMapReady]      = useState(false);
-  const [chapterIndex,  setChapterIndex]  = useState(0);
+  const [mapReady,     setMapReady]     = useState(false);
+  const [chapterIndex, setChapterIndex] = useState(0);
+  const [isAnimating,  setIsAnimating]  = useState(true); // hidden until first animation completes
 
   // ── Map init ───────────────────────────────────────────────────────────────
 
@@ -357,6 +446,7 @@ export default function LifeStoryEasterEgg({ onClose }) {
 
     cancelRef.current?.();
     cancelRef.current = null;
+    setIsAnimating(true);
 
     const chapter     = LIFE_STORY_CHAPTERS[index];
     const destNat     = toNat(chapter.lat, chapter.lng);
@@ -364,9 +454,6 @@ export default function LifeStoryEasterEgg({ onClose }) {
     const isForward   = index > chIdxRef.current;
     const route       = isForward ? buildRoute(chapter) : null;
 
-    // Trim accumulated routes: keep only those for chapters before `index`.
-    // (slice(0, index) keeps routes for chapters 1..index, since accRoutes[i]
-    //  holds the route that arrived at chapter i+1 and has length = chapterIndex)
     accRoutesRef.current = accRoutesRef.current.slice(0, index);
     chIdxRef.current     = index;
     setChapterIndex(index);
@@ -395,14 +482,11 @@ export default function LifeStoryEasterEgg({ onClose }) {
         const t = Math.min((now - startTime) / duration, 1);
         const e = ease(t);
 
-        // Vehicle position in natural coords at eased t
-        const vNat       = vehicleAt(route, e);
-        const curScale   = fromScale + (destScale - fromScale) * e;
+        const vNat     = vehicleAt(route, e);
+        const curScale = fromScale + (destScale - fromScale) * e;
 
-        // Camera follows vehicle
         centerOn(vNat, curScale, map);
 
-        // Draw
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         for (const r of accRoutesRef.current) drawRoute(ctx, r, 1, 0.35, map);
@@ -415,6 +499,7 @@ export default function LifeStoryEasterEgg({ onClose }) {
           accRoutesRef.current = [...accRoutesRef.current, route];
           repaint(canvas, map, accRoutesRef.current, destNat);
           cancelRef.current = null;
+          setIsAnimating(false);
         }
       };
 
@@ -440,8 +525,12 @@ export default function LifeStoryEasterEgg({ onClose }) {
         map.transY = fromTransY + (tgtTransY  - fromTransY) * e;
         map._applyTransform?.();
         repaint(canvas, map, accRoutesRef.current, t === 1 ? destNat : null);
-        if (t < 1) rafId = requestAnimationFrame(frame);
-        else cancelRef.current = null;
+        if (t < 1) {
+          rafId = requestAnimationFrame(frame);
+        } else {
+          cancelRef.current = null;
+          setIsAnimating(false);
+        }
       };
 
       cancelRef.current = () => cancelAnimationFrame(rafId);
@@ -465,39 +554,74 @@ export default function LifeStoryEasterEgg({ onClose }) {
   const chapter = LIFE_STORY_CHAPTERS[chapterIndex];
 
   return createPortal(
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 9998, display: 'flex', flexDirection: 'column', background: 'rgba(6,10,16,0.96)', backdropFilter: 'blur(4px)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'monospace' }}>life story</span>
-        <button onClick={onClose} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer', padding: '4px 10px', fontFamily: 'monospace' }}>ESC</button>
-      </div>
+    <>
+      <style>{`
+        @keyframes lsCardFadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+      <div
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9998,
+          display: 'flex', flexDirection: 'column',
+          background: 'rgba(6,10,16,0.96)', backdropFilter: 'blur(4px)',
+        }}
+        onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+      >
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '12px 20px',
+          borderBottom: '1px solid rgba(255,255,255,0.07)',
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+            life story
+          </span>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 8, color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer', padding: '4px 10px', fontFamily: 'monospace' }}
+          >
+            ESC
+          </button>
+        </div>
 
-      {/* Map + canvas overlay */}
-      <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-        <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
-        <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+        {/* Map — always full height; story panel overlays from bottom */}
+        <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: 0 }}>
+          <div ref={mountRef} style={{ width: '100%', height: '100%' }} />
+          <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+          {!mapReady && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'monospace' }}>
+              loading map…
+            </div>
+          )}
 
-        {mapReady && (
-          <ChapterCard
-            chapter={chapter}
-            chapterIndex={chapterIndex}
-            total={LIFE_STORY_CHAPTERS.length}
-            onNext={() => goToChapter(Math.min(chapterIndex + 1, LIFE_STORY_CHAPTERS.length - 1))}
-            onPrev={() => goToChapter(Math.max(chapterIndex - 1, 0))}
-            onClose={onClose}
-          />
-        )}
-
-        {!mapReady && (
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 12, fontFamily: 'monospace' }}>
-            loading map…
+          {/* Story panel — slides out below viewport during animation */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            height: '42%',
+            background: 'rgba(8,12,18,0.96)',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            transform: isAnimating ? 'translateY(100%)' : 'translateY(0)',
+            transition: 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
+            overflow: 'hidden',
+            pointerEvents: isAnimating ? 'none' : 'auto',
+          }}>
+            {mapReady && (
+              <ChapterCard
+                chapter={chapter}
+                chapterIndex={chapterIndex}
+                total={LIFE_STORY_CHAPTERS.length}
+                onNext={() => goToChapter(Math.min(chapterIndex + 1, LIFE_STORY_CHAPTERS.length - 1))}
+                onPrev={() => goToChapter(Math.max(chapterIndex - 1, 0))}
+                onClose={onClose}
+              />
+            )}
           </div>
-        )}
+        </div>
       </div>
-    </div>,
+    </>,
     document.body
   );
 }

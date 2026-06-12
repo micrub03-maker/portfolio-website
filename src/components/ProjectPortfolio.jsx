@@ -46,28 +46,7 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
     onOpenChange?.(false);
   }, [closeSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (!open) return;
-    let observer = null;
-    let hasBeenVisible = false;
-    const timeout = setTimeout(() => {
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            hasBeenVisible = true;
-          } else if (hasBeenVisible) {
-            setOpen(false);
-            onOpenChange?.(false);
-          }
-        },
-        { threshold: 0 }
-      );
-      if (containerRef.current) observer.observe(containerRef.current);
-    }, 700);
-    return () => { clearTimeout(timeout); observer?.disconnect(); };
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const toggle = (e) => {
+const toggle = (e) => {
     e?.stopPropagation();
     const next = !open;
     setOpen(next);
@@ -856,7 +835,7 @@ const slides = [
   { id: 'honours', label: 'Honours' },
 ];
 
-export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
+export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeAllSignal }) {
   const getInitialIndex = () => {
     if (!initialSlideId) return 0;
     const idx = slides.findIndex((s) => s.id === initialSlideId);
@@ -893,6 +872,11 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject }) {
       }, 400);
     }
   }, [jumpToProject]);
+
+  useEffect(() => {
+    if (!closeAllSignal) return;
+    setCloseSignal((s) => s + 1);
+  }, [closeAllSignal]);
 
   const goTo = (idx) => {
     setCurrentIndex(idx);

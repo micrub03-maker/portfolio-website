@@ -15,7 +15,7 @@ import RecentReads from "../components/RecentReads";
 import Skills from "../components/Skills";
 import InterestsCarousel from "../components/InterestsCarousel";
 // Using public directory paths directly for Vite
-const profile = "/images/profile.png";
+const profile = "/images/profile.jpg";
 const Delft = "/images/tu-delft-logo-black.png"
 const github = "/images/github.png";
 const linkedin = "/images/linkedin.png";
@@ -50,6 +50,7 @@ export default function About() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [travelJump, setTravelJump] = useState(0);
   const [projectJump, setProjectJump] = useState({ key: null, count: 0 });
+  const [projectsCloseSignal, setProjectsCloseSignal] = useState(0);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
   const [widgetsHiding, setWidgetsHiding] = useState(false);
@@ -257,7 +258,7 @@ export default function About() {
           fadeIn ? "opacity-100" : "opacity-0"
         }`}
       >
-      <TableOfContents onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); }} />
+      <TableOfContents onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
         <div
           id="home"
           className="w-full min-h-screen md:h-screen flex flex-col bg-cover bg-center relative overflow-hidden"
@@ -273,13 +274,15 @@ export default function About() {
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
               <div ref={profileCardRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-6 bg-white/10 backdrop-blur-md rounded-2xl p-3 md:p-4 shadow-2xl border border-white/20 flex flex-col items-center justify-center text-center hover:scale-105 transition-all">
                 <div
-                  className="w-16 h-16 md:w-36 md:h-36 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
+                  className="w-24 h-24 md:w-44 md:h-44 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
+                  style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
                   onClick={handleProfileClick}
                 >
                   <img
                     src={profile}
                     alt="Portrait of Michael Rubin"
                     className="block w-full h-full object-cover object-top pointer-events-none"
+                    style={{ imageRendering: 'auto' }}
                   />
                 </div>
                 <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
@@ -348,7 +351,7 @@ export default function About() {
               {/* Table of Contents - Bottom left widget — desktop only */}
               {!isMobile && (
                 <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); }} />
+                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
                 </div>
               )}
 
@@ -377,7 +380,7 @@ export default function About() {
           <AboutMe />
         </div>
         <div id="projects" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <ProjectPortfolio jumpToProject={projectJump} />
+          <ProjectPortfolio jumpToProject={projectJump} closeAllSignal={projectsCloseSignal} />
         </div>
         <div id="interests" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <InterestsCarousel jumpToTravel={travelJump} />
