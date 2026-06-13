@@ -199,7 +199,7 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
                     target="_blank"
                     rel="noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors whitespace-nowrap"
+                    className="flex items-center gap-1 text-[11px] uppercase tracking-wide text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 border border-white/20 font-medium px-3 py-0.5 rounded-full whitespace-nowrap"
                   >
                     {active.cta}
                   </a>

@@ -1,7 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaSlot } from "./MediaSlot";
 import AssemblyGuide from "./AssemblyGuide";
+import { NESTED_LEVEL2_STYLES } from '../main.jsx';
+
+// Lets each open Dropdown report when its title button has scrolled out of view,
+// so ProjectPortfolio can show a single floating "close" chip for the deepest one.
+const ChipContext = createContext(null);
+let chipIdCounter = 0;
 
 // -- helpers -------------------------------------------------------------------
 
@@ -31,61 +37,22 @@ function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, mobileImageBelow 
   );
 }
 
-// Nested-section style trial — swap a project's <Dropdown variant> to compare looks.
-// `default` reproduces the original style so untouched projects are unaffected.
-// Keyed by [variant][level]. level 1 = project dropdown, level 2 = nested "insight"
-// dropdown — Solution A ("one notch in") steps level 2 one step along the variant's
-// own axis (shallower well / more transparent / lower elevation) so nesting reads.
+// Nested-section style — the style trial is finalized: every project dropdown uses
+// one unified look (below). Level-2 ("insight") dropdown styling lives in main.jsx
+// (NESTED_LEVEL2_STYLES), keyed by the same variant names.
+// Original white fill colours + Option 1's (inset) border colour and inner shadow.
+// Per-variant keys are kept so existing `variant` props still resolve, but all map
+// to this one look.
+const NESTED_LEVEL1 = {
+  container: 'rounded-xl ring-1 ring-black/5 bg-white/60 shadow-inner overflow-hidden mt-4',
+  toggle: 'hover:bg-gray-50',
+  divider: 'border-t border-black/10',
+};
 const NESTED_VARIANTS = {
-  default: {
-    1: {
-      container: 'rounded-xl border border-gray-200 bg-white/60 overflow-hidden mt-4',
-      toggle: 'hover:bg-gray-50',
-      divider: 'border-t border-gray-100',
-    },
-  },
-  // Option 1 — recessed "inset well": tinted fill + hairline ring + inner shadow
-  inset: {
-    1: {
-      container: 'rounded-xl ring-1 ring-black/5 bg-black/[0.03] shadow-inner overflow-hidden mt-4',
-      toggle: 'hover:bg-black/[0.04]',
-      divider: 'border-t border-black/5',
-    },
-    2: {
-      // shallower: a plain panel inside the well (no second inner shadow)
-      container: 'rounded-xl ring-1 ring-black/5 bg-white/30 overflow-hidden mt-4',
-      toggle: 'hover:bg-white/40',
-      divider: 'border-t border-black/5',
-    },
-  },
-  // Option 2 — flat tonal: parent's hairline language, see-through fill, no shadow
-  flat: {
-    1: {
-      container: 'rounded-xl ring-1 ring-black/5 bg-white/40 overflow-hidden mt-4',
-      toggle: 'hover:bg-white/40',
-      divider: 'border-t border-black/5',
-    },
-    2: {
-      // more transparent: recedes further into the parent
-      container: 'rounded-xl ring-1 ring-black/5 bg-white/20 overflow-hidden mt-4',
-      toggle: 'hover:bg-white/30',
-      divider: 'border-t border-black/5',
-    },
-  },
-  // Option 3 — stacked elevated card: opaque-ish surface + soft drop shadow
-  stacked: {
-    1: {
-      container: 'rounded-xl ring-1 ring-black/5 bg-white/80 shadow-md overflow-hidden mt-4',
-      toggle: 'hover:bg-white/60',
-      divider: 'border-t border-black/5',
-    },
-    2: {
-      // lower elevation: child sits lower in the stack
-      container: 'rounded-xl ring-1 ring-black/5 bg-white/70 shadow-sm overflow-hidden mt-4',
-      toggle: 'hover:bg-white/60',
-      divider: 'border-t border-black/5',
-    },
-  },
+  default: { 1: NESTED_LEVEL1 },
+  inset: { 1: NESTED_LEVEL1 },
+  flat: { 1: NESTED_LEVEL1 },
+  stacked: { 1: NESTED_LEVEL1 },
 };
 
 // Fix: Issue #20 — default noClickClose to true so body clicks don't collapse the
@@ -94,6 +61,10 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
+  const chip = useContext(ChipContext);
+  const idRef = useRef(null);
+  if (idRef.current === null) idRef.current = ++chipIdCounter;
+  const [titleHidden, setTitleHidden] = useState(false);
 
   useEffect(() => {
     if (!forceOpenTrigger) return;
@@ -111,45 +82,74 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
     onOpenChange?.(false);
   }, [closeSignal]); // eslint-disable-line react-hooks/exhaustive-deps
 
-const toggle = (e) => {
+  // Close + scroll back to the target — the exact behaviour of the title button.
+  const close = () => {
+    setOpen(false);
+    onOpenChange?.(false);
+    setTimeout(() => {
+      const target = scrollTargetId ? document.getElementById(scrollTargetId) : buttonRef.current;
+      if (target) {
+        const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }, 350);
+  };
+  // Keep a live reference so the chip always calls the latest close().
+  const closeRef = useRef(close);
+  closeRef.current = close;
+
+  const toggle = (e) => {
     e?.stopPropagation();
-    const next = !open;
-    setOpen(next);
-    onOpenChange?.(next);
-    if (next) {
-      setTimeout(() => {
-        if (!containerRef.current) return;
-        const rect = containerRef.current.getBoundingClientRect();
-        const navOffset = 80;
-        const vh = window.innerHeight;
-        const fitsInView = rect.height <= vh - navOffset;
-        if (fitsInView) {
-          if (rect.bottom > vh) {
-            const y = Math.min(
-              rect.bottom + window.pageYOffset - vh + 16,
-              rect.top + window.pageYOffset - navOffset
-            );
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          } else if (rect.top < navOffset) {
-            window.scrollTo({ top: rect.top + window.pageYOffset - navOffset, behavior: 'smooth' });
-          }
-        } else {
+    if (open) { close(); return; }
+    setOpen(true);
+    onOpenChange?.(true);
+    setTimeout(() => {
+      if (!containerRef.current) return;
+      const rect = containerRef.current.getBoundingClientRect();
+      const navOffset = 80;
+      const vh = window.innerHeight;
+      const fitsInView = rect.height <= vh - navOffset;
+      if (fitsInView) {
+        if (rect.bottom > vh) {
+          const y = Math.min(
+            rect.bottom + window.pageYOffset - vh + 16,
+            rect.top + window.pageYOffset - navOffset
+          );
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        } else if (rect.top < navOffset) {
           window.scrollTo({ top: rect.top + window.pageYOffset - navOffset, behavior: 'smooth' });
         }
-      }, 350);
-    } else {
-      setTimeout(() => {
-        const target = scrollTargetId ? document.getElementById(scrollTargetId) : buttonRef.current;
-        if (target) {
-          const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
-          window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-      }, 350);
-    }
+      } else {
+        window.scrollTo({ top: rect.top + window.pageYOffset - navOffset, behavior: 'smooth' });
+      }
+    }, 350);
   };
 
+  // While open, flag when the title button scrolls above the viewport top.
+  useEffect(() => {
+    if (!open) { setTitleHidden(false); return; }
+    const el = buttonRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setTitleHidden(!entry.isIntersecting && entry.boundingClientRect.bottom <= 0),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [open]);
+
+  // Register with the chip controller while this dropdown's title is hidden.
+  useEffect(() => {
+    if (!chip || !(open && titleHidden)) return undefined;
+    const id = idRef.current;
+    chip.register(id, { level, close: () => closeRef.current?.() });
+    return () => chip.unregister(id);
+  }, [chip, open, titleHidden, level]);
+
   const group = NESTED_VARIANTS[variant] ?? NESTED_VARIANTS.default;
-  const v = group[level] ?? group[1];
+  const v = level === 2
+    ? (NESTED_LEVEL2_STYLES[variant] ?? group[1])
+    : (group[level] ?? group[1]);
 
   return (
     <div ref={containerRef} className={v.container}>
@@ -266,7 +266,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors whitespace-nowrap"
+                className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all whitespace-nowrap"
               >
                 Lab website
               </a>
@@ -293,7 +293,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into how I start new projects"
           summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own robot from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
           onOpenChange={onDd}
-          scrollTargetId="projects"
+          scrollTargetId="project-luci"
         >
           <SideBySide picWidth="w-[45%]" pic={
             <div className="flex justify-center">
@@ -386,7 +386,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors whitespace-nowrap"
+                className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all whitespace-nowrap"
               >
                 Team website
               </a>
@@ -406,11 +406,11 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into lap-belt insert design and validation"
           summarySubtitle="TL;DR I designed bonded metal inserts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
           onOpenChange={onDd}
-          scrollTargetId="projects"
+          scrollTargetId="project-calsol"
         >
           <SideBySide picWidth="w-[45%]" pic={
             <div className="relative group">
-              <div className="[&>div]:aspect-[16/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[240px]">
+              <div className="[&>div]:aspect-[10/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[288px]">
                 <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
@@ -430,7 +430,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
            Without access to dynamic crash equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test measuring an average failure load of 6.11 kN across four samples. Which, together with published dynamic CFRP insert data, showed the design could credibly meet the required loads.
           </p>
           <div className="relative group">
-            <div className="[&>div]:h-[320px] [&>div]:!p-1 [&>div]:my-0 overflow-hidden rounded-xl shadow-md my-3">
+            <div className="[&>div]:h-[128px] md:[&>div]:h-[320px] [&>div]:!p-1 [&>div]:my-0 overflow-hidden rounded-xl shadow-md my-3">
               <MediaSlot
                 src={'/images/insert testing jig picture.png'}
                 label="Inserts test set up"
@@ -458,7 +458,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into the topology-optimized shoulder-belt anchorage"
           summarySubtitle='TL;DR I designed a steel shoulder-belt mount holding wrapping bolts, cut mount weight by ~40% via topology optimization.'
           onOpenChange={onDd}
-          scrollTargetId="projects"
+          scrollTargetId="project-calsol"
         >
           <SideBySide picWidth="w-1/2" pic={
             <div className="flex justify-center">
@@ -532,8 +532,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
-              <a href="/images/Axiris-slides.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Slidedeck</a>
-              <a href="/images/Axiris-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
+              <a href="/images/Axiris-slides.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Slidedeck</a>
+              <a href="/images/Axiris-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
               Axiris is a low-cost, handheld autorefractor for vision screening in low-resource settings, where conventional 5,000–30,000-dollar systems are hard to deploy. As optical lead, I chose a Scheiner-disk optical path with an external NIR camera and helped develop a Python image-processing stack to estimate refractive error, iterating through six prototypes over 13 weeks to reach a 574-dollar BOM.
@@ -547,7 +547,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into my design process"
           summarySubtitle="TL;DR Stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
-          scrollTargetId="projects"
+          scrollTargetId="project-axiris"
         >
           <SideBySide pic={
             <div className="relative group">
@@ -603,7 +603,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into my resilience under tight constraints"
           summarySubtitle="TL;DR We didn't have access to an optics lab, so I proposed and built a modular model eye that gave us a stable, repeatable testbed to calibrate Axiris and de-risk the design before touching human subjects."
           onOpenChange={onDd}
-          scrollTargetId="projects"
+          scrollTargetId="project-axiris"
         >
           <SideBySide pic={
             <div className="relative group">
@@ -657,8 +657,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           </div>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
-              <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Lab website</a>
-              <a href="/images/135_report_finaldraft_pdf.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors">Paper</a>
+              <a href="https://edg.berkeley.edu/research/tactile-sensing/" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Lab website</a>
+              <a href="/images/135_report_finaldraft_pdf.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
               The Smart Suction Cup is a multi-chamber, vacuum-based robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
@@ -673,7 +673,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           summaryTitle="An insight into how I design for manufacturability"
           summarySubtitle="TL;DR I redesigned the injection mold for the suction cup to achieve higher success rate in production."
           onOpenChange={onDd}
-          scrollTargetId="projects"
+          scrollTargetId="project-edg"
         >
           <div className="flex flex-col gap-4">
             <div className="relative group">
@@ -791,7 +791,7 @@ const honourItems = [
   },
   {
     id: 'adlap',
-    date: 'Feb 2024 – May 2024',
+    date: 'Feb 2024 – June 2024',
     title: 'Capstone: A Light Module for a Robotic Surgery System',
     mediaLayout: 'text-above',
     media: [
@@ -868,7 +868,7 @@ function HonoursSlide({ onDd, closeSignal }) {
                   target="_blank"
                   rel="noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="text-[11px] text-black bg-white/90 hover:bg-white font-medium px-3 py-0.5 rounded-full transition-colors"
+                  className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all"
                 >
                   {l.label}
                 </a>
@@ -925,6 +925,24 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
   const [currentIndex, setCurrentIndex] = useState(getInitialIndex);
   const [closeSignal, setCloseSignal] = useState(0);
   const touchStartX = useRef(null);
+
+  // Registry of open dropdowns whose title has scrolled out of view. The chip
+  // targets the deepest one (highest level), so closing cascades inward-out.
+  const chipRegistry = useRef(new Map());
+  const chipOrder = useRef(0);
+  const [activeChip, setActiveChip] = useState(null);
+  const recomputeChip = useCallback(() => {
+    let best = null;
+    for (const entry of chipRegistry.current.values()) {
+      // Deepest dropdown wins; ties go to the most recently scrolled past.
+      if (!best || entry.level > best.level || (entry.level === best.level && entry.order > best.order)) best = entry;
+    }
+    setActiveChip(best);
+  }, []);
+  const chipController = useMemo(() => ({
+    register: (id, data) => { chipRegistry.current.set(id, { id, order: ++chipOrder.current, ...data }); recomputeChip(); },
+    unregister: (id) => { chipRegistry.current.delete(id); recomputeChip(); },
+  }), [recomputeChip]);
 
   useEffect(() => {
     // Fix: Issue #21 — track appended preload links and remove them on unmount
@@ -1040,19 +1058,43 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
         </div>
 
         {/* Slide content */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={slideId}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            {slideId === 'projects' && <FeaturedProjectsSlide autoOpen={jumpToProject} closeSignal={closeSignal} />}
-            {slideId === 'honours' && <HonoursSlide closeSignal={closeSignal} />}
-          </motion.div>
-        </AnimatePresence>
+        <ChipContext.Provider value={chipController}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={slideId}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {slideId === 'projects' && <FeaturedProjectsSlide autoOpen={jumpToProject} closeSignal={closeSignal} />}
+              {slideId === 'honours' && <HonoursSlide closeSignal={closeSignal} />}
+            </motion.div>
+          </AnimatePresence>
+        </ChipContext.Provider>
       </div>
+
+      {/* Floating close chip — appears when the open dropdown's title scrolls out
+          of frame; closes the deepest such dropdown via its own close behaviour. */}
+      <AnimatePresence>
+        {activeChip && (
+          <motion.button
+            key="project-close-chip"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => activeChip.close()}
+            aria-label="Close section"
+            className="fixed bottom-4 left-4 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl text-white/80 hover:text-white text-xs font-medium uppercase tracking-wide transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+            close
+          </motion.button>
+        )}
+      </AnimatePresence>
     </section>
   );
 }

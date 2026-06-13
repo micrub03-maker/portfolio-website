@@ -25,14 +25,15 @@ export default function AboutMe() {
           {/* Text */}
           <div className="order-2 lg:col-span-3 space-y-6 text-sm md:text-base text-gray-700 leading-relaxed">
             <p>
-              I’m a Belgian-born mechanical engineer trained at TU Delft and UC Berkeley and I like to understand how things work, where they fail, and how to turn that curiosity into hands-on problem solving.
+              I'm a mechanical engineer trained at TU Delft and UC Berkeley who builds hardware that works in the real world, with projects ranging from a low-cost autorefractor to a CNC machine I designed and built end to end.
             </p>
             <p>
-             My previous projects range from designing a light module for a surgical robot to building a fully functional CNC machine. After studying and working across several countries and academic systems, I’ve picked up five languages and a mix of perspectives that make it easier for me to connect with very different people and teams.
+              I work best at the intersection of mechanical design and controls, taking systems from analysis to functional hardware under tight timelines.
             </p>
             <p>
-            I’m most engaged at the intersection of design and controls, where working with people helps me turn messy requirements into clear hardware constraints and I can make complex systems robust and manufacturable.  My goal is to move real problems forward in medical, energy, or other technically demanding applications. 
-            When I’m not researching or debugging something, you'll find me outdoors!
+              Belgian-born and fluent in five languages, I’m comfortable in fast-paced, multidisciplinary teams across different engineering cultures. I’m looking to do that kind of work on hard problems in medical devices, energy, or other technically demanding fields.
+              <br />
+              When I'm not designing or debugging something, I'm outdoors.
             </p>
           </div>
         </div>

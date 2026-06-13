@@ -168,23 +168,34 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 8 }}
               transition={{ duration: 0.15 }}
-              className="fixed bottom-16 right-4 z-50 rounded-2xl bg-black/70 backdrop-blur-md border border-white/15 shadow-lg p-2"
+              className="fixed bottom-16 right-4 z-50 w-44 rounded-2xl bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl p-3 overflow-hidden"
             >
-              <nav className="flex flex-col">
-                {sections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => { scrollToSection(section.id); setMobileOpen(false); }}
-                    className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeSection === section.id
-                        ? 'bg-white/20 text-white font-semibold'
-                        : 'text-white/80 hover:bg-white/10'
-                    }`}
-                  >
-                    {section.label}
-                  </button>
-                ))}
-              </nav>
+              <div className="widget-gradient"></div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </div>
+                  <p className="text-white font-semibold text-xs uppercase tracking-wide">Navigation</p>
+                </div>
+                <nav className="flex flex-col space-y-1.5">
+                  {sections.map((section) => (
+                    <button
+                      key={section.id}
+                      onClick={() => { scrollToSection(section.id); setMobileOpen(false); }}
+                      className={`text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        activeSection === section.id
+                          ? 'bg-white/20 text-white font-semibold'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                      }`}
+                    >
+                      {section.label}
+                    </button>
+                  ))}
+                </nav>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -192,7 +203,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
           onClick={() => setMobileOpen((o) => !o)}
           aria-label="Toggle section navigation"
           aria-expanded={mobileOpen}
-          className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-lg flex items-center justify-center text-white"
+          className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl flex items-center justify-center text-white"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -224,7 +235,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
             borderColor: isDarkBackground ? 'rgba(255,255,255,0.3)' : 'rgb(229,231,235)',
           }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-center pl-2 pr-1 py-4 rounded-l-xl shadow-lg border border-r-0 backdrop-blur-md"
+          className="flex items-center justify-center gap-1 pl-2 pr-1 py-4 rounded-l-xl shadow-lg border border-r-0 backdrop-blur-md"
         >
           <motion.svg
             animate={{ color: isDarkBackground ? '#ffffff' : '#475569' }}
@@ -236,10 +247,20 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </motion.svg>
+          <motion.svg
+            animate={{ color: isDarkBackground ? '#ffffff' : '#475569' }}
+            transition={{ duration: 0.3 }}
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </motion.svg>
         </motion.div>
       </motion.div>
 
-      {/* Full TOC panel — slides in on hover, hidden on home */}
+      {/* Full TOC panel — slides in on hover, hidden on home. Styled to match the hero Navigation widget. */}
       <motion.div
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: isHovered && !isOnHome ? 1 : 0, x: isHovered && !isOnHome ? 0 : 50 }}
@@ -249,38 +270,34 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
         onMouseEnter={() => { if (hideTimer.current) clearTimeout(hideTimer.current); }}
         onMouseLeave={() => { hideTimer.current = setTimeout(() => setIsHovered(false), 50); }}
       >
-        <motion.div
-          animate={{
-            backgroundColor: isDarkBackground ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.7)',
-            borderColor: isDarkBackground ? 'rgba(255, 255, 255, 0.3)' : 'rgb(243, 244, 246)'
-          }}
-          transition={{ duration: 0.3 }}
-          className="backdrop-blur-md rounded-2xl p-4 shadow-lg border"
-        >
-          <nav className="space-y-2">
-            {sections.map((section) => (
-              <motion.button
-                key={section.id}
-                onClick={() => scrollToSection(section.id)}
-                animate={{
-                  backgroundColor: activeSection === section.id
-                    ? (isDarkBackground ? 'rgba(255, 255, 255, 0.25)' : 'rgba(51, 65, 85, 0.15)')
-                    : 'rgba(0, 0, 0, 0)',
-                  color: isDarkBackground ? '#ffffff' : '#334155'
-                }}
-                whileHover={{
-                  backgroundColor: isDarkBackground ? 'rgba(255, 255, 255, 0.15)' : 'rgba(51, 65, 85, 0.1)'
-                }}
-                transition={{ duration: 0.2 }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-sm font-medium ${
-                  activeSection === section.id ? 'font-semibold' : ''
-                }`}
-              >
-                {section.label}
-              </motion.button>
-            ))}
-          </nav>
-        </motion.div>
+        <div className="relative w-48 bg-slate-900/50 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 overflow-hidden">
+          <div className="widget-gradient"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+              </div>
+              <p className="text-white font-semibold text-xs uppercase tracking-wide">Navigation</p>
+            </div>
+            <nav className="space-y-1.5">
+              {sections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => scrollToSection(section.id)}
+                  className={`block w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    activeSection === section.id
+                      ? 'bg-white/20 text-white font-semibold'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  {section.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+        </div>
       </motion.div>
     </>
   );

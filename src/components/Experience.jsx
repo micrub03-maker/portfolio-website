@@ -218,7 +218,9 @@ export default function Experience() {
       return;
     }
     const observer = new IntersectionObserver(
-      ([entry]) => setToggleVisible(entry.isIntersecting),
+      // Only hide the chip's prerequisite when the bar is scrolled ABOVE the
+      // viewport — scrolling up past it (bar below) shouldn't surface the chip.
+      ([entry]) => setToggleVisible(entry.isIntersecting || entry.boundingClientRect.bottom > 0),
       { threshold: 0 }
     );
     if (toggleRef.current) observer.observe(toggleRef.current);
@@ -241,13 +243,13 @@ export default function Experience() {
           onClick={(e) => { e.stopPropagation(); if (showMore) { setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } else { isAutoClosingRef.current = false; /* Fix: Issue #19 */ setShowMore(true); } }}
           aria-expanded={showMore}
           aria-controls="more-experience"
-          className="flex items-center justify-between w-full rounded-2xl bg-white/50 backdrop-blur-md border border-gray-100 shadow-sm px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-white/70 hover:shadow-md transition-all"
+          className="flex items-center justify-between w-full rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl px-5 py-3 text-sm font-semibold text-gray-600 hover:bg-white/80 hover:shadow-2xl transition-all"
         >
           <span>{showMore ? 'Okay, that\'s everything — show less' : 'More experience — the full picture'}</span>
           <motion.span
             animate={{ rotate: showMore ? 180 : 0 }}
             transition={{ duration: 0.25 }}
-            className="text-gray-400 text-lg leading-none"
+            className="text-gray-600 text-lg leading-none"
           >
             ▾
           </motion.span>
@@ -285,10 +287,13 @@ export default function Experience() {
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.25 }}
             onClick={(e) => { e.stopPropagation(); if (isAutoClosingRef.current) return; setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); }}
-            /* Fix: Issue #18 */
-            className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-full bg-white/85 backdrop-blur-md border border-gray-200 shadow-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:shadow-xl transition-all"
+            /* Fix: Issue #18 — stacked above the resume close chip (bottom-4) to avoid overlap */
+            className="fixed bottom-16 left-4 z-50 flex items-center gap-1.5 rounded-full bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-white/80 hover:text-white transition-colors"
           >
-            ↑ show less
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+            show less
           </motion.button>
         )}
       </AnimatePresence>

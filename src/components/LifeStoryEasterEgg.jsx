@@ -466,11 +466,13 @@ export default function LifeStoryEasterEgg({ onClose }) {
       const isCarLike  = route.type === 'car' || route.type === 'roadtrip';
       const isMultileg = route.type === 'multileg';
       const isTrain    = route.type === 'train';
-      const duration   = isMultileg
+      const isCar      = route.type === 'car';
+      let duration     = isMultileg
         ? Math.max(6000, Math.min(11000, dist * 12))
         : isTrain
           ? Math.max(4900, Math.min(9800, dist * 24.5))
           : Math.max(isCarLike ? 3500 : 1800, Math.min(isCarLike ? 6300 : 4000, dist * (isCarLike ? 28 : 12)));
+      if (isCar || isTrain) duration *= 0.8; // car & train animations 20% faster
 
       const fromScale = map.scale;
       const startTime = performance.now();

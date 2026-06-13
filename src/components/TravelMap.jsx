@@ -374,7 +374,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
 
   const mapArea = (
     <div className={`relative rounded-lg overflow-hidden ${compact ? 'flex-1 min-h-[9rem]' : 'flex-1 min-h-[9rem]'}`}>
-      <WorldMap mapRef={mapRef} onTooltip={isMobile ? null : handleTooltip} zoomMax={compact ? 4 : ZOOM_MAX} isMobile={isMobile} />
+      <WorldMap mapRef={mapRef} onTooltip={isMobile ? null : handleTooltip} zoomMax={compact ? 8 : ZOOM_MAX} isMobile={isMobile} />
       {!isMobile && (
         <div className="absolute top-2 right-2 z-20 flex flex-col gap-1">
           <button
@@ -394,7 +394,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
 
   return (
     <>
-      <div className={`flex flex-col gap-2 relative backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl overflow-hidden ${compact ? 'bg-black/30' : 'bg-slate-900/50 md:h-full'}`}>
+      <div className={`flex flex-col gap-2 relative rounded-2xl p-3 overflow-hidden ${compact ? 'bg-black/30' : 'bg-slate-900/50 md:h-full backdrop-blur-md border border-white/20 shadow-2xl'}`}>
         {/* Header */}
         <div className="flex items-center justify-between">
           {header}
