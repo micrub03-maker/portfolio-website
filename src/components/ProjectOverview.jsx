@@ -33,12 +33,11 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const touchStartX = useRef(null);
-  const videoRef = useRef(null);
+  const videoRefs = useRef([]); // Fix: Issue #48 — per-slide refs instead of a single ref
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.play().catch(() => {});
-    }
+    // Fix: Issue #48 — play the active slide's video, not only slide 0
+    videoRefs.current[activeIndex]?.play().catch(() => {});
   }, [activeIndex]);
 
   useEffect(() => {
@@ -120,7 +119,7 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
           {onNavigate && (
             <button
               onClick={() => onNavigate(active.projectKey)}
-              className="flex items-center gap-1 text-[10px] text-white/60 hover:text-white/90 transition-colors bg-white/10 hover:bg-white/20 rounded-full px-2 py-0.5"
+              className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-2 py-0.5"
               aria-label="View in Projects section"
             >
               dive in ↓
@@ -141,7 +140,8 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
             style={{ opacity: idx === activeIndex ? 1 : 0, zIndex: idx === activeIndex ? 1 : 0, willChange: 'opacity' }}
           >
             {slide.src?.endsWith('.mp4') ? (
-              <video ref={idx === 0 ? videoRef : null} src={slide.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline preload="auto" />
+              <video // Fix: Issue #48
+                ref={(el) => { videoRefs.current[idx] = el; }} src={slide.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline preload="auto" />
             ) : slide.src ? (
               <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
             ) : (

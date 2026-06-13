@@ -401,7 +401,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
           {onNavigate && (
             <button
               onClick={onNavigate}
-              className="flex items-center gap-1 text-[10px] text-white/60 hover:text-white/90 transition-colors bg-white/10 hover:bg-white/20 rounded-full px-2 py-0.5"
+              className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-white/70 hover:text-white transition-colors bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-2 py-0.5"
               aria-label="View in Interests section"
             >
               explore ↓

@@ -31,9 +31,66 @@ function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, mobileImageBelow 
   );
 }
 
+// Nested-section style trial — swap a project's <Dropdown variant> to compare looks.
+// `default` reproduces the original style so untouched projects are unaffected.
+// Keyed by [variant][level]. level 1 = project dropdown, level 2 = nested "insight"
+// dropdown — Solution A ("one notch in") steps level 2 one step along the variant's
+// own axis (shallower well / more transparent / lower elevation) so nesting reads.
+const NESTED_VARIANTS = {
+  default: {
+    1: {
+      container: 'rounded-xl border border-gray-200 bg-white/60 overflow-hidden mt-4',
+      toggle: 'hover:bg-gray-50',
+      divider: 'border-t border-gray-100',
+    },
+  },
+  // Option 1 — recessed "inset well": tinted fill + hairline ring + inner shadow
+  inset: {
+    1: {
+      container: 'rounded-xl ring-1 ring-black/5 bg-black/[0.03] shadow-inner overflow-hidden mt-4',
+      toggle: 'hover:bg-black/[0.04]',
+      divider: 'border-t border-black/5',
+    },
+    2: {
+      // shallower: a plain panel inside the well (no second inner shadow)
+      container: 'rounded-xl ring-1 ring-black/5 bg-white/30 overflow-hidden mt-4',
+      toggle: 'hover:bg-white/40',
+      divider: 'border-t border-black/5',
+    },
+  },
+  // Option 2 — flat tonal: parent's hairline language, see-through fill, no shadow
+  flat: {
+    1: {
+      container: 'rounded-xl ring-1 ring-black/5 bg-white/40 overflow-hidden mt-4',
+      toggle: 'hover:bg-white/40',
+      divider: 'border-t border-black/5',
+    },
+    2: {
+      // more transparent: recedes further into the parent
+      container: 'rounded-xl ring-1 ring-black/5 bg-white/20 overflow-hidden mt-4',
+      toggle: 'hover:bg-white/30',
+      divider: 'border-t border-black/5',
+    },
+  },
+  // Option 3 — stacked elevated card: opaque-ish surface + soft drop shadow
+  stacked: {
+    1: {
+      container: 'rounded-xl ring-1 ring-black/5 bg-white/80 shadow-md overflow-hidden mt-4',
+      toggle: 'hover:bg-white/60',
+      divider: 'border-t border-black/5',
+    },
+    2: {
+      // lower elevation: child sits lower in the stack
+      container: 'rounded-xl ring-1 ring-black/5 bg-white/70 shadow-sm overflow-hidden mt-4',
+      toggle: 'hover:bg-white/60',
+      divider: 'border-t border-black/5',
+    },
+  },
+};
+
 // Fix: Issue #20 — default noClickClose to true so body clicks don't collapse the
 // dropdown; only the header button toggles it. Pass noClickClose={false} to opt back in.
-function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
+function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, variant = 'default', level = 1, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
@@ -91,13 +148,16 @@ const toggle = (e) => {
     }
   };
 
+  const group = NESTED_VARIANTS[variant] ?? NESTED_VARIANTS.default;
+  const v = group[level] ?? group[1];
+
   return (
-    <div ref={containerRef} className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden mt-4">
+    <div ref={containerRef} className={v.container}>
       <button
         ref={buttonRef}
         onClick={toggle}
         aria-expanded={open}
-        className="w-full text-left px-4 py-3 flex items-start justify-between gap-3 hover:bg-gray-50 transition-colors"
+        className={`w-full text-left px-4 py-3 flex items-start justify-between gap-3 ${v.toggle} transition-colors`}
       >
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm">
@@ -127,7 +187,7 @@ const toggle = (e) => {
             style={{ overflow: 'hidden' }}
           >
             <div
-              className={`px-4 pb-5 pt-1 border-t border-gray-100 space-y-3 ${noClickClose ? '' : 'cursor-pointer'}`}
+              className={`px-4 pb-5 pt-1 ${v.divider} space-y-3 ${noClickClose ? '' : 'cursor-pointer'}`}
               onClick={noClickClose ? undefined : toggle}
             >
               {children}
@@ -183,7 +243,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <div className="relative group">
@@ -228,6 +288,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         </div>
         {/* Full-width case-study dropdown */}
         <Dropdown
+          variant="inset"
+          level={2}
           summaryTitle="An insight into how I start new projects"
           summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own robot from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
           onOpenChange={onDd}
@@ -263,7 +325,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <SideBySide picWidth="w-[45%]" mobileImageBelow pic={
             <div className="relative group">
               <div className="[&>div]:aspect-[4/3] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[208px]">
-                <MediaSlot src={'images/simple-mount-render-2.png'} label="simple mount" />
+                <MediaSlot src={'/images/simple-mount-render-2.png'} label="simple mount" />
               </div>
               <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -284,7 +346,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -339,6 +401,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         </div>
         {/* Full-width case-study dropdowns */}
         <Dropdown
+          variant="flat"
+          level={2}
           summaryTitle="An insight into lap-belt insert design and validation"
           summarySubtitle="TL;DR I designed bonded metal inserts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
           onOpenChange={onDd}
@@ -389,6 +453,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           />
         </Dropdown>
         <Dropdown
+          variant="flat"
+          level={2}
           summaryTitle="An insight into the topology-optimized shoulder-belt anchorage"
           summarySubtitle='TL;DR I designed a steel shoulder-belt mount holding wrapping bolts, cut mount weight by ~40% via topology optimization.'
           onOpenChange={onDd}
@@ -448,7 +514,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <div className="relative group">
@@ -476,6 +542,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         </div>
         {/* Full-width case-study dropdowns */}
         <Dropdown
+          variant="stacked"
+          level={2}
           summaryTitle="An insight into my design process"
           summarySubtitle="TL;DR Stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
@@ -530,6 +598,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           />
         </Dropdown>
         <Dropdown
+          variant="stacked"
+          level={2}
           summaryTitle="An insight into my resilience under tight constraints"
           summarySubtitle="TL;DR We didn't have access to an optics lab, so I proposed and built a modular model eye that gave us a stable, repeatable testbed to calibrate Axiris and de-risk the design before touching human subjects."
           onOpenChange={onDd}

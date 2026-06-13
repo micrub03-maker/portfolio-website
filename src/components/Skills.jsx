@@ -24,7 +24,7 @@ const cards = [
     lines: [
       {
         label: 'Manufacturing:',
-        rest: ' CNC, Additive (FFF, DLP, I own a Bambulab P1S!), Injection Molding, Sheet Metal Fabrication, Bench Tests (Instron, Thermal, Calibration), Machine Shop & Lab Equipment Trained',
+        rest: ' CNC, Additive (FFF, DLP — including Bambu Lab P1S operator, 100+ print-hours), Injection Molding, Sheet Metal Fabrication, Bench Tests (Instron, Thermal, Calibration), Machine Shop & Lab Equipment Trained', // Fix: Issue #50
       },
     ]
   },

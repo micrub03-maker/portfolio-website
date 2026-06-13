@@ -74,7 +74,8 @@ export default function Education() {
           >
             {/* Logo */}
             <div className="flex-shrink-0 flex items-start justify-center sm:justify-start">
-              <div className={`w-40 h-40 rounded-xl overflow-hidden flex items-center justify-center ${entry.logoPad ?? 'p-2'} ${entry.noWidget ? '' : 'bg-white border border-gray-100 shadow-sm'}`}>
+              {/* Fix: Issue #49 — smaller logos on mobile portrait */}
+              <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden flex items-center justify-center ${entry.logoPad ?? 'p-2'} ${entry.noWidget ? '' : 'bg-white border border-gray-100 shadow-sm'}`}>
                 {entry.logoSrc
                   ? <img src={entry.logoSrc} alt={entry.logoLabel} className={`w-full h-full ${entry.logoFit ?? 'object-contain'} ${entry.logoScale ?? ''}`} />
                   : <span className="text-gray-300 text-xs font-mono text-center leading-tight">{entry.logoLabel}</span>

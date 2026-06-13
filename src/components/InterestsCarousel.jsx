@@ -248,7 +248,8 @@ export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
                     )
                     : (
                       <motion.div animate={glowControls} initial={false} className="select-none">
-                        <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
+                        {/* Skate clip is portrait — keep 9/16 explicitly now that MediaImage defaults to landscape (Issue #39) */}
+                        <MediaSlot label={active.mediaLabel} src={active.mediaSrc} videoAspect="aspect-[9/16]" />
                       </motion.div>
                     )
                   }
