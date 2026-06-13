@@ -1,6 +1,6 @@
 export const photos = [
-  { id: 1,  src: '/images/El Capitan, USA.JPG',          alt: 'El Capitan, USA',          ar: 1.510 },
-  { id: 2,  src: '/images/Yosemite, USA.JPG',            alt: 'Yosemite, USA',            ar: 1.510 },
+  { id: 1,  src: '/images/El Capitan, USA.JPG',          alt: 'El Capitan, USA',          ar: 0.667 },
+  { id: 2,  src: '/images/Yosemite, USA.JPG',            alt: 'Yosemite, USA',            ar: 1.51 },
   { id: 3,  src: '/images/Banff, Canada.jpg',            alt: 'Banff, Canada',            ar: 0.693 },
   { id: 4,  src: '/images/Big White, Canada.png',        alt: 'Big White, Canada',        ar: 0.811 },
   { id: 5,  src: '/images/Cervinia, Italy.JPG',          alt: 'Cervinia, Italy',          ar: 1.333 },

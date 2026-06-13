@@ -73,6 +73,14 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
   const [highlightedIcon, setHighlightedIcon] = useState(null); // null | 'dino' | 'projects'
   const [fading,         setFading]         = useState(false);
 
+  // Fix: Issue #24 — defer the inner height transition until after the outer
+  // AnimatePresence height animation has begun, so the two don't fight on open.
+  const [outerReady, setOuterReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setOuterReady(true), 0);
+    return () => clearTimeout(t);
+  }, []);
+
   useEffect(() => {
     fetch(src)
       .then(r => r.text())
@@ -117,7 +125,7 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden my-3 flex flex-col"
-      style={{ height: containerHeight, transition: 'height 0.35s ease', clipPath: 'inset(0 round 0.75rem)' }}
+      style={{ height: containerHeight, transition: outerReady ? 'height 0.35s ease' : 'none', clipPath: 'inset(0 round 0.75rem)' }}
       onClick={e => e.stopPropagation()}
     >
       {/* ── title bar ── */}

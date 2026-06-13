@@ -1,46 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+
+// Fix: Issue #46 — Goodreads link per book (ids 1 & 2 are direct; 3 & 4 use search URLs)
+const GOODREADS_URLS = {
+  1: 'https://www.goodreads.com/book/show/50024187-apeirogon?ref=nav_sb_ss_1_9',
+  2: 'https://www.goodreads.com/book/show/199798179-the-ministry-of-time?ref=nav_sb_ss_1_15',
+  3: 'https://www.goodreads.com/book/show/56587382-the-island-of-missing-trees?from_search=true&from_srp=true&qid=zAlbBcKGen&rank=1',
+  4: 'https://www.goodreads.com/book/show/248172429-the-poppy-war-series-by-r-f-kuang-2-books-collector-s-edition-set-the?from_search=true&from_srp=true&qid=MUlCj9Hhhm&rank=1',
+};
+
+// Fix: Issue #44 — static book data lifted to module scope (no effect / no setter needed)
+const RECENT_BOOKS = [
+  {
+    id: 1,
+    title: "Apeirogon",
+    author: "Colum McCann",
+    // NOTE: rename public/images/Apereigon.jpg → public/images/Apeirogon.jpg on disk
+    cover: "/images/Apeirogon.jpg", // Fix: Issue #45 — corrected filename typo
+    status: "current"
+  },
+  {
+    id: 2,
+    title: "The Ministry of Time",
+    author: "Kaliane Bradley",
+    cover: "/images/ministryoftime.jpg",
+    status: "recent"
+  },
+  {
+    id: 3,
+    title: "Island of the Missing Trees",
+    author: "Elif Shafak",
+    cover: "/images/theislandofmissingtrees.jpg",
+    status: "recent"
+  },
+  {
+    id: 4,
+    title: "The Poppy War",
+    author: "R.F. Kuang",
+    cover: "/images/poppywar.jpg",
+    status: "recent"
+  }
+];
 
 const RecentReads = () => {
-  const [currentRead, setCurrentRead] = useState(null);
-  const [recentBooks, setRecentBooks] = useState([]);
-
-  useEffect(() => {
-    const recentReads = [
-      {
-        id: 1,
-        title: "Apeirogon",
-        author: "Colum McCann",
-        cover: "/images/Apereigon.jpg",
-        status: "current"
-      },
-      {
-        id: 2,
-        title: "The Ministry of Time",
-        author: "Kaliane Bradley",
-        cover: "/images/ministryoftime.jpg",
-        status: "recent"
-      },
-      {
-        id: 3,
-        title: "Island of the Missing Trees",
-        author: "Elif Shafak",
-        cover: "/images/theislandofmissingtrees.jpg",
-        status: "recent"
-      },
-      {
-        id: 4,
-        title: "The Poppy War",
-        author: "R.F. Kuang",
-        cover: "/images/poppywar.jpg",
-        status: "recent"
-      }
-    ];
-
-    setRecentBooks(recentReads);
-  }, []);
+  const [recentBooks] = useState(RECENT_BOOKS); // Fix: Issue #44
 
   return (
-    <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 hover:scale-105 transition-all h-full overflow-hidden">
+    <div className="relative bg-slate-900/50 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 hover:scale-105 transition-all h-full overflow-hidden">
       <div className="widget-gradient"></div>
       <div className="relative z-10 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
@@ -56,9 +61,14 @@ const RecentReads = () => {
 
       <div className="grid grid-cols-2 grid-rows-2 gap-2 flex-1 min-h-0">
         {recentBooks.map((book, index) => (
-          <div
+          // Fix: Issue #46 — whole cover links to the book's Goodreads page
+          <a
             key={book.id}
-            className="group relative border border-white/10 rounded-xl overflow-hidden bg-black/20 h-full"
+            href={GOODREADS_URLS[book.id]}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${book.title} on Goodreads`}
+            className="group relative block border border-white/10 rounded-xl overflow-hidden bg-black/20 h-full"
           >
             {/* image fills full card */}
             <div className="absolute inset-0 bg-black/20 rounded-xl overflow-hidden">
@@ -104,7 +114,7 @@ const RecentReads = () => {
                 {book.author}
               </p>
             </div>
-          </div>
+          </a>
         ))}
       </div>
       </div>

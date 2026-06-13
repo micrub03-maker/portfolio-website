@@ -7,6 +7,19 @@ import LifeStoryEasterEgg from './LifeStoryEasterEgg';
 
 const ZOOM_MAX = 8;
 
+// Fix: Issue #33 — load jsvectormap (+ world map) once and share across all
+// instances (TravelMap and LifeStoryEasterEgg) instead of re-importing per mount.
+let _cachedJsVectorMap = null;
+export async function loadJsVectorMap() {
+  if (_cachedJsVectorMap) return _cachedJsVectorMap;
+  // Sequential: world.js calls window.jsVectorMap.addMap(), which requires the
+  // main library to have run first. Promise.all does NOT guarantee that order.
+  const { default: JsVectorMap } = await import('jsvectormap');
+  await import('jsvectormap/dist/maps/world.js');
+  _cachedJsVectorMap = JsVectorMap;
+  return JsVectorMap;
+}
+
 // --- Icons ---
 
 const GlobeIcon = ({ className }) => (
@@ -61,6 +74,9 @@ const StatItem = ({ icon: Icon, label, value, onClick }) => (
 
 const VISITED_COUNTRY_CODES = travelData.visited_countries.map(c => c.code);
 
+// Fix: Issue #32 — alphabetical list for the mobile country-list panel
+const SORTED_COUNTRIES = [...travelData.visited_countries].sort((a, b) => a.name.localeCompare(b.name));
+
 // jsvectormap's EventHandler uses a module-level singleton registry.
 // map.destroy() calls EventHandler.flush() which removes ALL registered
 // listeners globally — killing any other live map instances on the same page.
@@ -89,11 +105,8 @@ function WorldMap({ mapRef, onTooltip, zoomMax = ZOOM_MAX, isMobile = false }) {
     const initMap = async () => {
       const myGen = ++initGen;
       try {
-        // Sequential imports — world.js calls window.jsVectorMap.addMap() which
-        // requires the main library to have run first and set window.jsVectorMap.
-        // Promise.all does NOT guarantee this order.
-        const { default: JsVectorMap } = await import('jsvectormap');
-        await import('jsvectormap/dist/maps/world.js');
+        // Fix: Issue #33 — shared, cached loader (see loadJsVectorMap above)
+        const JsVectorMap = await loadJsVectorMap();
 
         await new Promise(r => requestAnimationFrame(r));
 
@@ -284,6 +297,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
   const mapRef = useRef(null);
   const [lifeStoryOpen, setLifeStoryOpen] = useState(false);
+  const [showCountryList, setShowCountryList] = useState(false); // Fix: Issue #32
 
   // Tooltip state: only visible/name trigger re-renders.
   // Position is written directly to the DOM element via tooltipElRef to avoid
@@ -293,6 +307,13 @@ const TravelMap = ({ compact = false, onNavigate }) => {
   const tooltipPos = useRef({ x: 0, y: 0 });
 
   const belgiumTimerRef = useRef(null);
+
+  // Fix: Issue #31 — clear any pending Belgium tooltip timer on unmount
+  useEffect(() => {
+    return () => {
+      if (belgiumTimerRef.current) clearTimeout(belgiumTimerRef.current);
+    };
+  }, []);
 
   const handleTooltip = useCallback(({ visible, name, x, y }) => {
     if (visible) {
@@ -373,7 +394,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
 
   return (
     <>
-      <div className={`flex flex-col gap-2 relative backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl overflow-hidden ${compact ? 'bg-black/30' : 'bg-white/10 md:h-full'}`}>
+      <div className={`flex flex-col gap-2 relative backdrop-blur-md rounded-2xl border border-white/20 p-3 shadow-2xl overflow-hidden ${compact ? 'bg-black/30' : 'bg-slate-900/50 md:h-full'}`}>
         {/* Header */}
         <div className="flex items-center justify-between">
           {header}
@@ -393,11 +414,38 @@ const TravelMap = ({ compact = false, onNavigate }) => {
             /* Mobile compact: full-width map, stats row, then trip highlights stacked */
             <>
               {mapArea}
-              <div className="flex justify-around border-t border-white/20 pt-2">
-                <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-                <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
-                <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
-              </div>
+              {/* Fix: Issue #32 — tap the stats row to reveal a scrollable country list; map stays visible above */}
+              {showCountryList ? (
+                <div className="border-t border-white/20 pt-2">
+                  <div className="bg-white/10 backdrop-blur rounded-xl text-white text-sm p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[9px] uppercase tracking-wide text-white/40 font-semibold">visited countries</span>
+                      <button
+                        onClick={() => setShowCountryList(false)}
+                        className="text-white/60 hover:text-white text-xs"
+                        aria-label="Close country list"
+                      >
+                        ✕ close
+                      </button>
+                    </div>
+                    <ul className="max-h-40 overflow-y-auto grid grid-cols-2 gap-x-3 gap-y-0.5">
+                      {SORTED_COUNTRIES.map(c => (
+                        <li key={c.code} className="text-white/80 leading-snug">{c.name}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className="flex justify-around border-t border-white/20 pt-2"
+                  onClick={() => setShowCountryList(true)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+                  <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={(e) => { e.stopPropagation(); setLifeStoryOpen(true); }} />
+                  <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
+                </div>
+              )}
               <div className="flex flex-col gap-1 border-t border-white/20 pt-2">
                 <p className="text-[9px] uppercase tracking-wide text-white/40 font-semibold mb-0.5">favourite trips</p>
                 {travelData.trip_highlights.filter(h => h.type === 'highlight').map((h, i) => (
@@ -413,11 +461,36 @@ const TravelMap = ({ compact = false, onNavigate }) => {
           /* Desktop compact: map | stats | trip highlights */
           <div className="flex flex-row gap-2">
             {mapArea}
-            <div className="flex flex-col gap-3 justify-center w-36 shrink-0 border-l border-white/20 pl-3">
-              <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
-              <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
-              <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
-            </div>
+            {/* Fix: Issue #32 — click the stats column to reveal the alphabetical country list; map stays visible */}
+            {showCountryList ? (
+              <div className="flex flex-col w-36 shrink-0 border-l border-white/20 pl-3 justify-center">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[9px] uppercase tracking-wide text-white/40 font-semibold">visited countries</span>
+                  <button
+                    onClick={() => setShowCountryList(false)}
+                    className="text-white/60 hover:text-white text-[10px]"
+                    aria-label="Close country list"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <ul className="max-h-40 overflow-y-auto flex flex-col gap-y-0.5">
+                  {SORTED_COUNTRIES.map(c => (
+                    <li key={c.code} className="text-white/80 text-sm leading-snug">{c.name}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div
+                className="flex flex-col gap-3 justify-center w-36 shrink-0 border-l border-white/20 pl-3"
+                onClick={() => setShowCountryList(true)}
+                style={{ cursor: 'pointer' }}
+              >
+                <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+                <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={(e) => { e.stopPropagation(); setLifeStoryOpen(true); }} />
+                <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
+              </div>
+            )}
             <div className="flex flex-col gap-1 w-56 shrink-0 border-l border-white/20 pl-3 justify-center">
               <p className="text-sm uppercase tracking-wide text-white/40 font-semibold mb-0.5">favourite trips</p>
               {travelData.trip_highlights.filter(h => h.type === 'highlight').map((h, i) => (

@@ -41,6 +41,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
   const navigate = useNavigate();
   const rampRef = useRef(null);
   const svgRef = useRef(null);
+  const loaderRootRef = useRef(null); // Fix: Issue #4 — scope keyboard listeners to the loader node
   const isExitingRef = useRef(false);
   const touchStartRef = useRef(null);
   const skaterRef = useRef({ x: 140, y: 78, angle: 0 });
@@ -182,11 +183,17 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
       if (e.key === "ArrowRight") keysRef.current.right = false;
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
+    // Fix: Issue #4 — attach key handlers to the loader root (not window) so they
+    // don't intercept assistive-technology navigation when the loader isn't focused.
+    const node = loaderRootRef.current;
+    if (!node) return;
+    node.addEventListener("keydown", handleKeyDown);
+    node.addEventListener("keyup", handleKeyUp);
+    // Focus on mount so keyboard users can interact immediately.
+    node.focus();
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
+      node.removeEventListener("keydown", handleKeyDown);
+      node.removeEventListener("keyup", handleKeyUp);
       if (kbAnimFrameRef.current) cancelAnimationFrame(kbAnimFrameRef.current);
     };
   }, []);
@@ -270,8 +277,8 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
         // let parent unmount Loader
         onEnterComplete();
       } else {
-        // fallback: navigate to new home = About at /home
-        navigate("/home");
+        // Fix: Issue #1 — /home route removed; About now lives only at /about
+        navigate("/about");
       }
     }, 1300);
   };
@@ -280,7 +287,9 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-[url('/nightsky.jpg')] bg-cover bg-center flex items-start justify-center cursor-pointer"
+      ref={loaderRootRef} // Fix: Issue #4
+      tabIndex={0} // Fix: Issue #4 — focusable so scoped key handlers receive events
+      className="fixed inset-0 z-50 bg-[url('/nightsky.jpg')] bg-cover bg-center flex items-start justify-center cursor-pointer outline-none"
       style={{
         opacity: isExiting ? 0 : 1,
         transition: "opacity 1.3s ease-in-out",
@@ -294,7 +303,8 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
 
       <div className="relative z-10 flex flex-col items-center text-center text-white px-6 max-w-2xl md:max-w-4xl mx-auto pt-12 md:pt-16">
         {/* HUD / terminal card */}
-        <div className="relative px-8 md:px-12 py-7 bg-black/70 border border-cyan-400/35 rounded-sm shadow-[0_0_40px_rgba(34,211,238,0.08),inset_0_0_40px_rgba(34,211,238,0.03)]">
+        {/* Fix: Issue #5 — tighter horizontal padding at ≤375px so the card breathes */}
+        <div className="relative px-4 sm:px-8 md:px-12 py-7 bg-black/70 border border-cyan-400/35 rounded-sm shadow-[0_0_40px_rgba(34,211,238,0.08),inset_0_0_40px_rgba(34,211,238,0.03)]">
 
           {/* Corner brackets */}
           <span className="absolute top-0 left-0 w-5 h-5 border-l-2 border-t-2 border-cyan-400/70" />
@@ -317,7 +327,8 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
               Hey there! I&apos;m Michael
             </h1>
-            <p className="text-base md:text-xl tracking-wide text-cyan-300/90">
+            {/* Fix: Issue #5 — smaller subtitle at 375px to avoid an awkward two-line wrap */}
+            <p className="text-[13px] sm:text-base md:text-xl tracking-wide text-cyan-300/90">
               Mechanical/Controls Engineer @ MPC lab Berkeley
             </p>
             <p className="text-sm md:text-base text-white/70 tracking-wide">

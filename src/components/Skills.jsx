@@ -49,7 +49,7 @@ export default function Skills() {
         {cards.filter(c => ['mechanical', 'manufacturing'].includes(c.key)).map((card) => (
           <div
             key={card.key}
-            className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 space-y-3"
+            className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-4 md:p-6 space-y-3"
           >
             {card.lines.map((line) => (
               <p key={line.label} className="text-sm text-gray-700 leading-relaxed">
@@ -66,7 +66,7 @@ export default function Skills() {
         {cards.filter(c => ['software', 'languages'].includes(c.key)).map((card) => (
           <div
             key={card.key}
-            className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 space-y-3"
+            className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-4 md:p-6 space-y-3"
           >
             {card.lines.map((line) => (
               <p key={line.label} className="text-sm text-gray-700 leading-relaxed">

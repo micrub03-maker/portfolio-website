@@ -7,15 +7,17 @@ export default function AboutMe() {
         about me
       </h2>
 
-      <div className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-6 md:p-8">
+      <div className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-6 md:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12 items-stretch">
           {/* Picture */}
           <div className="order-1 lg:col-span-2 h-full">
             <div className="w-full h-64 sm:h-80 lg:h-full rounded-xl overflow-hidden">
+              {/* NOTE: rename public/images/About-me.JPG → public/images/about-me.jpg on disk */}
               <img
-                src="/images/About-me.JPG"
+                src="/images/about-me.jpg" // Fix: Issue #14 — lowercase, case-safe path
                 alt="About me"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top" // Fix: Issue #15 — keep subject in frame on portrait crops
+                loading="lazy" // Fix: Issue #16 — image is well below the fold
               />
             </div>
           </div>

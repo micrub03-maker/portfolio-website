@@ -53,11 +53,21 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
   const handleNext = () => goTo((activeIndex + 1) % slides.length);
   const handlePrev = () => goTo((activeIndex - 1 + slides.length) % slides.length);
 
-  const handleTouchStart = (e) => { touchStartX.current = e.targetTouches[0].clientX; };
+  // Fix: Issue #47 — pause auto-advance while a touch is in progress, mirroring hover
+  const handleTouchStart = (e) => {
+    setIsHovered(true);
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
   const handleTouchEnd = (e) => {
+    setIsHovered(false);
     if (touchStartX.current === null) return;
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) diff > 0 ? handleNext() : handlePrev();
+    touchStartX.current = null;
+  };
+  // Fix: F-7 — an OS-interrupted touch never fires touchend; without this the pause sticks forever
+  const handleTouchCancel = () => {
+    setIsHovered(false);
     touchStartX.current = null;
   };
 
@@ -65,11 +75,12 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
 
   return (
     <div
-      className="relative bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 hover:scale-105 transition-all w-full h-full overflow-hidden flex flex-col"
+      className="relative bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 hover:scale-105 transition-all w-full h-full overflow-hidden flex flex-col"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
       <div className="widget-gradient" />
 

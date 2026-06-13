@@ -31,15 +31,21 @@ function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, mobileImageBelow 
   );
 }
 
-function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
+// Fix: Issue #20 — default noClickClose to true so body clicks don't collapse the
+// dropdown; only the header button toggles it. Pass noClickClose={false} to opt back in.
+function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (!forceOpenTrigger) return;
-    setOpen(true);
-    onOpenChange?.(true);
+    // Fix: Issue #23 — defer one frame so layout settles before any scroll measurement
+    const raf = requestAnimationFrame(() => {
+      setOpen(true);
+      onOpenChange?.(true);
+    });
+    return () => cancelAnimationFrame(raf);
   }, [forceOpenTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -161,6 +167,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
     assemblyVideoRef.current?.pause();
     if (assemblyVideoRef.current) assemblyVideoRef.current.currentTime = 0;
     setAssemblyPlaying(false);
+    // Fix: F-9 — never force-play sibling videos for users preferring reduced motion
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     suctionDropdownRef.current?.querySelectorAll('video').forEach(v => {
       if (v !== assemblyVideoRef.current) v.play();
     });
@@ -849,6 +857,8 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
   const touchStartX = useRef(null);
 
   useEffect(() => {
+    // Fix: Issue #21 — track appended preload links and remove them on unmount
+    const links = [];
     [
       '/images/suction-cup-assembly.mp4',
       '/images/suction-cup-grab.mp4',
@@ -861,7 +871,9 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
       link.as = 'video';
       link.href = url;
       document.head.appendChild(link);
+      links.push(link);
     });
+    return () => links.forEach(l => l.remove());
   }, []);
 
   useEffect(() => {
@@ -893,12 +905,17 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
     const diff = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) {
       diff > 0 ? goNext() : goPrev();
-      const section = document.getElementById('projects');
-      if (section) {
-        setTimeout(() => {
-          const y = section.getBoundingClientRect().top + window.pageYOffset - 80;
-          window.scrollTo({ top: y, behavior: 'smooth' });
-        }, 50);
+      // Fix: Issue #22 — only re-anchor to #projects if it isn't already in view
+      const el = document.getElementById('projects');
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const inView = rect.top >= 0 && rect.top <= window.innerHeight * 0.5;
+        if (!inView) {
+          setTimeout(() => {
+            const y = rect.top + window.pageYOffset - 80;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }, 50);
+        }
       }
     }
     touchStartX.current = null;
@@ -913,7 +930,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
       </h2>
 
       <div
-        className="rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
+        className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >

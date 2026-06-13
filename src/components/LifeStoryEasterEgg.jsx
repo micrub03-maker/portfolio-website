@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { LIFE_STORY_CHAPTERS } from '../data/lifeStory';
-import { _pendingReinit } from './TravelMap';
+import { _pendingReinit, loadJsVectorMap } from './TravelMap'; // Fix: Issue #33 — shared cached loader
 
 // ── World map projection (Miller cylindrical, jsvectormap world.js constants) ─
 
@@ -385,8 +385,7 @@ export default function LifeStoryEasterEgg({ onClose }) {
     let destroyed = false;
     const init = async () => {
       try {
-        const { default: JsVectorMap } = await import('jsvectormap');
-        await import('jsvectormap/dist/maps/world.js');
+        const JsVectorMap = await loadJsVectorMap(); // Fix: Issue #33
         await new Promise(r => requestAnimationFrame(r));
         if (destroyed || !mountRef.current) return;
 
@@ -550,6 +549,13 @@ export default function LifeStoryEasterEgg({ onClose }) {
     return () => window.removeEventListener('keydown', fn);
   }, [onClose]);
 
+  // Fix: Issue #34 — lock body scroll while the overlay is open
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const chapter = LIFE_STORY_CHAPTERS[chapterIndex];
 
   return createPortal(
@@ -570,7 +576,9 @@ export default function LifeStoryEasterEgg({ onClose }) {
           display: 'flex', flexDirection: 'column',
           background: 'rgba(6,10,16,0.96)', backdropFilter: 'blur(4px)',
         }}
-        onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+        // Fix: Issue #36 / F-2 — ignore backdrop taps while loading/animating, but keep
+        // the header close/ESC buttons interactive throughout
+        onClick={e => { if (e.target === e.currentTarget && mapReady && !isAnimating) onClose(); }}
       >
         {/* Header */}
         <div style={{

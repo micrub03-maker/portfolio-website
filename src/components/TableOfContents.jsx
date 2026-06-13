@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useMediaQuery } from 'react-responsive';
 
 const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
@@ -7,6 +7,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
   const [activeSection, setActiveSection] = useState('home');
   const [isHovered, setIsHovered] = useState(false);
   const [isDarkBackground, setIsDarkBackground] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false); // Fix: Issue #12
   const hideTimer = useRef(null);
   const activeSectionRef = useRef('home');
 
@@ -14,12 +15,17 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
     activeSectionRef.current = activeSection;
   }, [activeSection]);
 
+  // Fix: F-8 — close the mobile popover when scrolling back to the hero
+  useEffect(() => {
+    if (activeSection === 'home') setMobileOpen(false);
+  }, [activeSection]);
+
   const sections = [
     { id: 'home', label: 'home' },
     { id: 'about', label: 'about me' },
     { id: 'projects', label: 'projects' },
-    { id: 'interests', label: 'interests' },
     { id: 'resume', label: 'resume overview' },
+    { id: 'interests', label: 'interests' },
     { id: 'getInTouch', label: 'contact' },
   ];
 
@@ -80,7 +86,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
           onSectionNavigate?.('projects');
         };
         window.addEventListener('scrollend', notify, { once: true });
-        setTimeout(notify, 800);
+        setTimeout(notify, 500); // Fix: Issue #13 — shorter fallback for browsers without 'scrollend'
       }
       return;
     }
@@ -92,9 +98,18 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
       requestAnimationFrame(() => {
         const element = document.getElementById(sectionId);
         if (element) {
-          const yOffset = (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10 : -80;
-          const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-          window.scrollTo({ top: y, behavior: 'smooth' });
+          const rect = element.getBoundingClientRect();
+          const top = rect.top + window.pageYOffset;
+          if (sectionId === 'getInTouch') {
+            // Anchor so the whole contact widget is visible: center it when it
+            // fits the viewport, otherwise top-align with a small gap.
+            const vh = window.innerHeight;
+            const y = rect.height <= vh ? top - (vh - rect.height) / 2 : top - 20;
+            window.scrollTo({ top: Math.max(y, 0), behavior: 'smooth' });
+          } else {
+            const yOffset = (sectionId === 'about' || sectionId === 'interests' || sectionId === 'resume') ? -10 : -80;
+            window.scrollTo({ top: top + yOffset, behavior: 'smooth' });
+          }
         }
       })
     );
@@ -103,7 +118,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
   // Widget version
   if (isWidget) {
     return (
-      <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 hover:scale-105 transition-all h-full overflow-hidden">
+      <div className="relative bg-slate-900/50 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 hover:scale-105 transition-all h-full overflow-hidden">
         <div className="widget-gradient"></div>
         <div className="relative z-10 h-full flex flex-col">
           <div className="flex items-center justify-between mb-3">
@@ -136,8 +151,56 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
     );
   }
 
-  // Don't render floating version on mobile
-  if (!isDesktop) return null;
+  // Fix: Issue #12 — mobile: compact floating button + section popover
+  if (!isDesktop) {
+    // Fix: F-8 — hidden on the hero, matching the desktop floating TOC
+    if (activeSection === 'home') return null;
+    return (
+      <>
+        {/* Fix: F-8 — transparent backdrop closes the popover on outside tap */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40" onClick={() => setMobileOpen(false)} />
+        )}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 8 }}
+              transition={{ duration: 0.15 }}
+              className="fixed bottom-16 right-4 z-50 rounded-2xl bg-black/70 backdrop-blur-md border border-white/15 shadow-lg p-2"
+            >
+              <nav className="flex flex-col">
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => { scrollToSection(section.id); setMobileOpen(false); }}
+                    className={`text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      activeSection === section.id
+                        ? 'bg-white/20 text-white font-semibold'
+                        : 'text-white/80 hover:bg-white/10'
+                    }`}
+                  >
+                    {section.label}
+                  </button>
+                ))}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <button
+          onClick={() => setMobileOpen((o) => !o)}
+          aria-label="Toggle section navigation"
+          aria-expanded={mobileOpen}
+          className="fixed bottom-4 right-4 z-50 w-10 h-10 rounded-full bg-black/60 backdrop-blur-md border border-white/15 shadow-lg flex items-center justify-center text-white"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </>
+    );
+  }
 
   const isOnHome = activeSection === 'home';
 

@@ -156,6 +156,8 @@ function MosaicLayout({ photos, w }) {
 
 // ─── COMPONENT ────────────────────────────────────────────────────────────────
 function pickCount(w) {
+  // Fix: Issue #30 — below 400px force a single full-width photo (chooseLayout → 'row')
+  if (w < 400) return 1;
   return w < 500 ? 2 + Math.floor(Math.random() * 2) : 3 + Math.floor(Math.random() * 3);
 }
 
@@ -166,6 +168,8 @@ export default function PhotographyShowcase({ photos: photoProp }) {
   const wRef = useRef(DEFAULT_W);
   const [containerW, setContainerW] = useState(DEFAULT_W);
   const isFirstPhotoPropRun = useRef(true);
+  // Fix: Issue #29 — pausable auto-rotation; start paused when reduced motion is preferred
+  const [isPlaying, setIsPlaying] = useState(!reduced);
 
   const [frame, setFrame] = useState(() => {
     const photos = pickPhotos(pool, pickCount(DEFAULT_W), new Set());
@@ -192,8 +196,9 @@ export default function PhotographyShowcase({ photos: photoProp }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoProp]);
 
-  // Rotation interval
+  // Rotation interval — Fix: Issue #29 — only runs while playing
   useEffect(() => {
+    if (!isPlaying) return;
     const id = setInterval(() => {
       setFrame(prev => {
         const photos = pickPhotos(pool, pickCount(wRef.current), new Set(prev.photos.map(p => p.id)));
@@ -202,17 +207,25 @@ export default function PhotographyShowcase({ photos: photoProp }) {
     }, 5000);
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photoProp]);
+  }, [photoProp, isPlaying]);
 
   const w = Math.max(containerW, 200);
 
   return (
     <div
       ref={containerRef}
-      className="w-full my-3"
+      className="relative w-full my-3"
       role="img"
       aria-label="Photography showcase — rotating photo collage"
     >
+      {/* Fix: Issue #29 — pause/play toggle for the auto-rotation */}
+      <button
+        onClick={() => setIsPlaying(p => !p)}
+        aria-label={isPlaying ? 'Pause photo rotation' : 'Play photo rotation'}
+        className="absolute bottom-2 left-2 z-10 bg-black/40 hover:bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center text-xs transition-colors"
+      >
+        {isPlaying ? '⏸' : '▶'}
+      </button>
       <AnimatePresence mode="wait">
         <motion.div
           key={frame.tick}

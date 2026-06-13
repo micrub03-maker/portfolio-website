@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import TravelMap from './TravelMap';
 import { MediaSlot } from "./MediaSlot";
 import DoodleJump from './DoodleJump';
@@ -38,7 +38,7 @@ const slides = [
     mediaLabel: 'TEMP: music',
     mediaSrc: null,
     description:
-      'I am a huge festival fan, will boogie to nearly any sound and have recently gotten into playing guitar. Here is a snapshot of what I listen to.',
+      'I’m a huge festival fan, will boogie to nearly any sound and have recently gotten into playing guitar. Here is a snapshot of what I listen to.',
   },
   {
     id: 'winter-sports',
@@ -58,9 +58,10 @@ const slides = [
   },
 ];
 
-export default function InterestsCarousel({ jumpToTravel = 0 }) {
+export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showGame, setShowGame] = useState(false);
+  const glowControls = useAnimation();
   const skateClicks = useRef(0);
   const konamiBuffer = useRef([]);
   const sectionRef = useRef(null);
@@ -80,6 +81,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
   }, [jumpToTravel]);
 
   const openGame = () => {
+    onRequestOpen?.();
     const idx = slides.findIndex(s => s.id === 'skateboarding');
     if (idx !== -1) setCurrentIndex(idx);
     setShowGame(true);
@@ -100,11 +102,27 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  // Fix: Issue #27 — don't let stale clicks accumulate across slide visits
+  useEffect(() => {
+    if (slides[currentIndex].id !== 'skateboarding') {
+      skateClicks.current = 0;
+    }
+  }, [currentIndex]);
+
   const handleSkateClick = () => {
     skateClicks.current += 1;
     if (skateClicks.current >= 5) {
       skateClicks.current = 0;
       openGame();
+    } else {
+      glowControls.start({
+        filter: [
+          'drop-shadow(0 0 0px rgba(59,130,246,0))',
+          'drop-shadow(0 0 14px rgba(59,130,246,0.9))',
+          'drop-shadow(0 0 0px rgba(59,130,246,0))',
+        ],
+        transition: { duration: 0.5 },
+      });
     }
   };
 
@@ -126,10 +144,8 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
 
   return (
     <section ref={sectionRef}>
-      <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">interests</h2>
-
       <div
-        className="max-w-5xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg overflow-hidden"
+        className="max-w-5xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -164,11 +180,6 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
             ›
           </button>
         </div>
-
-        {/* Label */}
-        <p className="text-center text-xs text-gray-400 uppercase tracking-wide pt-2 px-4">
-          What I'm into outside the lab
-        </p>
 
         {/* Slide content */}
         <AnimatePresence mode="wait">
@@ -217,15 +228,29 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                 <PhotographyShowcase photos={outdoorsPhotos} />
               </>
             ) : active.mediaSrc ? (
-              <div className="flex gap-4 items-start">
+              <div className="flex flex-col min-[480px]:flex-row gap-3 min-[480px]:gap-4 items-start">
+                {/* Fix: Issue #28 — stack video + text below 480px so neither column is cramped */}
                 <div
-                  className="w-2/5 flex-shrink-0"
+                  className="w-full min-[480px]:w-2/5 flex-shrink-0"
                   onClick={active.id === 'skateboarding' && !showGame ? handleSkateClick : undefined}
                   style={active.id === 'skateboarding' && !showGame ? { cursor: 'pointer' } : undefined}
                 >
                   {active.id === 'skateboarding' && showGame
-                    ? <DoodleJump inline onClose={() => setShowGame(false)} />
-                    : <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
+                    ? (
+                      /* Fix: Issue #26 — keep game touches from triggering carousel swipes */
+                      <div
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onTouchEnd={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                      >
+                        <DoodleJump inline onClose={() => setShowGame(false)} />
+                      </div>
+                    )
+                    : (
+                      <motion.div animate={glowControls} initial={false} className="select-none">
+                        <MediaSlot label={active.mediaLabel} src={active.mediaSrc} />
+                      </motion.div>
+                    )
                   }
                 </div>
                 <div className="flex-1 flex flex-col justify-end pb-2">

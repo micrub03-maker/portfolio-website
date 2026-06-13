@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMediaQuery } from "react-responsive";
 import emailjs from "@emailjs/browser";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 import { useBackground } from "../contexts/BackgroundContext";
 import TableOfContents from "../components/TableOfContents";
 import TravelMap from "../components/TravelMap";
@@ -53,10 +53,13 @@ export default function About() {
   const [projectJump, setProjectJump] = useState({ key: null, count: 0 });
   const [projectsCloseSignal, setProjectsCloseSignal] = useState(0);
   const [resumeOpen, setResumeOpen] = useState(false);
+  const [interestsOpen, setInterestsOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
   const [widgetsHiding, setWidgetsHiding] = useState(false);
   const [widgetRects, setWidgetRects] = useState(null);
   const [widgetSnapshots, setWidgetSnapshots] = useState(null);
+  // Fix: Issue #51 / F-10 — animation controls avoid remounting the photo on each shake
+  const shakeControls = useAnimationControls();
   const profileClickCount = useRef(0);
   const profileClickTimer = useRef(null);
   const profileCardRef = useRef(null);
@@ -65,6 +68,7 @@ export default function About() {
   const tocRef         = useRef(null);
   const readsRef       = useRef(null);
   const resumeSectionRef = useRef(null);
+  const interestsSectionRef = useRef(null);
 
   const handleProfileClick = () => {
     profileClickCount.current += 1;
@@ -96,16 +100,11 @@ export default function About() {
         ['Contents', tocRef],
         ['Reads',    readsRef],
       ];
+      // Fix: Issue #11 / F-1 — dynamic import keeps html2canvas out of the main
+      // bundle; only visitors who trigger the easter egg download it
       (async () => {
         try {
-          const html2canvas = await new Promise((resolve, reject) => {
-            if (window.html2canvas) { resolve(window.html2canvas); return; }
-            const s = document.createElement('script');
-            s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-            s.onload = () => resolve(window.html2canvas);
-            s.onerror = reject;
-            document.head.appendChild(s);
-          });
+          const { default: html2canvas } = await import('html2canvas');
           const pairs = await Promise.all(
             TARGETS.map(async ([label, ref]) => {
               if (!ref.current) return [label, null];
@@ -128,6 +127,7 @@ export default function About() {
         }
       })();
     } else {
+      shakeControls.start({ x: [0, -5, 5, -3, 3, 0], transition: { duration: 0.35 } }); // Fix: Issue #51
       profileClickTimer.current = setTimeout(() => { profileClickCount.current = 0; }, 1500);
     }
   };
@@ -172,38 +172,78 @@ export default function About() {
   }, [resumeOpen]);
 
 
+  useEffect(() => {
+    if (!interestsOpen) return;
+    const el = interestsSectionRef.current;
+    if (!el) return;
+    let observer = null;
+    let hasBeenVisible = false;
+    const timeout = setTimeout(() => {
+      observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) {
+            hasBeenVisible = true;
+          } else if (hasBeenVisible) {
+            setInterestsOpen(false);
+          }
+        },
+        { threshold: 0 }
+      );
+      observer.observe(el);
+    }, 700);
+    return () => {
+      clearTimeout(timeout);
+      observer?.disconnect();
+    };
+  }, [interestsOpen]);
+
   const handleProfileLoad = () => {
     setProfileLoaded(true);
   };
 
+  // Fix: Issue #10
   const handleScrollAbout = (e) => {
     e.preventDefault();
     const aboutSection = document.querySelector("#about");
     const yOffset = -10;
-    const y = aboutSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+    const y = aboutSection.getBoundingClientRect().top + window.scrollY + yOffset;
     window.scrollTo({top: y, behavior: 'smooth'});
   };
 
   const handleScrollGetInTouch = (e) => {
     e.preventDefault();
-    const aboutSection = document.querySelector("#getInTouch");
-    aboutSection.scrollIntoView({ behavior: "smooth" });
+    const section = document.querySelector("#getInTouch");
+    if (!section) return;
+    // Anchor so the whole contact widget is visible: center it when it fits,
+    // otherwise top-align with a small gap.
+    const rect = section.getBoundingClientRect();
+    const top = rect.top + window.pageYOffset;
+    const vh = window.innerHeight;
+    const y = rect.height <= vh ? top - (vh - rect.height) / 2 : top - 20;
+    window.scrollTo({ top: Math.max(y, 0), behavior: "smooth" });
   };
 
   const handleTravelNavigate = () => {
     setTravelJump(n => n + 1);
-    const el = document.getElementById('interests');
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.pageYOffset - 10;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
+    setInterestsOpen(true);
+    // Defer past two frames so the accordion expands and lays out before we
+    // measure + scroll, otherwise the layout shift cancels the smooth scroll.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const el = document.getElementById('interests');
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - 10;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      })
+    );
   };
 
   const handleProjectsNavigate = (projectKey) => {
     setProjectJump(prev => ({ key: projectKey, count: prev.count + 1 }));
     const el = document.getElementById('projects');
     if (el) {
-      const y = el.getBoundingClientRect().top + window.pageYOffset - 80;
+      const y = el.getBoundingClientRect().top + window.scrollY - 80;
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
@@ -216,29 +256,23 @@ export default function About() {
 
 
   // --- Contact form ---
-  const [noteOpen, setNoteOpen] = useState(false);
   const [formData, setFormData] = useState({ firstName: "", email: "", message: "" });
   const [submitStatus, setSubmitStatus] = useState(null); // null | "sending" | "success" | "error"
+  const successTimerRef = useRef(null); // Fix: F-6
   const formRef = useRef(null);
-  const noteAccordionRef = useRef(null);
-
-  useEffect(() => {
-    if (noteOpen && noteAccordionRef.current) {
-      setTimeout(() => {
-        noteAccordionRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 320); // wait for the expand animation to finish
-    }
-  }, [noteOpen]);
 
   const allFilled = formData.firstName.trim() && formData.email.trim() && formData.message.trim();
 
   const handleFormChange = (e) => {
+    if (submitStatus === "success") setSubmitStatus(null); // Fix: Issue #9
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!allFilled) return;
+    // Fix: F-6 — a stale auto-clear timer from a prior success must not fire mid-send
+    if (successTimerRef.current) { clearTimeout(successTimerRef.current); successTimerRef.current = null; }
     setSubmitStatus("sending");
     try {
       // Configure these three values in .env.local:
@@ -255,6 +289,7 @@ export default function About() {
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
       setSubmitStatus("success");
+      successTimerRef.current = setTimeout(() => setSubmitStatus(null), 5000); // Fix: Issue #9 / F-6
       setFormData({ firstName: "", email: "", message: "" });
     } catch {
       setSubmitStatus("error");
@@ -268,31 +303,33 @@ export default function About() {
           fadeIn ? "opacity-100" : "opacity-0"
         }`}
       >
-      <TableOfContents onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
+      <TableOfContents onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'interests') setInterestsOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
         <div
           id="home"
-          className={`w-full flex flex-col bg-cover bg-center relative overflow-hidden ${isLandscapeMobile ? 'h-screen' : 'min-h-screen md:h-screen'}`}
+          className={`w-full flex flex-col bg-cover bg-center relative overflow-x-hidden ${isLandscapeMobile ? 'min-h-svh' : 'min-h-svh'}`}
           style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/sunset.jpg')" }}
         >
           {/* Hero Dashboard - Redesigned */}
-          <div className={`w-full h-full flex items-center justify-center ${isLandscapeMobile ? 'px-2 py-1' : 'px-4 md:px-8 py-4 md:py-6'}`}>
+          <div className={`w-full flex-1 min-h-0 flex items-center justify-center ${isLandscapeMobile ? 'px-2 py-1' : 'px-4 md:px-8 py-4 md:py-6'}`}>
             <div
-              className={`w-full transition-opacity duration-300 ${isLandscapeMobile ? 'grid grid-cols-2 h-full gap-2' : 'max-w-7xl min-h-[90vh] md:h-[75vh] grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:grid-rows-6 gap-2 md:gap-3'}`}
+              className={`w-full transition-opacity duration-300 ${isLandscapeMobile ? 'grid grid-cols-2 min-h-0 gap-2' : 'max-w-7xl w-full min-h-0 grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:auto-rows-fr md:min-h-[75vh] gap-2 md:gap-3'}`}
               style={{ opacity: widgetsHiding ? 0 : 1 }}
             >
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
-              <div ref={profileCardRef} className={`bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 transition-all ${isLandscapeMobile ? 'col-span-1 row-span-1 p-2 flex items-center' : 'col-span-1 md:col-span-4 row-span-1 md:row-span-6 p-3 md:p-4 flex flex-col items-center justify-center text-center active:scale-[0.98] [@media(hover:hover)]:hover:scale-105'}`}>
+              <div ref={profileCardRef} className={`bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 transition-all ${isLandscapeMobile ? 'col-span-1 row-span-1 p-2 flex items-center' : 'col-span-1 md:col-span-4 row-span-1 md:row-span-6 p-3 md:p-4 flex flex-col items-center justify-center text-center active:scale-[0.98] [@media(hover:hover)]:hover:scale-105'}`}>
                 {isLandscapeMobile ? (
                   /* Landscape mobile: compact horizontal layout */
                   <div className="flex flex-row items-center gap-3 w-full h-full">
-                    <div
+                    {/* Fix: Issue #51 / F-10 — z:0 keeps the translateZ(0) GPU hint in framer's transform */}
+                    <motion.div
+                      animate={shakeControls}
                       className="w-14 h-14 rounded-full overflow-hidden border border-white/20 flex-shrink-0 cursor-pointer select-none"
-                      style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+                      style={{ z: 0, backfaceVisibility: 'hidden' }}
                       onClick={handleProfileClick}
                     >
                       <img src={profile} alt="Portrait of Michael Rubin" className="block w-full h-full object-cover object-top pointer-events-none" style={{ imageRendering: 'auto' }} />
-                    </div>
+                    </motion.div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0 text-left">
                       <h1 className="text-xs font-bold text-white leading-none">Michael Rubin</h1>
                       <p className="text-white/80 text-[10px] leading-tight">Mechanical/Controls Engineer @ MPC lab</p>
@@ -305,7 +342,8 @@ export default function About() {
                           <img className="h-2.5 w-2.5" src={github} alt="github" />
                           <span className="text-white text-[10px] font-medium">GitHub</span>
                         </a>
-                        <a href="https://www.linkedin.com/in/-michael-rubin" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all">
+                        {/* Fix: Issue #7 */}
+                        <a href="https://www.linkedin.com/in/-michael-rubin" target="_blank" rel="noreferrer" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all">
                           <img className="h-2.5 w-2.5" src={linkedin} alt="linkedin" />
                           <span className="text-white text-[10px] font-medium">LinkedIn</span>
                         </a>
@@ -325,9 +363,11 @@ export default function About() {
                 ) : (
                   /* Portrait / desktop: original layout */
                   <>
-                    <div
+                    {/* Fix: Issue #51 / F-10 — z:0 keeps the translateZ(0) GPU hint in framer's transform */}
+                    <motion.div
+                      animate={shakeControls}
                       className="w-32 h-32 md:w-52 md:h-52 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
-                      style={{ transform: 'translateZ(0)', backfaceVisibility: 'hidden' }}
+                      style={{ z: 0, backfaceVisibility: 'hidden' }}
                       onClick={handleProfileClick}
                     >
                       <img
@@ -336,7 +376,7 @@ export default function About() {
                         className="block w-full h-full object-cover object-top pointer-events-none"
                         style={{ imageRendering: 'auto' }}
                       />
-                    </div>
+                    </motion.div>
                     <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
                     <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab Berkeley</p>
                     <div className="flex items-center gap-2 mb-1">
@@ -353,7 +393,8 @@ export default function About() {
                         <img className="h-4 w-4" src={github} alt="github" />
                         <span className="text-white text-xs font-medium">GitHub</span>
                       </a>
-                      <a href="https://www.linkedin.com/in/-michael-rubin" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
+                      {/* Fix: Issue #7 */}
+                      <a href="https://www.linkedin.com/in/-michael-rubin" target="_blank" rel="noreferrer" className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all hover:scale-105">
                         <img className="h-4 w-4" src={linkedin} alt="linkedin" />
                         <span className="text-white text-xs font-medium">LinkedIn</span>
                       </a>
@@ -399,13 +440,14 @@ export default function About() {
 
               {/* A.3 Project Overview */}
               <div ref={projectsRef} className={isLandscapeMobile ? "col-span-1 row-span-1 h-full" : "col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-52 md:h-full"}>
-                <ProjectOverview onProjectClick={(key) => console.log('Project overview click:', key)} onNavigate={handleProjectsNavigate} />
+                {/* Fix: Issue #8 */}
+                <ProjectOverview onProjectClick={import.meta.env.DEV ? (key) => console.log('Project overview click:', key) : undefined} onNavigate={handleProjectsNavigate} />
               </div>
 
               {/* Table of Contents - Bottom left widget — desktop only */}
               {!isMobile && !isLandscapeMobile && (
                 <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
+                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'interests') setInterestsOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
                 </div>
               )}
 
@@ -435,9 +477,6 @@ export default function About() {
         </div>
         <div id="projects" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <ProjectPortfolio jumpToProject={projectJump} closeAllSignal={projectsCloseSignal} />
-        </div>
-        <div id="interests" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
-          <InterestsCarousel jumpToTravel={travelJump} />
         </div>
         <div id="resume" ref={resumeSectionRef} className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <button
@@ -472,10 +511,39 @@ export default function About() {
             )}
           </AnimatePresence>
         </div>
+        <div id="interests" ref={interestsSectionRef} className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
+          <button
+            onClick={() => setInterestsOpen((o) => !o)}
+            className="w-full flex items-center justify-center gap-3 mb-8 group"
+          >
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors">interests</h2>
+            <motion.span
+              animate={{ rotate: interestsOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="text-gray-400 group-hover:text-gray-300 transition-colors text-xl leading-none mt-1"
+            >
+              ▾
+            </motion.span>
+          </button>
+          <AnimatePresence initial={false}>
+            {interestsOpen && (
+              <motion.div
+                key="interests-content"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.35, ease: "easeInOut" }}
+                style={{ overflow: "hidden" }}
+              >
+                <InterestsCarousel jumpToTravel={travelJump} onRequestOpen={() => setInterestsOpen(true)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
         <div id="getInTouch" className="flex flex-col items-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">contact</h2>
 
-          <div className="w-full rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-6 md:p-10">
+          <div className="w-full rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-6 md:p-10">
 
             {/* Blurb */}
             <p className="text-base md:text-lg text-gray-800 leading-relaxed mb-6">
@@ -546,92 +614,68 @@ export default function About() {
               </a>
             </div>
 
-            {/* Drop me a note accordion */}
-            <div ref={noteAccordionRef} className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden">
-              <button
-                onClick={() => { setNoteOpen((o) => !o); setSubmitStatus(null); }}
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors text-left"
-              >
+            {/* Drop me a note */}
+            <div className="rounded-xl border border-gray-200 bg-white/60 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100">
                 <span className="text-sm font-semibold text-gray-800">Drop me a note...</span>
-                <motion.span
-                  animate={{ rotate: noteOpen ? 180 : 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-gray-400 text-base leading-none"
-                >
-                  ▾
-                </motion.span>
-              </button>
-
-              <AnimatePresence initial={false}>
-                {noteOpen && (
-                  <motion.div
-                    key="note-form"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    style={{ overflow: "hidden" }}
+              </div>
+              <form
+                ref={formRef}
+                onSubmit={handleSubmit}
+                className="px-4 pb-5 pt-4 flex flex-col gap-3"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500">First Name</label>
+                    <input
+                      type="text"
+                      name="firstName"
+                      value={formData.firstName}
+                      onChange={handleFormChange}
+                      placeholder="First Name"
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-gray-500">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleFormChange}
+                      placeholder="Email"
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-medium text-gray-500">What's on your mind?</label>
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleFormChange}
+                    placeholder="What's on your mind?"
+                    rows={4}
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  {submitStatus === "success" && (
+                    <p className="text-sm text-green-600 font-medium">Message sent!</p>
+                  )}
+                  {submitStatus === "error" && (
+                    <p className="text-sm text-red-500 font-medium">Something went wrong — try emailing directly.</p>
+                  )}
+                  {!submitStatus && <span />}
+                  <button
+                    type="submit"
+                    disabled={!allFilled || submitStatus === "sending"}
+                    className="ml-auto text-sm font-semibold px-5 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    <form
-                      ref={formRef}
-                      onSubmit={handleSubmit}
-                      className="px-4 pb-5 pt-3 border-t border-gray-100 flex flex-col gap-3"
-                    >
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="flex flex-col gap-1">
-                          <label className="text-xs font-medium text-gray-500">First Name</label>
-                          <input
-                            type="text"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleFormChange}
-                            placeholder="First Name"
-                            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                          />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          <label className="text-xs font-medium text-gray-500">Email</label>
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleFormChange}
-                            placeholder="Email"
-                            className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-xs font-medium text-gray-500">What's on your mind?</label>
-                        <textarea
-                          name="message"
-                          value={formData.message}
-                          onChange={handleFormChange}
-                          placeholder="What's on your mind?"
-                          rows={4}
-                          className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-800 bg-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 resize-none"
-                        />
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        {submitStatus === "success" && (
-                          <p className="text-sm text-green-600 font-medium">Message sent!</p>
-                        )}
-                        {submitStatus === "error" && (
-                          <p className="text-sm text-red-500 font-medium">Something went wrong — try emailing directly.</p>
-                        )}
-                        {!submitStatus && <span />}
-                        <button
-                          type="submit"
-                          disabled={!allFilled || submitStatus === "sending"}
-                          className="ml-auto text-sm font-semibold px-5 py-2 rounded-full bg-gray-900 text-white hover:bg-gray-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {submitStatus === "sending" ? "Sending…" : "Submit"}
-                        </button>
-                      </div>
-                    </form>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    {submitStatus === "sending" ? "Sending…" : "Submit"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
 

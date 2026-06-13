@@ -1,6 +1,7 @@
 import React from 'react';
 
-const PLAYLISTS = [
+// Fix: Issue #41 — exported so SpotifyPlaylistsAPI can use this rich data as its fallback
+export const FALLBACK_PLAYLISTS = [
     {
         id: '1KIXfl8eA8zAsXk2AOCN5K',
         name: 'Zzaj par & pihpoh',
@@ -27,7 +28,7 @@ const PLAYLISTS = [
     },
 ];
 
-const TOP_ARTISTS = [
+export const FALLBACK_TOP_ARTISTS = [
     { id: '5INjqkS1o8h1imAzPqGZBb', name: 'Tame Impala', image: 'https://i.scdn.co/image/ab67616100005174e412a782245eb20d9626c601', url: 'https://open.spotify.com/artist/5INjqkS1o8h1imAzPqGZBb' },
     { id: '1uiEZYehlNivdK3iQyAbye', name: 'Tom Misch',   image: 'https://i.scdn.co/image/ab67616100005174d13583bc1c845d1fedbe059f', url: 'https://open.spotify.com/artist/1uiEZYehlNivdK3iQyAbye' },
     { id: '59oA5WbbQvomJz2BuRG071', name: 'Jungle',      image: 'https://i.scdn.co/image/ab6761610000517421f6e9ccd576bb2ef541a3fe', url: 'https://open.spotify.com/artist/59oA5WbbQvomJz2BuRG071' },
@@ -35,7 +36,7 @@ const TOP_ARTISTS = [
     { id: '6yrtCy4XJHXM6tczo4RlTs', name: 'Lime Cordiale', image: 'https://i.scdn.co/image/ab6761610000517434660d01a37a353e8783c89d', url: 'https://open.spotify.com/artist/6yrtCy4XJHXM6tczo4RlTs' },
 ];
 
-const TOP_TRACKS = [
+export const FALLBACK_TOP_TRACKS = [
     { id: '1To3VopSqc8cWHcZJrpjvX', name: 'Mumbo Sugar',    artist: 'Arc De Soleil', image: 'https://i.scdn.co/image/ab67616d00004851aaa0e265b3d9c073d08911d2', url: 'https://open.spotify.com/track/1To3VopSqc8cWHcZJrpjvX' },
     { id: '0AFajg4fi2mIxO0CSBBIp5', name: 'Struck',          artist: 'Saloon Dion',  image: 'https://i.scdn.co/image/ab67616d0000485136270a5c729b95e46310f9a4', url: 'https://open.spotify.com/track/0AFajg4fi2mIxO0CSBBIp5' },
     { id: '0iI2cOHpX6xmwKD15Q5ynd', name: 'Breakfast in Bed', artist: 'Rayana Jay', image: 'https://i.scdn.co/image/ab67616d00004851b2fbd9875d8ab3d79484d12f', url: 'https://open.spotify.com/track/0iI2cOHpX6xmwKD15Q5ynd' },
@@ -63,21 +64,26 @@ const SpotifyPlaylists = () => (
             <div className="w-full md:w-[40%] md:flex-shrink-0">
                 <p className="text-[11px] uppercase tracking-wide text-white/40 font-semibold mb-1.5">playlists</p>
                 <div className="grid grid-cols-2 gap-1.5">
-                    {PLAYLISTS.map((playlist) => (
+                    {FALLBACK_PLAYLISTS.map((playlist) => (
                         <div
                             key={playlist.id}
                             className="bg-white/10 border border-white/10 rounded-lg overflow-hidden cursor-pointer group relative aspect-square"
                             onClick={() => playlist.url && window.open(playlist.url, '_blank')}
                         >
-                            {playlist.cover ? (
-                                <img src={playlist.cover} alt={`${playlist.name} cover`} className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 flex items-center justify-center">
-                                    <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                                    </svg>
-                                </div>
+                            {/* Fix: Issue #42 — fallback sibling always rendered so onError can reveal it */}
+                            {playlist.cover && (
+                                <img
+                                    src={playlist.cover}
+                                    alt={`${playlist.name} cover`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.style?.setProperty('display', 'flex'); }}
+                                />
                             )}
+                            <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 items-center justify-center" style={{ display: playlist.cover ? 'none' : 'flex' }}>
+                                <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                </svg>
+                            </div>
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1.5 py-1">
                                 <p className="text-[10px] text-white leading-tight truncate">{playlist.name}</p>
                             </div>
@@ -93,7 +99,7 @@ const SpotifyPlaylists = () => (
                 <div className="flex-1 min-w-0">
                     <p className="text-[11px] uppercase tracking-wide text-white/40 font-semibold mb-1.5">top artists</p>
                     <div className="flex flex-col gap-1.5">
-                        {TOP_ARTISTS.map((artist, i) => (
+                        {FALLBACK_TOP_ARTISTS.map((artist, i) => (
                             <div
                                 key={artist.id}
                                 className="flex items-center gap-2 cursor-pointer group"
@@ -101,15 +107,20 @@ const SpotifyPlaylists = () => (
                             >
                                 <span className="text-[11px] text-white/30 w-3 text-right flex-shrink-0">{i + 1}</span>
                                 <div className="w-8 h-8 md:w-[60px] md:h-[60px] rounded-full overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
-                                    {artist.image ? (
-                                        <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center">
-                                            <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                            </svg>
-                                        </div>
+                                    {/* Fix: Issue #42 */}
+                                    {artist.image && (
+                                        <img
+                                            src={artist.image}
+                                            alt={artist.name}
+                                            className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.style?.setProperty('display', 'flex'); }}
+                                        />
                                     )}
+                                    <div className="w-full h-full items-center justify-center" style={{ display: artist.image ? 'none' : 'flex' }}>
+                                        <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                                 <p className="text-[11px] md:text-[13px] text-white/70 truncate leading-tight">{artist.name}</p>
                             </div>
@@ -121,7 +132,7 @@ const SpotifyPlaylists = () => (
                 <div className="flex-1 min-w-0">
                     <p className="text-[11px] uppercase tracking-wide text-white/40 font-semibold mb-1.5">top tracks</p>
                     <div className="flex flex-col gap-1.5">
-                        {TOP_TRACKS.map((track, i) => (
+                        {FALLBACK_TOP_TRACKS.map((track, i) => (
                             <div
                                 key={track.id}
                                 className="flex items-center gap-2 cursor-pointer group"
@@ -129,15 +140,20 @@ const SpotifyPlaylists = () => (
                             >
                                 <span className="text-[11px] text-white/30 w-3 text-right flex-shrink-0">{i + 1}</span>
                                 <div className="w-8 h-8 md:w-[60px] md:h-[60px] rounded-lg overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
-                                    {track.image ? (
-                                        <img src={track.image} alt={track.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
-                                    ) : (
-                                        <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 flex items-center justify-center">
-                                            <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                                            </svg>
-                                        </div>
+                                    {/* Fix: Issue #42 */}
+                                    {track.image && (
+                                        <img
+                                            src={track.image}
+                                            alt={track.name}
+                                            className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                                            onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.style?.setProperty('display', 'flex'); }}
+                                        />
                                     )}
+                                    <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 items-center justify-center" style={{ display: track.image ? 'none' : 'flex' }}>
+                                        <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                        </svg>
+                                    </div>
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                     <p className="text-[11px] md:text-[13px] text-white/70 truncate leading-tight">{track.name}</p>

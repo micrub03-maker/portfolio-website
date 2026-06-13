@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-import { Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom";
-import Home from "./pages/Home";
+import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from "react-router-dom";
 import About from "./pages/About";
 import ResumePage from "./pages/ResumePage";
 import { Loader } from "./components/Loader";
@@ -16,12 +15,13 @@ function AppContent() {
 
   return (
     <main className={`w-full min-h-screen relative transition-colors duration-1000 ${getBackgroundClass()}`}>
+      {/* Fix: Issue #1 / F-3 — old /home links redirect; unknown paths fall back to the loader */}
       <Routes>
         <Route path="/" element={<Loader />} />
-        <Route path="/home" element={<About />} />
-        <Route path="/3d" element={<Home />} />
         <Route path="/about" element={<About />} />
+        <Route path="/home" element={<Navigate to="/about" replace />} />
         <Route path="/Michael-Rubin-Resume.PlsHireMe" element={<ResumePage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
   );

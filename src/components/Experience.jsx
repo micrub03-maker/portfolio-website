@@ -138,7 +138,7 @@ function ExperienceCard({ entry, index = 0 }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.06 }}
-      className={`flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg hover:shadow-xl transition-shadow ${entry.compactCard ? 'py-2 px-4 md:py-3 md:px-6' : 'p-4 md:p-6'}`}
+      className={`flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl hover:shadow-2xl transition-shadow ${entry.compactCard ? 'py-2 px-4 md:py-3 md:px-6' : 'p-4 md:p-6'}`}
     >
       {/* Logo */}
       <div className="w-44 flex-shrink-0 flex flex-row gap-1 mx-auto sm:mx-0">
@@ -178,6 +178,7 @@ function ExperienceCard({ entry, index = 0 }) {
 
 export default function Experience() {
   const [showMore, setShowMore] = useState(false);
+  const [toggleVisible, setToggleVisible] = useState(true);
   const toggleRef = useRef(null);
   const sectionRef = useRef(null);
   const isAutoClosingRef = useRef(false);
@@ -209,8 +210,24 @@ export default function Experience() {
     return () => { clearTimeout(timeout); observer?.disconnect(); };
   }, [showMore]);
 
+  // Track whether the top toggle bar is in the viewport — the sticky chip is
+  // redundant while the bar (which also says "show less") is on screen.
+  React.useEffect(() => {
+    if (!showMore) {
+      setToggleVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setToggleVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    if (toggleRef.current) observer.observe(toggleRef.current);
+    return () => observer.disconnect();
+  }, [showMore]);
+
   return (
-    <div ref={sectionRef} onClick={() => { if (showMore && window.innerWidth >= 768) { if (isAutoClosingRef.current) return; setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } }}>
+    /* Fix: Issue #17 — collapsing happens only via the toggle button and sticky chip */
+    <div ref={sectionRef}>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
 
       <div className="flex flex-col gap-4">
@@ -221,7 +238,7 @@ export default function Experience() {
         {/* More Experience toggle */}
         <button
           ref={toggleRef}
-          onClick={(e) => { e.stopPropagation(); if (showMore) { setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } else { setShowMore(true); } }}
+          onClick={(e) => { e.stopPropagation(); if (showMore) { setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } else { isAutoClosingRef.current = false; /* Fix: Issue #19 */ setShowMore(true); } }}
           aria-expanded={showMore}
           aria-controls="more-experience"
           className="flex items-center justify-between w-full rounded-2xl bg-white/50 backdrop-blur-md border border-gray-100 shadow-sm px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-white/70 hover:shadow-md transition-all"
@@ -260,7 +277,7 @@ export default function Experience() {
 
       {/* Sticky collapse chip */}
       <AnimatePresence>
-        {showMore && (
+        {showMore && !toggleVisible && (
           <motion.button
             key="sticky-collapse"
             initial={{ opacity: 0, y: 16 }}
@@ -268,7 +285,8 @@ export default function Experience() {
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.25 }}
             onClick={(e) => { e.stopPropagation(); if (isAutoClosingRef.current) return; setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); }}
-            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-white/85 backdrop-blur-md border border-gray-200 shadow-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:shadow-xl transition-all"
+            /* Fix: Issue #18 */
+            className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-full bg-white/85 backdrop-blur-md border border-gray-200 shadow-lg px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-white hover:shadow-xl transition-all"
           >
             ↑ show less
           </motion.button>

@@ -15,14 +15,12 @@ export const BackgroundProvider = ({ children }) => {
   const [aboutContentLoaded, setAboutContentLoaded] = useState(false);
   const [currentRoute, setCurrentRoute] = useState('/');
 
+  // Fix: Issue #1
   const getBackgroundClass = () => {
-    if (currentRoute === '/home') {
-      return 'bg-gray-800';
-    }
     if (currentRoute === '/about') {
       return aboutContentLoaded
-        ? 'bg-gradient-to-br from-slate-100 via-blue-50/30 to-slate-50'
-        : 'bg-gray-900';
+        ? 'bg-[#0a192f]'
+        : 'bg-[#0a192f]';
     }
     return homeLoaded ? 'bg-gradient-to-b from-sunset to-transparent bg-cover' : 'bg-transparent';
   };

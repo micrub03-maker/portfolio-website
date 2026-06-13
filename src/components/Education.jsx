@@ -70,7 +70,7 @@ export default function Education() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: i * 0.08 }}
-            className="flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md border border-gray-100 shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow"
+            className="flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-4 md:p-6 hover:shadow-2xl transition-shadow"
           >
             {/* Logo */}
             <div className="flex-shrink-0 flex items-start justify-center sm:justify-start">

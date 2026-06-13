@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from 'react';
+// Fix: Issue #41 — rich fallback data instead of generic placeholders
+import { FALLBACK_PLAYLISTS, FALLBACK_TOP_ARTISTS, FALLBACK_TOP_TRACKS } from './SpotifyPlaylists';
 
 const PLAYLIST_IDS = [
     '1KIXfl8eA8zAsXk2AOCN5K',
     '0A5kyzT4JY6dPXCAj5mr6n',
     '6eFkx6pxi7L6buUj8jcZeg',
     '5tzwDFgYtw6k6VYpwmBgmL',
-];
-
-const STATIC_PLAYLISTS = [
-    { id: '1', name: "Playlist 1", cover: null, url: "https://open.spotify.com/playlist/1KIXfl8eA8zAsXk2AOCN5K" },
-    { id: '2', name: "Playlist 2", cover: null, url: "https://open.spotify.com/playlist/0A5kyzT4JY6dPXCAj5mr6n" },
-    { id: '3', name: "Playlist 3", cover: null, url: "https://open.spotify.com/playlist/6eFkx6pxi7L6buUj8jcZeg" },
-    { id: '4', name: "Playlist 4", cover: null, url: "https://open.spotify.com/playlist/5tzwDFgYtw6k6VYpwmBgmL" },
 ];
 
 async function getClientToken() {
@@ -121,16 +116,22 @@ export default function SpotifyPlaylistsAPI() {
                 })(),
             ]);
 
+            // Fix: Issue #41 / F-4 — also fall back on fulfilled-but-empty results
+            // (missing/expired refresh token and non-OK responses resolve to [])
             setPlaylists(
-                playlistResult.status === 'fulfilled'
+                playlistResult.status === 'fulfilled' && playlistResult.value.length > 0
                     ? playlistResult.value
-                    : STATIC_PLAYLISTS
+                    : FALLBACK_PLAYLISTS
             );
             setTopArtists(
-                artistResult.status === 'fulfilled' ? artistResult.value : []
+                artistResult.status === 'fulfilled' && artistResult.value.length > 0
+                    ? artistResult.value
+                    : FALLBACK_TOP_ARTISTS
             );
             setTopTracks(
-                trackResult.status === 'fulfilled' ? trackResult.value : []
+                trackResult.status === 'fulfilled' && trackResult.value.length > 0
+                    ? trackResult.value
+                    : FALLBACK_TOP_TRACKS
             );
             setLoading(false);
         })();
@@ -174,15 +175,20 @@ export default function SpotifyPlaylistsAPI() {
                                 className="bg-white/10 border border-white/10 rounded-lg overflow-hidden cursor-pointer group relative aspect-square"
                                 onClick={() => playlist.url && window.open(playlist.url, '_blank')}
                             >
-                                {playlist.cover ? (
-                                    <img src={playlist.cover} alt={`${playlist.name} cover`} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 flex items-center justify-center">
-                                        <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                                        </svg>
-                                    </div>
+                                {/* Fix: F-5 — same onError fallback pattern as SpotifyPlaylists.jsx */}
+                                {playlist.cover && (
+                                    <img
+                                        src={playlist.cover}
+                                        alt={`${playlist.name} cover`}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.style?.setProperty('display', 'flex'); }}
+                                    />
                                 )}
+                                <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 items-center justify-center" style={{ display: playlist.cover ? 'none' : 'flex' }}>
+                                    <svg className="w-4 h-4 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                    </svg>
+                                </div>
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-1.5 py-1">
                                     <p className="text-[10px] text-white leading-tight truncate">{playlist.name}</p>
                                 </div>
@@ -208,15 +214,20 @@ export default function SpotifyPlaylistsAPI() {
                                 >
                                     <span className="text-[11px] text-white/30 w-3 text-right flex-shrink-0">{i + 1}</span>
                                     <div className="w-8 h-8 md:w-[60px] md:h-[60px] rounded-full overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
-                                        {artist.image ? (
-                                            <img src={artist.image} alt={artist.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                                </svg>
-                                            </div>
+                                        {/* Fix: F-5 */}
+                                        {artist.image && (
+                                            <img
+                                                src={artist.image}
+                                                alt={artist.name}
+                                                className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.style?.setProperty('display', 'flex'); }}
+                                            />
                                         )}
+                                        <div className="w-full h-full items-center justify-center" style={{ display: artist.image ? 'none' : 'flex' }}>
+                                            <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                            </svg>
+                                        </div>
                                     </div>
                                     <p className="text-[11px] md:text-[13px] text-white/70 truncate leading-tight">{artist.name}</p>
                                 </div>
@@ -237,15 +248,20 @@ export default function SpotifyPlaylistsAPI() {
                                 >
                                     <span className="text-[11px] text-white/30 w-3 text-right flex-shrink-0">{i + 1}</span>
                                     <div className="w-8 h-8 md:w-[60px] md:h-[60px] rounded-lg overflow-hidden bg-white/10 border border-white/10 flex-shrink-0">
-                                        {track.image ? (
-                                            <img src={track.image} alt={track.name} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 flex items-center justify-center">
-                                                <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                                                </svg>
-                                            </div>
+                                        {/* Fix: F-5 */}
+                                        {track.image && (
+                                            <img
+                                                src={track.image}
+                                                alt={track.name}
+                                                className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                                                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.style?.setProperty('display', 'flex'); }}
+                                            />
                                         )}
+                                        <div className="w-full h-full bg-gradient-to-br from-green-700/40 to-green-900/40 items-center justify-center" style={{ display: track.image ? 'none' : 'flex' }}>
+                                            <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                                            </svg>
+                                        </div>
                                     </div>
                                     <div className="flex flex-col min-w-0">
                                         <p className="text-[11px] md:text-[13px] text-white/70 truncate leading-tight">{track.name}</p>
