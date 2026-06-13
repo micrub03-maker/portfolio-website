@@ -324,22 +324,22 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
           </div>
 
           <div className="flex flex-col items-center gap-3 font-mono">
-            <h1 className="text-3xl md:text-5xl font-bold tracking-tight text-white">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
               Hey there! I&apos;m Michael
             </h1>
             {/* Fix: Issue #5 — smaller subtitle at 375px to avoid an awkward two-line wrap */}
-            <p className="text-[13px] sm:text-base md:text-xl tracking-wide text-cyan-300/90">
+            <p className="text-[18px] sm:text-lg md:text-xl tracking-wide text-cyan-300/90">
               Mechanical/Controls Engineer @ MPC lab Berkeley
             </p>
-            <p className="text-sm md:text-base text-white/70 tracking-wide">
+            <p className="text-md md:text-lg text-white/70 tracking-wide">
               UC Berkeley MEng &apos;26 · TU Delft BSc &apos;24
             </p>
             <div className="w-full border-t border-cyan-400/20 my-1" />
-            <p className="text-xs md:text-sm text-white/55 leading-relaxed max-w-xl mx-auto">
+            <p className="text-sm md:text-base text-white/55 leading-relaxed max-w-lg mx-auto">
               <span className="text-cyan-400/50">&gt; </span>Welcome to my portfolio website, glad you stopped by :)<br />
               <span className="text-cyan-400/50">&gt; </span>My goal is to give you a clear sense of what drives me, how I learn and solve problems, and the kind of energy I bring to a team.
             </p>
-            <p className="text-xs md:text-sm text-white/55">
+            <p className="text-sm md:text-base text-white/55">
               <span className="text-cyan-400/50">&gt; </span>Have fun browsing!
             </p>
           </div>
@@ -417,7 +417,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
           </g>
         </svg>
 
-        <p className="font-mono text-xs text-cyan-400/60 tracking-widest animate-pulse">
+        <p className="font-mono text-sm text-cyan-400/60 tracking-widest animate-pulse">
           <span className="text-cyan-400/40">&gt; </span>click anywhere to continue<span className="ml-1 inline-block animate-blink">_</span>
         </p>
       </div>

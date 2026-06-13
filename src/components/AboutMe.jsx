@@ -32,8 +32,9 @@ export default function AboutMe() {
             </p>
             <p>
               Belgian-born and fluent in five languages, I’m comfortable in fast-paced, multidisciplinary teams across different engineering cultures. I’m looking to do that kind of work on hard problems in medical devices, energy, or other technically demanding fields.
-              <br />
-              When I'm not designing or debugging something, I'm outdoors.
+            </p>
+            <p>
+              When I'm not designing or debugging something, you'll find me outdoors.
             </p>
           </div>
         </div>

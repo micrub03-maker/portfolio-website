@@ -620,7 +620,7 @@ export default function About() {
             {/* Drop me a note */}
             <div className="w-full rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl overflow-hidden">
               <div className="px-4 py-3 border-b border-black/5">
-                <span className="text-sm font-semibold text-gray-700">Drop me a note...</span>
+                <span className="text-sm font-semibold text-gray-800">Drop me a note...</span>
               </div>
               <form
                 ref={formRef}
