@@ -144,7 +144,7 @@ function ExperienceCard({ entry, index = 0 }) {
       <div className="w-44 flex-shrink-0 flex flex-row gap-1 mx-auto sm:mx-0">
         {entry.logoSrcs
           ? entry.logoSrcs.map((logo) => (
-              <div key={logo.label} className={`flex-1 min-w-0 flex flex-col overflow-hidden ${entry.logoSrcsHeight ?? 'h-[100px]'}}`}>
+              <div key={logo.label} className={`flex-1 min-w-0 flex flex-col overflow-hidden ${entry.logoSrcsHeight ?? 'h-[100px]'}`}>
                 <MediaSlot label={logo.label} src={logo.src} fill />
               </div>
             ))

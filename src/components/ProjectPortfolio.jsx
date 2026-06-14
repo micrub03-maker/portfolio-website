@@ -931,6 +931,20 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
   const chipRegistry = useRef(new Map());
   const chipOrder = useRef(0);
   const [activeChip, setActiveChip] = useState(null);
+  // The close chip is only useful while the Projects section is on screen; once
+  // the whole section scrolls out of view it has nothing to act on, so hide it.
+  const sectionRef = useRef(null);
+  const [sectionVisible, setSectionVisible] = useState(true);
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setSectionVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const recomputeChip = useCallback(() => {
     let best = null;
     for (const entry of chipRegistry.current.values()) {
@@ -1012,7 +1026,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
   const slideId = slides[currentIndex].id;
 
   return (
-    <section>
+    <section ref={sectionRef}>
       <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">
         project portfolio
       </h2>
@@ -1077,7 +1091,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
       {/* Floating close chip — appears when the open dropdown's title scrolls out
           of frame; closes the deepest such dropdown via its own close behaviour. */}
       <AnimatePresence>
-        {activeChip && (
+        {activeChip && sectionVisible && (
           <motion.button
             key="project-close-chip"
             initial={{ opacity: 0, y: 8 }}

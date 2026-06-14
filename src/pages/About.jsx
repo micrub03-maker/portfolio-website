@@ -72,6 +72,7 @@ export default function About() {
   const resumeSectionRef = useRef(null);
   const resumeTitleRef = useRef(null);
   const interestsSectionRef = useRef(null);
+  const projectsSectionRef = useRef(null);
 
   const handleProfileClick = () => {
     profileClickCount.current += 1;
@@ -232,6 +233,28 @@ export default function About() {
     };
   }, [interestsOpen]);
 
+  // Auto-close any open project dropdowns when the Projects section scrolls out
+  // the bottom of the viewport (user scrolling up) — mirrors resume/interests.
+  // Never on a downward (scroll-past) exit, which would collapse content above
+  // the viewport and yank everything below it upward.
+  useEffect(() => {
+    const el = projectsSectionRef.current;
+    if (!el) return;
+    let hasBeenVisible = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          hasBeenVisible = true;
+        } else if (hasBeenVisible && entry.boundingClientRect.top >= 0) {
+          setProjectsCloseSignal((n) => n + 1);
+        }
+      },
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   const handleProfileLoad = () => {
     setProfileLoaded(true);
   };
@@ -311,6 +334,24 @@ export default function About() {
     setTimeout(finish, 600); // fallback for browsers without 'scrollend'
   };
 
+  // Back to top: scroll to the hero, then once the scroll settles, collapse
+  // every open dropdown in the background. The user is at the top by then, so
+  // the collapses happen far below the viewport with no visible effect.
+  const handleBackToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('scrollend', finish);
+      setResumeOpen(false);
+      setInterestsOpen(false);
+      setProjectsCloseSignal((n) => n + 1);
+    };
+    window.addEventListener('scrollend', finish, { once: true });
+    setTimeout(finish, 700); // fallback for browsers without 'scrollend'
+  };
+
   const handleProjectsNavigate = (projectKey) => {
     setProjectJump(prev => ({ key: projectKey, count: prev.count + 1 }));
     const el = document.getElementById('projects');
@@ -382,7 +423,7 @@ export default function About() {
           style={{ backgroundImage: "linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/sunset.jpg')" }}
         >
           {/* Hero Dashboard - Redesigned */}
-          <div className={`w-full flex-1 min-h-0 flex items-center justify-center ${isLandscapeMobile ? 'px-2 py-1' : 'px-4 md:px-8 py-4 md:py-6'}`}>
+          <div className={`w-full flex-1 min-h-0 flex items-center justify-center ${isLandscapeMobile ? 'px-2 py-1' : 'px-4 md:px-8 pt-0 md:pt-1 pb-4 md:pb-6'}`}>
             <div
               className={`w-full transition-opacity duration-300 ${isLandscapeMobile ? 'grid grid-cols-2 min-h-0 gap-2' : 'max-w-7xl w-full min-h-0 grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:auto-rows-fr md:min-h-[75vh] gap-2 md:gap-3'}`}
               style={{ opacity: widgetsHiding ? 0 : 1 }}
@@ -547,7 +588,7 @@ export default function About() {
         <div className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <AboutMe />
         </div>
-        <div id="projects" className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
+        <div id="projects" ref={projectsSectionRef} className="flex flex-col justify-center w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <ProjectPortfolio jumpToProject={projectJump} closeAllSignal={projectsCloseSignal} />
         </div>
         <div id="resume" ref={resumeSectionRef} className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
@@ -751,7 +792,7 @@ export default function About() {
 
           {/* Back to top */}
           <button
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={handleBackToTop}
             className="mt-8 inline-flex items-center gap-2 text-sm text-gray-400 hover:text-gray-700 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
