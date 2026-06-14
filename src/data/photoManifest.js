@@ -21,7 +21,6 @@ export const photos = [
   { id: 20, src: '/images/Sequoia sunset.JPG',           alt: 'Sequoia sunset',           ar: 1.510 },
   { id: 21, src: '/images/Hoi An.JPG',                          alt: 'Hoi An',                       ar: 1.519 },
   { id: 22, src: '/images/IMGP7293.JPG',                        alt: 'IMGP7293',                     ar: 1.509 },
-  { id: 23, src: '/images/IMGP7843.JPG',                        alt: 'IMGP7843',                     ar: 1.509 },
   { id: 24, src: '/images/Italy roofs.jpg',                     alt: 'Italy roofs',                  ar: 1.778 },
   { id: 25, src: '/images/Lofoten.jpg',                         alt: 'Lofoten',                      ar: 0.667 },
   { id: 26, src: '/images/Mika planten.JPG',                    alt: 'Mika planten',                 ar: 1.509 },

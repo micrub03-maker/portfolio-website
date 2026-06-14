@@ -167,6 +167,24 @@ html.blueprint-mode .text-gray-400 {
     color: #dbeafe !important;
 }
 
+/* Carousel nav (InterestsCarousel) → blueprint-blue outline buttons instead of
+   the pale gray pills, which otherwise wash out into near-invisible circles on
+   the navy field once the glyph text is recoloured to cyan-white. */
+html.blueprint-mode .carousel-arrow {
+    background-color: rgba(13, 59, 130, 0.25) !important;
+    border: 1px solid rgba(147, 197, 253, 0.55);
+    color: #dbeafe !important;
+}
+html.blueprint-mode .carousel-arrow:hover {
+    background-color: rgba(147, 197, 253, 0.18) !important;
+}
+html.blueprint-mode .carousel-dot {
+    background-color: rgba(147, 197, 253, 0.35) !important;
+}
+html.blueprint-mode .carousel-dot-active {
+    background-color: #7dd3fc !important;
+}
+
 /* Imagery → clean monochrome on the blueprint field, no colour tint. */
 html.blueprint-mode img,
 html.blueprint-mode video {

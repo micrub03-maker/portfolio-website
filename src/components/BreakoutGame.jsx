@@ -1,10 +1,8 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { fetchLeaderboard, submitScore } from '../lib/leaderboard';
-import { notifyLeaderboardEntry } from '../lib/leaderboardEmail';
 
 const GAME_ID = 'breakout';
 const BOARD_SIZE = 5;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ISO-3166 alpha-2 country code → flag emoji (regional indicator letters).
 function countryFlag(cc) {
@@ -24,9 +22,9 @@ function locationLabel(row) {
 
 const WIDGET_AREAS = [
   { label: 'Profile',  color: '#818cf8', colStart: 0, rowStart: 0, colSpan: 4, rowSpan: 6 },
-  { label: 'Travel',   color: '#34d399', colStart: 4, rowStart: 0, colSpan: 4, rowSpan: 3 },
+  { label: 'Contents', color: '#a78bfa', colStart: 4, rowStart: 0, colSpan: 4, rowSpan: 3 },
   { label: 'Projects', color: '#fb923c', colStart: 8, rowStart: 0, colSpan: 4, rowSpan: 3 },
-  { label: 'Contents', color: '#a78bfa', colStart: 4, rowStart: 3, colSpan: 4, rowSpan: 3 },
+  { label: 'Travel',   color: '#34d399', colStart: 4, rowStart: 3, colSpan: 4, rowSpan: 3 },
   { label: 'Reads',    color: '#f472b6', colStart: 8, rowStart: 3, colSpan: 4, rowSpan: 3 },
 ];
 
@@ -147,6 +145,15 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
     let banner    = null;        // big centre flash, e.g. "ROUND 2 / SCRAMBLED"
     const blueprint = isBlueprint();
     const isTouch   = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // A widget area with no captured source rect isn't on the page at this layout
+    // (the hero only renders Profile + Projects on mobile; Travel/Contents/Reads
+    // are desktop-only). Their bricks have no widget imagery to show, so we paint
+    // them as plain glassy black rather than flashing the section colours.
+    const isGhostWidget = (label) => {
+      const r = widgetRectsRef.current?.[label];
+      return !(r && r.width > 0 && r.height > 0);
+    };
 
     // Ball speed grows ~16% per cleared round.
     const roundSpeed = () => Math.max(canvas.width, canvas.height) * 0.003 * Math.pow(1.16, round - 1);
@@ -309,9 +316,16 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       if (canAnimate && Date.now() - animStart < ANIM_TOTAL) {
         status = 'animating';
       } else {
-        status    = 'playing';
-        startTime = Date.now();
+        status = 'ready';
       }
+    }
+
+    // The ball sits parked on the paddle after the intro; the first click or key
+    // press launches it (its velocity was already set in initGame / nextRound).
+    function launch() {
+      if (status !== 'ready') return;
+      status    = 'playing';
+      startTime = Date.now();
     }
 
     // ── nextRound ───────────────────────────────────────────────────────────────
@@ -351,18 +365,26 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       if (banner) { banner.life--; if (banner.life <= 0) banner = null; }
 
       if (status === 'animating') {
-        if (Date.now() - animStart >= ANIM_TOTAL) {
-          status    = 'playing';
-          startTime = Date.now();
-        }
+        if (Date.now() - animStart >= ANIM_TOTAL) status = 'ready';
         return;
       }
-      if (status !== 'playing') return;
 
       const W = canvas.width;
       const H = canvas.height;
 
-      paddle.x = Math.max(0, Math.min(W - paddle.w, mouseX - paddle.w / 2));
+      if (status === 'ready' || status === 'playing') {
+        paddle.x = Math.max(0, Math.min(W - paddle.w, mouseX - paddle.w / 2));
+      }
+
+      // Ball rides on the paddle until the player clicks / presses to launch.
+      if (status === 'ready') {
+        ball.x = paddle.x + paddle.w / 2;
+        ball.y = paddle.y - ball.r - 2;
+        return;
+      }
+
+      if (status !== 'playing') return;
+
       ball.x += ball.vx;
       ball.y += ball.vy;
 
@@ -398,7 +420,8 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
           score += 10;
           const cx = b.x + b.w / 2;
           const cy = b.y + b.h / 2;
-          spawnParticles(cx, cy, b.color, 12, 3.5);
+          // Ghost (missing-section) bricks shatter as dark glass, matching their fill.
+          spawnParticles(cx, cy, isGhostWidget(b.widgetLabel) ? '#0a0a0c' : b.color, 12, 3.5);
           spawnPopup(cx, cy, '+10');
           const overL = ball.x + ball.r - b.x;
           const overR = b.x + b.w - (ball.x - ball.r);
@@ -418,7 +441,6 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
     // ── draw helpers ──────────────────────────────────────────────────────────
     function paintBrick(b, dx, dy, dw, dh, alpha = 1) {
       if (dw <= 0 || dh <= 0 || alpha <= 0) return;
-      const { r, g, b: bl } = hexToRgb(b.color);
       const radius = Math.min(8, dh * 0.25);
 
       ctx.save();
@@ -436,9 +458,17 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
         const sw = b.snapRatioW * snapshot.width;
         const sh = b.snapRatioH * snapshot.height;
         ctx.drawImage(snapshot, sx, sy, sw, sh, dx, dy, dw, dh);
+      } else if (isGhostWidget(b.widgetLabel)) {
+        // Section that doesn't exist at this layout (e.g. Travel/Contents/Reads on
+        // mobile): glassy black, so the missing widgets read as empty dark panes
+        // rather than their section colours.
+        ctx.fillStyle = 'rgba(10, 10, 12, 0.32)';
+        ctx.fillRect(dx, dy, dw, dh);
       } else {
-        // No snapshot, so fall back to the widget's colour so the brick is still visible.
-        ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, 0.18)`;
+        // No snapshot yet (slow/failed capture): fall back to a neutral glass tint,
+        // never the section colour — the widgets dropped their colours, so the bricks
+        // must read as plain glass rather than flashing the old section palette.
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.10)';
         ctx.fillRect(dx, dy, dw, dh);
       }
 
@@ -574,7 +604,7 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       drawScore(W);
       drawBanner(W, H);
 
-      if (status === 'playing') {
+      if (status === 'playing' || status === 'ready') {
         ctx.fillStyle = 'rgba(255,255,255,0.92)';
         rrect(ctx, paddle.x, paddle.y, paddle.w, paddle.h, 5);
         ctx.fill();
@@ -587,7 +617,17 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        if (Date.now() - startTime < 3000) {
+        if (status === 'ready') {
+          // Pulsing prompt while the ball waits on the paddle to be served.
+          ctx.globalAlpha  = 0.55 + 0.35 * Math.sin(Date.now() / 280);
+          ctx.fillStyle    = 'rgba(255,255,255,0.95)';
+          ctx.font         = `bold ${Math.min(22, W * 0.03)}px monospace`;
+          ctx.textAlign    = 'center';
+          ctx.textBaseline = 'middle';
+          const prompt = (isTouch || W < 768) ? 'tap to start' : 'click or press space to start';
+          ctx.fillText(prompt, W / 2, H * 0.66);
+          ctx.globalAlpha  = 1;
+        } else if (Date.now() - startTime < 3000) {
           ctx.fillStyle    = 'rgba(255,255,255,0.45)';
           ctx.font         = `${Math.min(13, W * 0.018)}px monospace`;
           ctx.textAlign    = 'center';
@@ -612,7 +652,12 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
     initGameRef.current = initGame;
 
     const onKey = e => {
-      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === 'Escape') { onCloseRef.current(); return; }
+      // Parked ball waiting to be served: Space / Enter launches it.
+      if (status === 'ready') {
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); launch(); }
+        return;
+      }
       // While the game-over overlay is up, Replay lives on a real button so 'r'
       // doesn't fire mid-keystroke when someone is typing their initials.
       if ((e.key === 'r' || e.key === 'R') && status !== 'animating' && !overlayOpenRef.current) {
@@ -620,7 +665,9 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       }
     };
     const onClick = () => {
-      if (status !== 'playing' && status !== 'animating' && !overlayOpenRef.current) initGame(true);
+      if (overlayOpenRef.current) return;
+      if (status === 'ready') { launch(); return; }
+      if (status !== 'playing' && status !== 'animating') initGame(true);
     };
     const onResize = () => {
       canvas.width  = canvas.offsetWidth  || window.innerWidth;
@@ -695,33 +742,25 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
 }
 
 // ── game-over overlay ─────────────────────────────────────────────────────────
-// Shown when a round ends: final score, the global top-5, and, when the score is
-// good enough and the backend is live, a "claim your spot" form (name, company,
-// optional email) aimed at recruiters competing for the board. Location is stamped
-// server-side from edge geo headers. All network calls degrade silently (see
-// ../lib/leaderboard), so with no backend the panel just shows score + Replay/Close.
+// Shown when a round ends: final score, the global top-5, and, when the score
+// cracks the top-5 and the backend is live, a "claim your spot" form (name +
+// optional company). Location is stamped server-side from edge geo headers. All
+// network calls degrade silently (see ../lib/leaderboard), so with no backend the
+// panel just shows score + Replay/Close.
 function GameOverPanel({ result, blueprint, onReplay, onClose }) {
   const { status, score } = result;
   const [scores, setScores]     = useState([]);
   const [configured, setConfig] = useState(false);
   const [loading, setLoading]   = useState(true);
-  const [form, setForm]         = useState({ name: '', company: '', email: '' });
+  const [form, setForm]         = useState({ name: '', company: '' });
   const [phase, setPhase]       = useState('idle'); // 'idle' | 'submitting' | 'submitted'
-  const [outcome, setOutcome]   = useState(null);   // mode frozen at submit ('board' | 'contact')
   const inputRef = useRef(null);
 
-  // 'board':   score cracks the visible top-5, offer to claim a spot.
-  // 'contact': it didn't, but they played, so still invite them to leave contact info.
-  // Either way the goal is a recruiter's details; only the framing/required field differ.
+  // Score cracks the visible top-5 → offer to claim a spot with name + company.
   const madeBoard = score > 0 &&
     (scores.length < BOARD_SIZE || score > scores[scores.length - 1].score);
-  const mode = madeBoard ? 'board' : 'contact';
-  const showForm = configured && score > 0 && phase !== 'submitted';
-  // Board mode needs a name (it's displayed); contact mode needs a real email (the
-  // whole point is reaching them).
-  const canSubmit = mode === 'board'
-    ? !!form.name.trim()
-    : EMAIL_RE.test(form.email.trim());
+  const showForm = configured && madeBoard && phase !== 'submitted';
+  const canSubmit = !!form.name.trim();
 
   useEffect(() => {
     let cancelled = false;
@@ -743,92 +782,70 @@ function GameOverPanel({ result, blueprint, onReplay, onClose }) {
     e?.preventDefault();
     if (phase === 'submitting' || !canSubmit) return;
     setPhase('submitting');
-    setOutcome(mode); // freeze: the board refresh below can flip `mode` afterwards
-    if (mode === 'board') {
-      const updated = await submitScore(GAME_ID, score, form);
-      // If they left an email, route it to the contact inbox like a normal message.
-      if (form.email.trim()) {
-        notifyLeaderboardEntry({ ...form, score, madeBoard: true });
-      }
-      setScores(updated ?? (await fetchLeaderboard(GAME_ID)).scores);
-    } else {
-      // Didn't make the board, so no leaderboard entry, just send their details on.
-      await notifyLeaderboardEntry({ ...form, score, madeBoard: false });
-    }
+    const updated = await submitScore(GAME_ID, score, form);
+    setScores(updated ?? (await fetchLeaderboard(GAME_ID)).scores);
     setPhase('submitted');
   }
 
-  const accent  = blueprint ? 'text-sky-300' : 'text-amber-300';
-  const panelBg = blueprint ? 'bg-[#0b2e63]/85 border-sky-300/30' : 'bg-black/65 border-white/15';
-  const field   = 'w-full rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-sm outline-none placeholder:text-white/35 focus:border-white/60';
+  // Match the hero dashboard's widget language: frosted slate card, sans-serif,
+  // white primary action + translucent secondary (like "Learn More" / "Get in Touch").
+  const accent  = blueprint ? 'text-sky-300' : 'text-amber-200';
+  const panelBg = blueprint ? 'bg-[#0b2e63]/70 border-sky-300/25' : 'bg-slate-900/55 border-white/20';
+  const field   = 'w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white outline-none placeholder:text-white/35 transition-colors focus:border-white/50';
   const submittedName = form.name.trim() || 'Anonymous';
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 backdrop-blur-sm font-mono text-white">
-      <div className={`max-h-[92vh] w-[min(94vw,440px)] overflow-y-auto rounded-2xl border ${panelBg} px-7 py-6 shadow-2xl`}>
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 backdrop-blur-sm text-white">
+      <div className={`max-h-[92vh] w-[min(94vw,440px)] overflow-y-auto rounded-2xl border ${panelBg} px-7 py-6 shadow-2xl backdrop-blur-md`}>
         <div className="text-center">
-          <div className={`text-sm tracking-[0.3em] ${accent}`}>
-            {status === 'won' ? 'CLEARED' : 'GAME OVER'}
+          <div className="text-xs font-medium uppercase tracking-wider text-white/50">
+            {status === 'won' ? 'Cleared' : 'Game Over'}
           </div>
-          <div className="mt-1 text-4xl font-bold">{score}</div>
+          <div className="mt-1 text-5xl font-bold tracking-tight">{score}</div>
         </div>
 
         {showForm && (
           <form onSubmit={handleSubmit} className="mt-5 space-y-2">
             <div className="text-center text-xs text-white/60">
-              {mode === 'board'
-                ? `Top ${BOARD_SIZE} score! Claim your spot`
-                : `Didn't crack the top ${BOARD_SIZE}. Recruiting or want to connect? Leave your details and it comes straight to me.`}
+              {`Top ${BOARD_SIZE} score — claim your spot`}
             </div>
             <input
               ref={inputRef}
               value={form.name}
               onChange={setField('name')}
               maxLength={24}
-              placeholder={mode === 'board' ? 'Name' : 'Name (optional)'}
+              placeholder="Name"
               className={field}
             />
             <input
               value={form.company}
               onChange={setField('company')}
               maxLength={40}
-              placeholder="Company"
-              className={field}
-            />
-            <input
-              value={form.email}
-              onChange={setField('email')}
-              type="email"
-              maxLength={120}
-              placeholder={mode === 'board' ? 'Email (optional, private)' : 'Email (private)'}
+              placeholder="Company (optional)"
               className={field}
             />
             <button
               type="submit"
               disabled={!canSubmit || phase === 'submitting'}
-              className={`w-full rounded-lg border border-current py-1.5 text-sm font-bold ${accent} disabled:opacity-40`}
+              className="w-full rounded-lg border border-white/40 bg-white/75 py-2 text-sm font-semibold text-slate-900 shadow transition-all hover:bg-white/90 active:scale-[0.98] disabled:opacity-40 disabled:active:scale-100"
             >
-              {phase === 'submitting'
-                ? 'Sending…'
-                : mode === 'board' ? 'Save my score' : 'Get in touch'}
+              {phase === 'submitting' ? 'Saving…' : 'Save my score'}
             </button>
             <p className="text-center text-[10px] leading-tight text-white/35">
-              {mode === 'board'
-                ? 'Location is added from your region. Email is never shown publicly.'
-                : 'Goes to my inbox like a contact message. Email is never shown publicly.'}
+              Location is added from your region.
             </p>
           </form>
         )}
 
         {phase === 'submitted' && (
           <div className="mt-5 text-center text-sm text-white/70">
-            {outcome === 'board' ? 'Saved to the board 🎉' : "Thanks! I'll be in touch 🙌"}
+            Saved to the board 🎉
           </div>
         )}
 
         <div className="mt-5">
-          <div className="mb-2 text-center text-xs tracking-[0.25em] text-white/40">
-            GLOBAL TOP {BOARD_SIZE}
+          <div className="mb-2 text-center text-xs font-medium uppercase tracking-wider text-white/40">
+            Global Top {BOARD_SIZE}
           </div>
           {loading ? (
             <div className="py-4 text-center text-sm text-white/40">loading…</div>
@@ -844,17 +861,17 @@ function GameOverPanel({ result, blueprint, onReplay, onClose }) {
                 return (
                   <li
                     key={i}
-                    className={`flex items-baseline gap-2 rounded px-2 py-1 ${mine ? 'bg-white/15' : ''}`}
+                    className={`flex items-baseline gap-2 rounded-lg px-2 py-1 ${mine ? 'border border-white/20 bg-white/15' : ''}`}
                   >
                     <span className="w-4 shrink-0 text-white/40">{i + 1}</span>
                     <span className="min-w-0 flex-1">
-                      <span className={`block truncate ${mine ? 'font-bold' : ''}`}>
+                      <span className={`block truncate ${mine ? 'font-semibold' : ''}`}>
                         {row.name}
                         {row.company && <span className="text-white/50"> · {row.company}</span>}
                       </span>
                       {place && <span className="block truncate text-[11px] text-white/40">{place}</span>}
                     </span>
-                    <span className={`shrink-0 tabular-nums ${mine ? `font-bold ${accent}` : ''}`}>
+                    <span className={`shrink-0 tabular-nums ${mine ? `font-bold ${accent}` : 'text-white/90'}`}>
                       {row.score}
                     </span>
                   </li>
@@ -867,13 +884,13 @@ function GameOverPanel({ result, blueprint, onReplay, onClose }) {
         <div className="mt-6 flex justify-center gap-3">
           <button
             onClick={onReplay}
-            className="rounded-lg border border-white/25 px-5 py-1.5 text-sm font-bold hover:bg-white/10"
+            className="rounded-lg border border-white/40 bg-white/75 px-5 py-2 text-sm font-semibold text-slate-900 shadow transition-all hover:bg-white/90 active:scale-[0.98]"
           >
             Replay
           </button>
           <button
             onClick={onClose}
-            className="rounded-lg px-5 py-1.5 text-sm text-white/60 hover:text-white"
+            className="rounded-lg border border-white/20 bg-white/10 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98]"
           >
             Close
           </button>

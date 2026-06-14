@@ -65,15 +65,11 @@ export default function About() {
   const [projectsCloseSignal, setProjectsCloseSignal] = useState(0);
   const [resumeOpen, setResumeOpen] = useState(false);
   const [showResumeClose, setShowResumeClose] = useState(false);
-  // Progressive single chip (Option 2): the close chip hands off to Experience's
-  // "show less" chip only at the moment that chip appears (i.e. the More-experience
-  // toggle bar scrolls out of frame) — not merely when the dropdown opens.
   const [showLessChipVisible, setShowLessChipVisible] = useState(false);
   const [interestsOpen, setInterestsOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
   const [widgetRects, setWidgetRects] = useState(null);
   const [widgetSnapshots, setWidgetSnapshots] = useState(null);
-  // Fix: Issue #51 / F-10 — animation controls avoid remounting the photo on each shake
   const shakeControls = useAnimationControls();
   const profileClickCount = useRef(0);
   const profileClickTimer = useRef(null);
@@ -573,10 +569,10 @@ export default function About() {
                 )}
               </div>
 
-              {/* Travel Map widget — desktop only */}
+              {/* Table of Contents (navigation) - Top middle widget — desktop only */}
               {!isMobile && !isLandscapeMobile && (
-                <div ref={travelRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
-                  <TravelMap onNavigate={handleTravelNavigate} />
+                <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
+                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'interests') setInterestsOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
                 </div>
               )}
 
@@ -586,10 +582,10 @@ export default function About() {
                 <ProjectOverview onProjectClick={import.meta.env.DEV ? (key) => console.log('Project overview click:', key) : undefined} onNavigate={handleProjectsNavigate} />
               </div>
 
-              {/* Table of Contents - Bottom left widget — desktop only */}
+              {/* Travel Map widget - Bottom middle widget — desktop only */}
               {!isMobile && !isLandscapeMobile && (
-                <div ref={tocRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 h-48 md:h-full">
-                  <TableOfContents isWidget={true} onSectionNavigate={(id) => { if (id === 'resume') setResumeOpen(true); if (id === 'interests') setInterestsOpen(true); if (id === 'projects') setProjectsCloseSignal(n => n + 1); }} />
+                <div ref={travelRef} className="col-span-1 md:col-span-4 row-span-1 md:row-span-3 md:h-full overflow-hidden rounded-2xl hover:scale-105 transition-all">
+                  <TravelMap onNavigate={handleTravelNavigate} />
                 </div>
               )}
 

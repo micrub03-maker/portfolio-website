@@ -120,7 +120,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
         <div className="flex items-center justify-between px-4 py-2">
           <button
             onClick={goPrev}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
+            className="carousel-arrow w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
             aria-label="Previous interest"
           >
             ‹
@@ -132,8 +132,8 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
                 key={s.id}
                 onClick={() => goTo(i)}
                 aria-label={`Go to ${s.title}`}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === currentIndex ? 'w-6 bg-gray-600' : 'w-2 bg-gray-300 hover:bg-gray-400'
+                className={`carousel-dot h-2 rounded-full transition-all duration-300 ${
+                  i === currentIndex ? 'carousel-dot-active w-6 bg-gray-600' : 'w-2 bg-gray-300 hover:bg-gray-400'
                 }`}
               />
             ))}
@@ -141,7 +141,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
 
           <button
             onClick={goNext}
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
+            className="carousel-arrow w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition text-base leading-none"
             aria-label="Next interest"
           >
             ›
