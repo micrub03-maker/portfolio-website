@@ -7,6 +7,7 @@ import SpotifyPlaylistsAPI from './SpotifyPlaylistsAPI';
 import SpotifyPlaylists from './SpotifyPlaylists';
 import PhotographyShowcase from './PhotographyShowcase';
 import { outdoorsPhotos } from '../data/outdoorsManifest';
+import { trackPageview } from '../lib/analytics';
 
 const hasSpotifyCredentials =
     !!import.meta.env?.VITE_SPOTIFY_CLIENT_ID &&
@@ -73,6 +74,14 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
     const idx = slides.findIndex(s => s.id === 'traveling');
     if (idx !== -1) setCurrentIndex(idx);
   }, [jumpToTravel]);
+
+  // Report each interests slide as a virtual pageview so the Vercel "Pages"
+  // dashboard shows which interests visitors browse. Fires on the initial slide
+  // (the carousel only mounts once the visitor opens the Interests accordion)
+  // and on every slide change thereafter.
+  useEffect(() => {
+    trackPageview(`/about/interests/${slides[currentIndex].id}`);
+  }, [currentIndex]);
 
   const touchStartX = useRef(null);
 

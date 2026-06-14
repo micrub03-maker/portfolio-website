@@ -4,6 +4,7 @@ import { MediaSlot } from "./MediaSlot";
 import AssemblyGuide from "./AssemblyGuide";
 import { NESTED_LEVEL2_STYLES } from '../main.jsx';
 import { T } from '../i18n';
+import { trackPageview } from '../lib/analytics';
 
 // Lets each open Dropdown report when its title button has scrolled out of view,
 // so ProjectPortfolio can show a single floating "close" chip for the deepest one.
@@ -94,7 +95,7 @@ const NESTED_VARIANTS = {
 
 // Fix: Issue #20 — default noClickClose to true so body clicks don't collapse the
 // dropdown; only the header button toggles it. Pass noClickClose={false} to opt back in.
-function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, variant = 'default', level = 1, children }) {
+function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, trackPath, variant = 'default', level = 1, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
@@ -118,6 +119,13 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
     setOpen(false);
     onOpenChange?.(false);
   }, [closeSignal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Report opening this dropdown as a virtual pageview, so the Vercel "Pages"
+  // dashboard shows which projects / case-study deep-dives visitors actually
+  // expand. Fires on every open (Vercel dedupes by visitor); never on close.
+  useEffect(() => {
+    if (open && trackPath) trackPageview(trackPath);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Close + scroll back to the target — the exact behaviour of the title button.
   const close = () => {
@@ -280,7 +288,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/luci">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <HoverMediaOverlay caption="Full vehicle CAD">
@@ -323,6 +331,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           variant="inset"
           level={2}
           summaryTitle="An insight into how I start new projects"
+          trackPath="/about/projects/luci/process"
           summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own robot from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
           onOpenChange={onDd}
           scrollTargetId="project-luci"
@@ -362,7 +371,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/calsol">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -420,6 +429,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           variant="flat"
           level={2}
           summaryTitle="An insight into lap-belt insert design and validation"
+          trackPath="/about/projects/calsol/inserts"
           summarySubtitle="TL;DR I designed bonded metal inserts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
           onOpenChange={onDd}
           scrollTargetId="project-calsol"
@@ -458,6 +468,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           variant="flat"
           level={2}
           summaryTitle="An insight into the topology-optimized shoulder-belt anchorage"
+          trackPath="/about/projects/calsol/shoulder"
           summarySubtitle='TL;DR I designed a steel shoulder-belt mount holding wrapping bolts, cut mount weight by ~40% via topology optimization.'
           onOpenChange={onDd}
           scrollTargetId="project-calsol"
@@ -505,7 +516,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/axiris">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <HoverMediaOverlay align="right" caption={<>Axiris current<br />design</>}>
@@ -531,6 +542,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           variant="stacked"
           level={2}
           summaryTitle="An insight into my design process"
+          trackPath="/about/projects/axiris/process"
           summarySubtitle="TL;DR Stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
@@ -577,6 +589,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           variant="stacked"
           level={2}
           summaryTitle="An insight into my resilience under tight constraints"
+          trackPath="/about/projects/axiris/model-eye"
           summarySubtitle="TL;DR We didn't have access to an optics lab, so I proposed and built a modular model eye that gave us a stable, repeatable testbed to calibrate Axiris and de-risk the design before touching human subjects."
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
@@ -608,7 +621,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" summaryDate="Sept 2025 – May 2026" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal}>
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" summaryDate="Sept 2025 – May 2026" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/edg">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
@@ -642,6 +655,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         <div ref={suctionDropdownRef}>
         <Dropdown
           summaryTitle="An insight into how I design for manufacturability"
+          trackPath="/about/projects/edg/manufacturability"
           summarySubtitle="TL;DR I redesigned the injection mold for the suction cup to achieve higher success rate in production."
           onOpenChange={onDd}
           scrollTargetId="project-edg"
@@ -821,6 +835,7 @@ function HonoursSlide({ onDd, closeSignal }) {
           onOpenChange={onDd}
           scrollTargetId="projects"
           closeSignal={closeSignal}
+          trackPath={`/about/projects/honours/${item.id}`}
         >
           {item.links.length > 0 && (
             <div className="flex justify-end gap-2 flex-wrap">
@@ -956,6 +971,13 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
     if (!closeAllSignal) return;
     setCloseSignal((s) => s + 1);
   }, [closeAllSignal]);
+
+  // Report viewing the Honours slide as a virtual pageview. The Projects slide
+  // is already covered by the /about/projects section view (App.jsx), so we only
+  // need the second carousel slide here.
+  useEffect(() => {
+    if (slides[currentIndex].id === 'honours') trackPageview('/about/projects/honours');
+  }, [currentIndex]);
 
   const goTo = (idx) => {
     setCurrentIndex(idx);
