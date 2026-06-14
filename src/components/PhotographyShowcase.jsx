@@ -7,12 +7,68 @@ const MAX_H = 420;
 const MIN_H = 180;
 const MIN_TWO_ROW_H = 140;
 const DEFAULT_W = 520;
+const ROTATE_MS = 6000;
+const PRELOAD_CAP_MS = 3000; // never block a swap longer than this on a slow file
+
+// ─── IMAGE PRELOAD CACHE ──────────────────────────────────────────────────────
+// Module-level so every showcase instance (photography + outdoors) shares one
+// cache and never re-fetches/re-decodes an image the browser already holds.
+// A frame is only swapped in once its images are decoded, so cells never flash
+// their gray placeholder and heavy decode work never lands mid-animation.
+const imgCache = new Map(); // src -> Promise<void> (resolves when loaded + decoded)
+
+function preload(src) {
+  let p = imgCache.get(src);
+  if (p) return p;
+  p = new Promise((resolve) => {
+    const img = new Image();
+    const done = () => resolve();
+    img.onload = () => (img.decode ? img.decode().then(done, done) : done());
+    img.onerror = done; // a broken/missing file must never stall rotation
+    img.src = src;
+  });
+  imgCache.set(src, p);
+  return p;
+}
+
+// Resolve once every src is decoded, but never wait longer than `cap` ms so a
+// single huge/slow file can't hold up the whole collage.
+function preloadAll(srcs, cap = PRELOAD_CAP_MS) {
+  return Promise.race([
+    Promise.all(srcs.map(preload)),
+    new Promise((r) => setTimeout(r, cap)),
+  ]);
+}
 
 // ─── PHOTO SELECTION ──────────────────────────────────────────────────────────
+// Diving shots (Phuket dive set) are recognizable by "dive" in their name.
+const isDivePhoto = p => /dive/i.test(p.alt) || /dive/i.test(p.src);
+
 function pickPhotos(pool, count, excludeIds) {
   const available = excludeIds?.size ? pool.filter(p => !excludeIds.has(p.id)) : pool;
   const source = available.length >= count ? available : pool;
-  return [...source].sort(() => Math.random() - 0.5).slice(0, count);
+  const shuffled = [...source].sort(() => Math.random() - 0.5);
+
+  // Max one diving picture per layout.
+  const picked = [];
+  let hasDive = false;
+  for (const p of shuffled) {
+    if (picked.length === count) break;
+    if (isDivePhoto(p)) {
+      if (hasDive) continue;
+      hasDive = true;
+    }
+    picked.push(p);
+  }
+  // If skipping extra dive shots left us short (tiny pool), backfill with leftovers.
+  if (picked.length < count) {
+    const pickedIds = new Set(picked.map(p => p.id));
+    for (const p of shuffled) {
+      if (picked.length === count) break;
+      if (!pickedIds.has(p.id)) picked.push(p);
+    }
+  }
+  return picked;
 }
 
 // ─── LAYOUT SELECTION ─────────────────────────────────────────────────────────
@@ -81,7 +137,11 @@ function ImgCell({ photo, width, height }) {
         alt={photo.alt}
         style={{ width: '100%', height: '100%', display: 'block' }}
         draggable={false}
-        loading="lazy"
+        // Frames are only shown after preloadAll() has decoded their images, so
+        // the file is already in cache here — eager + async decode paints it
+        // immediately instead of lazily refetching after the cell mounts.
+        loading="eager"
+        decoding="async"
       />
     </div>
   );
@@ -173,8 +233,23 @@ export default function PhotographyShowcase({ photos: photoProp }) {
 
   const [frame, setFrame] = useState(() => {
     const photos = pickPhotos(pool, pickCount(DEFAULT_W), new Set());
-    return { photos, layoutType: chooseLayout(photos, DEFAULT_W), tick: 0 };
+    return {
+      photos,
+      layoutType: chooseLayout(photos, DEFAULT_W),
+      tick: 0,
+      // Cumulative set of every photo id already shown — so a picked photo
+      // isn't shown again in any upcoming layout until the pool is exhausted.
+      shownIds: new Set(photos.map(p => p.id)),
+    };
   });
+
+  // Mirror the latest frame into a ref so the rotation scheduler can read the
+  // current shown-history without re-subscribing every swap.
+  const frameRef = useRef(frame);
+  useEffect(() => { frameRef.current = frame; }, [frame]);
+
+  // Warm the cache with the first frame's images right away.
+  useEffect(() => { preloadAll(frame.photos.map(p => p.src)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Measure container width and keep it current
   useEffect(() => {
@@ -192,20 +267,52 @@ export default function PhotographyShowcase({ photos: photoProp }) {
   useEffect(() => {
     if (isFirstPhotoPropRun.current) { isFirstPhotoPropRun.current = false; return; }
     const photos = pickPhotos(pool, pickCount(wRef.current), new Set());
-    setFrame({ photos, layoutType: chooseLayout(photos, wRef.current), tick: 0 });
+    preloadAll(photos.map(p => p.src));
+    setFrame({
+      photos,
+      layoutType: chooseLayout(photos, wRef.current),
+      tick: 0,
+      shownIds: new Set(photos.map(p => p.id)),
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoProp]);
 
-  // Rotation interval — Fix: Issue #29 — only runs while playing
+  // Rotation — Fix: Issue #29 — only runs while playing.
+  // Self-scheduling (not setInterval): each swap waits the display interval,
+  // then prepares + decodes the next frame, and only commits once its images
+  // are ready. This guarantees no cell shows its placeholder and no two swaps
+  // ever overlap (which is what made layouts flash in and instantly leave).
   useEffect(() => {
     if (!isPlaying) return;
-    const id = setInterval(() => {
-      setFrame(prev => {
-        const photos = pickPhotos(pool, pickCount(wRef.current), new Set(prev.photos.map(p => p.id)));
-        return { photos, layoutType: chooseLayout(photos, wRef.current), tick: prev.tick + 1 };
-      });
-    }, 5000);
-    return () => clearInterval(id);
+    let cancelled = false;
+    let timer;
+
+    const scheduleNext = () => {
+      timer = setTimeout(async () => {
+        const prev = frameRef.current;
+        const count = pickCount(wRef.current);
+        // Exclude every photo already shown. Once too few unseen photos remain
+        // to fill the next layout, reset the history — but still avoid repeating
+        // whatever is currently on screen.
+        let exclude = prev.shownIds;
+        if (pool.filter(p => !exclude.has(p.id)).length < count) {
+          exclude = new Set(prev.photos.map(p => p.id));
+        }
+        const photos = pickPhotos(pool, count, exclude);
+        const next = {
+          photos,
+          layoutType: chooseLayout(photos, wRef.current),
+          tick: prev.tick + 1,
+          shownIds: new Set([...exclude, ...photos.map(p => p.id)]),
+        };
+        await preloadAll(photos.map(p => p.src));
+        if (cancelled) return;
+        setFrame(next);
+        scheduleNext();
+      }, ROTATE_MS);
+    };
+    scheduleNext();
+    return () => { cancelled = true; clearTimeout(timer); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [photoProp, isPlaying]);
 
