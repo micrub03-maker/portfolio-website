@@ -38,6 +38,19 @@ const ucbEng = "/images/ucb-eng.jpg";
 const cal = "/images/cal.png";
 const calsolLogo = "/images/calsol.png";
 const calsolCar = "/images/calsolcar.png";
+
+// Solution 3: cache the html2canvas dynamic import so the easter-egg snapshot
+// capture never pays the chunk download+parse cost during the fly-in. Prewarmed
+// on profile hover/click (well before the 5th click), so by the time it runs the
+// module is already resident and capture is pure main-thread work, not I/O.
+let html2canvasPromise = null;
+function loadHtml2Canvas() {
+  if (!html2canvasPromise) {
+    html2canvasPromise = import("html2canvas").then((m) => m.default);
+  }
+  return html2canvasPromise;
+}
+
 export default function About() {
   const isDesktop = useMediaQuery({ query: "(min-width: 768px)" });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
@@ -75,6 +88,9 @@ export default function About() {
   const projectsSectionRef = useRef(null);
 
   const handleProfileClick = () => {
+    // Solution 3: warm the html2canvas chunk on every click so it's resident
+    // before the 5th click triggers the capture.
+    loadHtml2Canvas();
     profileClickCount.current += 1;
     if (profileClickTimer.current) clearTimeout(profileClickTimer.current);
     if (profileClickCount.current >= 5) {
@@ -89,14 +105,11 @@ export default function About() {
         Reads:    readsRef.current?.getBoundingClientRect(),
       });
       setWidgetSnapshots(null);
+      // Fade the widgets out immediately for instant feedback. This only changes
+      // ancestor opacity, not layout, so html2canvas still captures full-size
+      // widgets below — and the game overlay covers them once it mounts.
       setWidgetsHiding(true);
-      setTimeout(() => {
-        setWidgetsHiding(false);
-        setBreakoutActive(true);
-      }, 350);
 
-      // Capture pixel snapshots async — game starts immediately and snapshots
-      // fill in when ready (typically before phase-2 bricks start flying).
       const TARGETS = [
         ['Profile',  profileCardRef],
         ['Travel',   travelRef],
@@ -104,11 +117,27 @@ export default function About() {
         ['Contents', tocRef],
         ['Reads',    readsRef],
       ];
+
+      // Solution 1: do the heavy html2canvas capture BEFORE the game (and its
+      // requestAnimationFrame fly-in) starts, so the rasterization never
+      // contends with the animation on the main thread. The game begins only
+      // once snapshots are ready — guaranteeing the bricks fly in with real
+      // imagery and zero capture jank. A short fallback starts the game with
+      // glass-only bricks if capture is slow or unavailable, so the egg never hangs.
+      let started = false;
+      const beginGame = () => {
+        if (started) return;
+        started = true;
+        setWidgetsHiding(false);
+        setBreakoutActive(true);
+      };
+      const fallback = setTimeout(beginGame, 600);
+
       // Fix: Issue #11 / F-1 — dynamic import keeps html2canvas out of the main
       // bundle; only visitors who trigger the easter egg download it
       (async () => {
         try {
-          const { default: html2canvas } = await import('html2canvas');
+          const html2canvas = await loadHtml2Canvas();
           const pairs = await Promise.all(
             TARGETS.map(async ([label, ref]) => {
               if (!ref.current) return [label, null];
@@ -128,6 +157,9 @@ export default function About() {
           setWidgetSnapshots(Object.fromEntries(pairs.filter(([, c]) => c !== null)));
         } catch {
           // html2canvas unavailable — game continues with glass-only bricks
+        } finally {
+          clearTimeout(fallback);
+          beginGame();
         }
       })();
     } else {
@@ -430,7 +462,7 @@ export default function About() {
             >
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
-              <div ref={profileCardRef} className={`bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 transition-all ${isLandscapeMobile ? 'col-span-1 row-span-1 p-2 flex items-center' : 'col-span-1 md:col-span-4 row-span-1 md:row-span-6 p-3 md:p-4 flex flex-col items-center justify-center text-center active:scale-[0.98] [@media(hover:hover)]:hover:scale-105'}`}>
+              <div ref={profileCardRef} onMouseEnter={loadHtml2Canvas} className={`bg-slate-900/50 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 transition-all ${isLandscapeMobile ? 'col-span-1 row-span-1 p-2 flex items-center' : 'col-span-1 md:col-span-4 row-span-1 md:row-span-6 p-3 md:p-4 flex flex-col items-center justify-center text-center active:scale-[0.98] [@media(hover:hover)]:hover:scale-105'}`}>
                 {isLandscapeMobile ? (
                   /* Landscape mobile: compact horizontal layout */
                   <div className="flex flex-row items-center gap-3 w-full h-full">

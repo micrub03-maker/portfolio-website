@@ -37,6 +37,42 @@ function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, mobileImageBelow 
   );
 }
 
+// Wraps media with a hover-reveal gradient + caption. The wrapper is its own
+// block-formatting context (overflow-hidden) and owns the vertical spacing +
+// rounding, so the overlay (a plain inset-0) always matches the media box no
+// matter where this sits in the layout. Pass media as children with no vertical
+// margin of its own (for MediaSlot, use the `compact` prop).
+// tw: bg-gradient-to-t bg-gradient-to-b from-black/80 via-black/30 from-black/60 via-black/20 to-transparent
+function HoverMediaOverlay({
+  children,
+  caption,
+  captionColor = 'text-white',
+  position = 'bottom',          // 'bottom' | 'top'
+  align = 'left',              // 'left' | 'right'
+  gradientClassName,          // override the default gradient
+  captionClassName,           // override the default caption positioning
+  className = '',             // extra wrapper classes (widths, flex-1, …)
+  style,                     // wrapper inline style (e.g. drop-shadow filter)
+}) {
+  const gradient = gradientClassName ?? (position === 'top'
+    ? 'bg-gradient-to-b from-black/80 via-black/30 to-transparent'
+    : 'bg-gradient-to-t from-black/80 via-black/30 to-transparent');
+  const captionPos = captionClassName ?? (position === 'top'
+    ? 'absolute top-0 left-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300'
+    : `absolute bottom-0 ${align === 'right' ? 'right-0' : 'left-0 right-0'} p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300`);
+  return (
+    <div className={`relative group my-3 rounded-xl overflow-hidden ${className}`} style={style}>
+      {children}
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <div className={`absolute inset-0 ${gradient}`} />
+        <div className={captionPos}>
+          <p className={`${captionColor} ${align === 'right' ? 'text-right' : ''} text-sm font-semibold tracking-wide`}>{caption}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Nested-section style — the style trial is finalized: every project dropdown uses
 // one unified look (below). Level-2 ("insight") dropdown styling lives in main.jsx
 // (NESTED_LEVEL2_STYLES), keyed by the same variant names.
@@ -246,19 +282,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
       <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-          <div className="relative group">
+          <HoverMediaOverlay caption="Full vehicle CAD">
             <MediaSlot
               src={"/images/LUCI-CAD.png"}
               label="ONR Luci CAD"
+              compact
               imageAspect="aspect-[16/9] md:aspect-auto md:h-[260px]"
             />
-            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-white text-sm font-semibold tracking-wide">Full vehicle CAD</p>
-              </div>
-            </div>
-          </div>
+          </HoverMediaOverlay>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a
@@ -297,17 +328,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         >
           <SideBySide picWidth="w-[45%]" pic={
             <div className="flex justify-center">
-            <div className="relative group w-[71%]">
-              <div className="[&>div]:h-auto [&_img]:!h-auto [&>div]:rounded-xl [&>div]:overflow-hidden">
-                <MediaSlot src={"/assets/29_jetson_3.jpg"} label="Luci build" />
-              </div>
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm font-semibold tracking-wide">Re-assembling the rover</p>
-                </div>
-              </div>
-            </div>
+            <HoverMediaOverlay className="w-[71%]" caption="Re-assembling the rover">
+              <MediaSlot src={"/assets/29_jetson_3.jpg"} label="Luci build" natural compact />
+            </HoverMediaOverlay>
             </div>
           }>
             I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand these issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
@@ -323,17 +346,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             </div>
           </div>
           <SideBySide picWidth="w-[45%]" mobileImageBelow pic={
-            <div className="relative group">
-              <div className="[&>div]:aspect-[4/3] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[208px]">
-                <MediaSlot src={'/images/simple-mount-render-2.png'} label="simple mount" />
-              </div>
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm font-semibold tracking-wide">Simple adjustable camera mount</p>
-                </div>
-              </div>
-            </div>
+            <HoverMediaOverlay caption="Simple adjustable camera mount">
+              <MediaSlot src={'/images/simple-mount-render-2.png'} label="simple mount" compact imageAspect="aspect-[4/3] h-auto md:aspect-auto md:h-[208px]" />
+            </HoverMediaOverlay>
           }>
             Doing all of this was the best way to get up to speed quickly. I now feel confident I have enough context to start the fun part! 
             <br />
@@ -409,17 +424,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           scrollTargetId="project-calsol"
         >
           <SideBySide picWidth="w-[45%]" pic={
-            <div className="relative group">
-              <div className="[&>div]:aspect-[10/9] [&>div]:h-auto md:[&>div]:aspect-auto md:[&>div]:h-[288px]">
-                <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" />
-              </div>
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
-                <div className="absolute top-0 left-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm font-semibold tracking-wide">Inserts flushed in shell</p>
-                </div>
-              </div>
-            </div>
+            <HoverMediaOverlay position="top" caption="Inserts flushed in shell">
+              <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" compact imageAspect="aspect-[10/9] h-auto md:aspect-auto md:h-[288px]" />
+            </HoverMediaOverlay>
           }>
             To safely anchor the lap- and sub-belts into the thin carbon fiber cell, I designed bonded metal inserts that follow the shell curvature and sit sandwiched within the laminate. The belts clip into eyebolts threaded into these inserts.
             <br />
@@ -429,21 +436,15 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <p className="text-sm text-gray-700 leading-relaxed">
            Without access to dynamic crash equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test measuring an average failure load of 6.11 kN across four samples. Which, together with published dynamic CFRP insert data, showed the design could credibly meet the required loads.
           </p>
-          <div className="relative group">
-            <div className="[&>div]:h-[128px] md:[&>div]:h-[320px] [&>div]:!p-1 [&>div]:my-0 overflow-hidden rounded-xl shadow-md my-3">
+          <HoverMediaOverlay className="shadow-md" position="top" captionColor="text-gray-800" caption="insert testing jig">
+            <div className="[&>div]:h-[128px] md:[&>div]:h-[320px] [&>div]:!p-1 [&>div]:my-0">
               <MediaSlot
                 src={'/images/insert testing jig picture.png'}
                 label="Inserts test set up"
                 padded
               />
             </div>
-            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
-              <div className="absolute top-0 left-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                <p className="text-gray-800 text-sm font-semibold tracking-wide">insert testing jig</p>
-              </div>
-            </div>
-          </div>
+          </HoverMediaOverlay>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
@@ -462,34 +463,23 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         >
           <SideBySide picWidth="w-1/2" pic={
             <div className="flex justify-center">
-              <div className="relative group w-full md:w-[73%]">
-                <div className="md:[&>div]:h-[202px]">
-                  <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" padded />
-                </div>
-                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="text-white text-sm font-semibold tracking-wide">Shoulder anchorage in car</p>
-                  </div>
-                </div>
-              </div>
+              <HoverMediaOverlay className="w-full md:w-[73%]" caption="Shoulder anchorage in car">
+                <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" compact imageAspect="h-[184px] md:h-[202px]" />
+              </HoverMediaOverlay>
             </div>
           }>
             For the shoulder harness, I designed a steel anchorage that bolts through the chassis and supports transverse "wrapping bolts" around which the shoulder belts are looped, eliminating single-point failure by allowing each strap to wrap independently.
           </SideBySide>
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
             <div className="flex justify-center">
-              <div className="relative group w-full md:w-[73%]">
-                <div className="md:[&>div]:h-[240px]">
-                  <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" padded />
-                </div>
-                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  <div className="absolute bottom-[15%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="text-white text-sm font-semibold tracking-wide">Bolt governing load case</p>
-                  </div>
-                </div>
-              </div>
+              <HoverMediaOverlay
+                className="w-full md:w-[73%]"
+                caption="Bolt governing load case"
+                gradientClassName="bg-gradient-to-t from-black/60 via-black/20 to-transparent"
+                captionClassName="absolute bottom-[15%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" compact imageAspect="h-[184px] md:h-[240px]" />
+              </HoverMediaOverlay>
             </div>
           }>
             I modeled the wrapping bolts as fixed-fixed beams under the projected distributed load to size them for the governing failure mode: bending. The rest of the anchorage was designed around these choices.
@@ -517,19 +507,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
       <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal}>
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
-          <div className="relative group">
+          <HoverMediaOverlay align="right" caption={<>Axiris current<br />design</>}>
             <MediaSlot
               src={'/images/Axiris-final-design.png'}
               label="Axiris final design"
+              compact
               imageAspect="h-auto md:h-[184px]"
             />
-            <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-              <div className="absolute bottom-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300 text-right">
-                <p className="text-white text-sm font-semibold tracking-wide">Axiris current<br />design</p>
-              </div>
-            </div>
-          </div>
+          </HoverMediaOverlay>
           <div className="flex flex-col gap-3">
             <div className="flex justify-end gap-2 flex-wrap">
               <a href="/images/Axiris-slides.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Slidedeck</a>
@@ -550,19 +535,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           scrollTargetId="project-axiris"
         >
           <SideBySide pic={
-            <div className="relative group">
+            <HoverMediaOverlay caption={<>Market<br />Research</>}>
               <MediaSlot
                 src={'/images/Axiris-interviews.png'}
                 label="Axiris market research"
                 natural
+                compact
               />
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm font-semibold tracking-wide">Market<br />Research</p>
-                </div>
-              </div>
-            </div>
+            </HoverMediaOverlay>
           }>
             Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why?
             <br />
@@ -570,19 +550,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate 50+ concepts to approach this problem at its root.
           </SideBySide>
           <SideBySide picLeft={false} pic={
-            <div className="relative group">
+            <HoverMediaOverlay captionColor="text-gray-600" caption={<>Optical<br />Path</>}>
               <MediaSlot
                 src={'/images/Axiris-optical.png'}
                 label="Axiris optical path"
-                imageAspect="h-auto md:h-[329px]"
+                natural
+                compact
               />
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-gray-600 text-sm font-semibold tracking-wide">Optical<br />Path</p>
-                </div>
-              </div>
-            </div>
+            </HoverMediaOverlay>
           }>
             Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
             <br />
@@ -606,19 +581,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           scrollTargetId="project-axiris"
         >
           <SideBySide pic={
-            <div className="relative group">
+            <HoverMediaOverlay caption="Modular Model Eye">
               <MediaSlot
                 src={'/images/Axiris-model-eye.png'}
                 label="model eye Axiris"
+                compact
                 imageAspect="h-auto md:h-[320px]"
               />
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm font-semibold tracking-wide">Modular Model Eye</p>
-                </div>
-              </div>
-            </div>
+            </HoverMediaOverlay>
           }>
             Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state. This allowed us to tune the image-processing pipeline and guide mechanical changes.
             <br />
@@ -641,18 +611,18 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
-            <div className="flex-1 min-w-0 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
-              <MediaSlot
-                src={'/images/suction-cup-gif.gif'}
-                label="Suction cup overview"
-                height = "300px"
-              />
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-[10%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm font-semibold tracking-wide">Haptic following on the suction cup</p>
-                </div>
-              </div>
+            <div className="flex-1 min-w-0" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
+              <HoverMediaOverlay
+                caption="Haptic following on the suction cup"
+                captionClassName="absolute bottom-[10%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <MediaSlot
+                  src={'/images/suction-cup-gif.gif'}
+                  label="Suction cup overview"
+                  compact
+                  height="300px"
+                />
+              </HoverMediaOverlay>
             </div>
           </div>
           <div className="flex flex-col gap-3">
@@ -676,20 +646,14 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           scrollTargetId="project-edg"
         >
           <div className="flex flex-col gap-4">
-            <div className="relative group">
+            <HoverMediaOverlay captionColor="text-gray-800" caption="Suction cup redesign">
               <div className="md:hidden">
-                <MediaSlot src={'/images/suction-cup-mold-mobile.png'} label="Suction cup mold" padded />
+                <MediaSlot src={'/images/suction-cup-mold-mobile.png'} label="Suction cup mold" padded compact />
               </div>
               <div className="hidden md:block">
-                <MediaSlot src={'/images/suction-cup-mold.png'} label="Suction cup mold" padded />
+                <MediaSlot src={'/images/suction-cup-mold.png'} label="Suction cup mold" padded compact />
               </div>
-              <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-gray-800 text-sm font-semibold tracking-wide">Suction cup redesign</p>
-                </div>
-              </div>
-            </div>
+            </HoverMediaOverlay>
             <p className="text-sm text-gray-700 leading-relaxed">
               To improve the manufacturability of the silicone suction cup, I switched to a three-chamber geometry and redesigned its mold.
               <br/>
@@ -708,7 +672,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               <div className="w-full overflow-hidden rounded-xl my-3" style={{aspectRatio: '16/9'}}>
                 <video ref={assemblyVideoRef} src="/images/suction-cup-assembly.mp4" className="w-full h-full object-cover" loop muted playsInline preload="auto" />
               </div>
-              <div className={`absolute inset-0 rounded-xl overflow-hidden transition-opacity duration-300 pointer-events-none ${assemblyPlaying ? 'opacity-0' : 'opacity-100'}`} style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
+              <div className={`absolute inset-0 rounded-xl overflow-hidden transition-opacity duration-300 pointer-events-none ${assemblyPlaying ? 'opacity-0' : 'opacity-100'}`}>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-3">
                   <p className="text-white text-sm font-semibold tracking-wide">
@@ -725,23 +689,15 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           </SideBySide>
           <SideBySide pic={
             <div className="flex flex-col md:flex-row gap-2">
-              <div className="flex-1 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
-                <MediaSlot src={'/images/suction-cup-grab.mp4'} label="maximum payload suction cup" videoAspect="aspect-[45/64]" />
-                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="text-white text-sm font-semibold tracking-wide">Maximum payload test</p>
-                  </div>
-                </div>
+              <div className="flex-1" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
+                <HoverMediaOverlay caption="Maximum payload test">
+                  <MediaSlot src={'/images/suction-cup-grab.mp4'} label="maximum payload suction cup" videoAspect="aspect-[45/64]" compact />
+                </HoverMediaOverlay>
               </div>
-              <div className="flex-1 relative group" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
-                <MediaSlot src={'/images/suction-cup-grab-2.mp4'} label="transparent & oddly shaped object test" videoAspect="aspect-[45/64]" />
-                <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="text-white text-sm font-semibold tracking-wide">Transparent &amp; oddly shaped object test</p>
-                  </div>
-                </div>
+              <div className="flex-1" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
+                <HoverMediaOverlay caption={<>Transparent &amp; oddly shaped object test</>}>
+                  <MediaSlot src={'/images/suction-cup-grab-2.mp4'} label="transparent & oddly shaped object test" videoAspect="aspect-[45/64]" compact />
+                </HoverMediaOverlay>
               </div>
             </div>
           }>
@@ -832,19 +788,22 @@ const honourItems = [
 ];
 
 function MediaItemCell({ m, squareImages, outerClassName = 'flex-1 min-w-0' }) {
+  const media = (
+    <MediaSlot src={m.src} label={m.label} square={!!squareImages} videoAspect={m.videoAspect} imageAspect={m.imageAspect} fluid={!!m.fluid} fit={m.fit} natural={!!m.natural} compact />
+  );
   return (
     <div className={outerClassName}>
-      <div className="relative group">
-        <MediaSlot src={m.src} label={m.label} square={!!squareImages} videoAspect={m.videoAspect} imageAspect={m.imageAspect} fluid={!!m.fluid} fit={m.fit} natural={!!m.natural} />
-        {m.hoverLabel && (
-          <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" style={{marginTop: '0.75rem', marginBottom: '0.75rem'}}>
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
-              <p className={`${m.hoverTextColor || 'text-white'} ${m.hoverAlign === 'right' ? 'text-right' : ''} text-sm font-semibold tracking-wide`}>{m.hoverLabel}</p>
-            </div>
-          </div>
-        )}
-      </div>
+      {m.hoverLabel ? (
+        <HoverMediaOverlay
+          caption={m.hoverLabel}
+          captionColor={m.hoverTextColor || 'text-white'}
+          align={m.hoverAlign === 'right' ? 'right' : 'left'}
+        >
+          {media}
+        </HoverMediaOverlay>
+      ) : (
+        <div className="my-3 rounded-xl overflow-hidden">{media}</div>
+      )}
     </div>
   );
 }

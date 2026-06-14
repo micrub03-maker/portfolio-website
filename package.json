@@ -32,6 +32,9 @@
     "remark-gfm": "^4.0.1",
     "three": "^0.164.1"
   },
+  "overrides": {
+    "rollup": "4.59.1"
+  },
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
