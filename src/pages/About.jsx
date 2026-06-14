@@ -50,6 +50,11 @@ export default function About() {
   const [projectJump, setProjectJump] = useState({ key: null, count: 0 });
   const [projectsCloseSignal, setProjectsCloseSignal] = useState(0);
   const [resumeOpen, setResumeOpen] = useState(false);
+  const [showResumeClose, setShowResumeClose] = useState(false);
+  // Progressive single chip (Option 2): the close chip hands off to Experience's
+  // "show less" chip only at the moment that chip appears (i.e. the More-experience
+  // toggle bar scrolls out of frame) — not merely when the dropdown opens.
+  const [showLessChipVisible, setShowLessChipVisible] = useState(false);
   const [interestsOpen, setInterestsOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
   const [widgetsHiding, setWidgetsHiding] = useState(false);
@@ -65,6 +70,7 @@ export default function About() {
   const tocRef         = useRef(null);
   const readsRef       = useRef(null);
   const resumeSectionRef = useRef(null);
+  const resumeTitleRef = useRef(null);
   const interestsSectionRef = useRef(null);
 
   const handleProfileClick = () => {
@@ -174,6 +180,30 @@ export default function About() {
     };
   }, [resumeOpen]);
 
+  // Show a floating close chip once the resume title (the only collapse control)
+  // scrolls out of the viewport — but only while the section itself is still in
+  // view. Once the whole section scrolls out of frame the chip disappears.
+  useEffect(() => {
+    if (!resumeOpen) { setShowResumeClose(false); return; }
+    const titleEl = resumeTitleRef.current;
+    const sectionEl = resumeSectionRef.current;
+    if (!titleEl || !sectionEl) return;
+    let titleVisible = true;
+    let sectionVisible = true;
+    const update = () => setShowResumeClose(!titleVisible && sectionVisible);
+    const titleObserver = new IntersectionObserver(
+      ([entry]) => { titleVisible = entry.isIntersecting; update(); },
+      { threshold: 0 }
+    );
+    const sectionObserver = new IntersectionObserver(
+      ([entry]) => { sectionVisible = entry.isIntersecting; update(); },
+      { threshold: 0 }
+    );
+    titleObserver.observe(titleEl);
+    sectionObserver.observe(sectionEl);
+    return () => { titleObserver.disconnect(); sectionObserver.disconnect(); };
+  }, [resumeOpen]);
+
   useEffect(() => {
     if (!interestsOpen) return;
     const el = interestsSectionRef.current;
@@ -242,6 +272,43 @@ export default function About() {
         }
       })
     );
+  };
+
+  // Toggle the resume overview from its title. On open, scroll to the same
+  // landing spot the nav's "resume overview" uses (#resume top, -10 offset),
+  // deferred two frames so React flushes the accordion open and the browser
+  // lays out before we measure — otherwise the height change cancels the scroll.
+  const handleResumeToggle = () => {
+    if (resumeOpen) { setResumeOpen(false); return; }
+    setResumeOpen(true);
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        const el = resumeSectionRef.current;
+        if (el) {
+          const top = el.getBoundingClientRect().top + window.pageYOffset;
+          window.scrollTo({ top: top - 10, behavior: 'smooth' });
+        }
+      })
+    );
+  };
+
+  // Scroll the title back into frame first, then collapse exactly like the
+  // title button (a plain setResumeOpen(false)). Closing only after the scroll
+  // settles keeps the height change from cancelling the scroll.
+  const handleResumeClose = () => {
+    const el = resumeSectionRef.current;
+    if (!el) { setResumeOpen(false); return; }
+    const y = el.getBoundingClientRect().top + window.pageYOffset - 10;
+    window.scrollTo({ top: Math.max(y, 0), behavior: 'smooth' });
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener('scrollend', finish);
+      setResumeOpen(false);
+    };
+    window.addEventListener('scrollend', finish, { once: true });
+    setTimeout(finish, 600); // fallback for browsers without 'scrollend'
   };
 
   const handleProjectsNavigate = (projectKey) => {
@@ -485,7 +552,8 @@ export default function About() {
         </div>
         <div id="resume" ref={resumeSectionRef} className="flex flex-col justify-center h-max w-full md:w-11/12 lg:w-4/5 px-6 md:px-0 py-6 md:py-10">
           <button
-            onClick={() => setResumeOpen((o) => !o)}
+            ref={resumeTitleRef}
+            onClick={handleResumeToggle}
             className="w-full flex items-center justify-center gap-3 mb-8 group"
           >
             <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors">resume overview</h2>
@@ -509,7 +577,7 @@ export default function About() {
               >
                 <div className="flex flex-col gap-10">
                   <Skills />
-                  <Experience />
+                  <Experience onShowLessChipChange={setShowLessChipVisible} />
                   <Education />
                 </div>
               </motion.div>
@@ -693,6 +761,27 @@ export default function About() {
           </button>
         </div>
       </div>
+
+      {/* Floating collapse chip — appears when the resume title scrolls out of frame */}
+      <AnimatePresence>
+        {showResumeClose && !showLessChipVisible && (
+          <motion.button
+            key="resume-close-chip"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2 }}
+            onClick={handleResumeClose}
+            aria-label="Close resume overview"
+            className="fixed bottom-4 left-4 z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl text-white/80 hover:text-white text-xs font-medium uppercase tracking-wide transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+            </svg>
+            close
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {breakoutActive && (
         <BreakoutGame

@@ -176,39 +176,17 @@ function ExperienceCard({ entry, index = 0 }) {
   );
 }
 
-export default function Experience() {
+export default function Experience({ onShowLessChipChange }) {
   const [showMore, setShowMore] = useState(false);
   const [toggleVisible, setToggleVisible] = useState(true);
   const toggleRef = useRef(null);
-  const sectionRef = useRef(null);
-  const isAutoClosingRef = useRef(false);
 
+  // Report when our sticky "show less" chip is actually on screen (dropdown open
+  // AND the toggle bar scrolled out of frame) so the resume "close" chip can
+  // defer to it — they hand off only at the moment one replaces the other.
   React.useEffect(() => {
-    if (!showMore) {
-      isAutoClosingRef.current = false;
-    }
-  }, [showMore]);
-
-  React.useEffect(() => {
-    if (!showMore) return;
-    let observer = null;
-    let hasBeenVisible = false;
-    const timeout = setTimeout(() => {
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            hasBeenVisible = true;
-          } else if (hasBeenVisible) {
-            isAutoClosingRef.current = true;
-            setShowMore(false);
-          }
-        },
-        { threshold: 0 }
-      );
-      if (sectionRef.current) observer.observe(sectionRef.current);
-    }, 700);
-    return () => { clearTimeout(timeout); observer?.disconnect(); };
-  }, [showMore]);
+    onShowLessChipChange?.(showMore && !toggleVisible);
+  }, [showMore, toggleVisible, onShowLessChipChange]);
 
   // Track whether the top toggle bar is in the viewport — the sticky chip is
   // redundant while the bar (which also says "show less") is on screen.
@@ -229,7 +207,7 @@ export default function Experience() {
 
   return (
     /* Fix: Issue #17 — collapsing happens only via the toggle button and sticky chip */
-    <div ref={sectionRef}>
+    <div>
       <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
 
       <div className="flex flex-col gap-4">
@@ -240,7 +218,7 @@ export default function Experience() {
         {/* More Experience toggle */}
         <button
           ref={toggleRef}
-          onClick={(e) => { e.stopPropagation(); if (showMore) { setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } else { isAutoClosingRef.current = false; /* Fix: Issue #19 */ setShowMore(true); } }}
+          onClick={(e) => { e.stopPropagation(); if (showMore) { setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); } else { setShowMore(true); } }}
           aria-expanded={showMore}
           aria-controls="more-experience"
           className="flex items-center justify-between w-full rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl px-5 py-3 text-sm font-semibold text-gray-600 hover:bg-white/80 hover:shadow-2xl transition-all"
@@ -286,9 +264,11 @@ export default function Experience() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 16 }}
             transition={{ duration: 0.25 }}
-            onClick={(e) => { e.stopPropagation(); if (isAutoClosingRef.current) return; setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); }}
-            /* Fix: Issue #18 — stacked above the resume close chip (bottom-4) to avoid overlap */
-            className="fixed bottom-16 left-4 z-50 flex items-center gap-1.5 rounded-full bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-white/80 hover:text-white transition-colors"
+            onClick={(e) => { e.stopPropagation(); setShowMore(false); setTimeout(() => { const y = toggleRef.current?.getBoundingClientRect().top + window.scrollY - 170; window.scrollTo({ top: y, behavior: 'smooth' }); }, 370); }}
+            /* Progressive single chip (Option 2): shares the bottom-4 slot with the
+               resume close chip — they're now mutually exclusive, so the label
+               morphs in place from "show less" to "close" rather than stacking. */
+            className="fixed bottom-4 left-4 z-50 flex items-center gap-1.5 rounded-full bg-slate-900/50 backdrop-blur-md border border-white/20 shadow-2xl px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-white/80 hover:text-white transition-colors"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />

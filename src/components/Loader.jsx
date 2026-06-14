@@ -62,6 +62,17 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
     setSkater(val);
   };
 
+  // Lock body scroll while the loader overlay is up so wheel/trackpad input
+  // can't scroll the About page mounted behind it. Restored on unmount (i.e.
+  // once the crossfade completes and the loader is removed).
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
+
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (isExitingRef.current || handstandActiveRef.current) return;

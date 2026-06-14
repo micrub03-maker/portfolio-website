@@ -441,7 +441,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
                   onClick={() => setShowCountryList(true)}
                   style={{ cursor: 'pointer' }}
                 >
-                  <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+                  <StatItem icon={GlobeIcon} label="countries visited" value={travelData.visited_countries.length} />
                   <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={(e) => { e.stopPropagation(); setLifeStoryOpen(true); }} />
                   <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
                 </div>
@@ -486,7 +486,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
                 onClick={() => setShowCountryList(true)}
                 style={{ cursor: 'pointer' }}
               >
-                <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+                <StatItem icon={GlobeIcon} label="countries visited" value={travelData.visited_countries.length} />
                 <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={(e) => { e.stopPropagation(); setLifeStoryOpen(true); }} />
                 <StatItem icon={MapPinIcon} label="continents" value={travelData.continents_count} />
               </div>
@@ -508,7 +508,7 @@ const TravelMap = ({ compact = false, onNavigate }) => {
           <>
             {mapArea}
             <div className="flex divide-x divide-white/20">
-              <StatItem icon={GlobeIcon} label="countries" value={travelData.visited_countries.length} />
+              <StatItem icon={GlobeIcon} label="countries visited" value={travelData.visited_countries.length} />
               <StatItem icon={HouseIcon} label="countries lived" value={travelData.homes_count} onClick={() => setLifeStoryOpen(true)} />
             </div>
           </>
