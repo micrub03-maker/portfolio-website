@@ -4,6 +4,7 @@ import About from "./pages/About";
 import ResumePage from "./pages/ResumePage";
 import { Loader } from "./components/Loader";
 import { BackgroundProvider, useBackground } from "./contexts/BackgroundContext";
+import { Analytics } from "@vercel/analytics/react";
 
 function AppContent() {
   const location = useLocation();
@@ -44,6 +45,7 @@ export default function App() {
     <Router>
       <BackgroundProvider>
         <AppContent />
+        <Analytics />
       </BackgroundProvider>
     </Router>
   );
