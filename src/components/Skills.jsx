@@ -34,7 +34,7 @@ const cards = [
     lines: [
       {
         label: 'Languages & Soft Skills:',
-        rest: ' English (Near-Native, TOEFL 114/120), French (Native), Spanish (Fluent), Hebrew (Elementary), Adaptability, Reporting & Documentation, Collaboration, Task Prioritization, Creativity',
+        rest: ' English (Near-Native, TOEFL 114/120), Dutch (Native), French (Native), Spanish (Fluent), Hebrew (Elementary), Adaptability, Reporting & Documentation, Collaboration, Task Prioritization, Creativity',
       },
     ],
   },

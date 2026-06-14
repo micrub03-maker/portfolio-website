@@ -136,7 +136,7 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
               <button
                 key={section.id}
                 onClick={() => scrollToSection(section.id)}
-                className={`block w-full text-center flex-1 flex items-center justify-center px-2 py-1 rounded-lg text-xs font-medium transition-all ${
+                className={`block w-full text-center flex-1 flex items-center justify-center px-2 py-1 rounded-lg text-sm font-medium transition-all ${
                   activeSection === section.id
                     ? 'bg-white/20 text-white font-semibold'
                     : 'text-white/70 hover:text-white hover:bg-white/10'

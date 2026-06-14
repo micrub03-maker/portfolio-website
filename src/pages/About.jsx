@@ -52,6 +52,25 @@ function loadHtml2Canvas() {
   return html2canvasPromise;
 }
 
+// Subtle easter-egg breadcrumb: a row of dots that fills in as the visitor
+// clicks the profile photo, hinting that something happens on the 5th click
+// (the hidden Breakout game). Hidden at rest, fades in on the first click.
+function ProfileProgressDots({ progress }) {
+  return (
+    <div
+      className={`pointer-events-none absolute left-1/2 -bottom-2.5 -translate-x-1/2 flex gap-1 transition-opacity duration-300 ${progress > 0 ? 'opacity-100' : 'opacity-0'}`}
+      aria-hidden="true"
+    >
+      {[0, 1, 2, 3, 4].map((i) => (
+        <span
+          key={i}
+          className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${i < progress ? 'bg-white scale-100' : 'bg-white/30 scale-75'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function About() {
   const isDesktop = useMediaQuery({ query: "(min-width: 768px)" });
   const isMobile = useMediaQuery({ query: "(max-width: 768px)" });
@@ -68,6 +87,7 @@ export default function About() {
   const [showLessChipVisible, setShowLessChipVisible] = useState(false);
   const [interestsOpen, setInterestsOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
+  const [clickProgress, setClickProgress] = useState(0);
   const [widgetRects, setWidgetRects] = useState(null);
   const [widgetSnapshots, setWidgetSnapshots] = useState(null);
   const shakeControls = useAnimationControls();
@@ -88,9 +108,11 @@ export default function About() {
     // before the 5th click triggers the capture.
     loadHtml2Canvas();
     profileClickCount.current += 1;
+    setClickProgress(profileClickCount.current);
     if (profileClickTimer.current) clearTimeout(profileClickTimer.current);
     if (profileClickCount.current >= 5) {
       profileClickCount.current = 0;
+      setClickProgress(5); // fill the final dot; cleared when the game closes
 
       // Capture rects now, while widgets are still in position, so the fly animation knows where to start from.
       setWidgetRects({
@@ -158,7 +180,7 @@ export default function About() {
       })();
     } else {
       shakeControls.start({ x: [0, -5, 5, -3, 3, 0], transition: { duration: 0.35 } }); // Fix: Issue #51
-      profileClickTimer.current = setTimeout(() => { profileClickCount.current = 0; }, 1500);
+      profileClickTimer.current = setTimeout(() => { profileClickCount.current = 0; setClickProgress(0); }, 1500);
     }
   };
 
@@ -460,14 +482,17 @@ export default function About() {
                   /* Landscape mobile: compact horizontal layout */
                   <div className="flex flex-row items-center gap-3 w-full h-full">
                     {/* Fix: Issue #51 / F-10 — z:0 keeps the translateZ(0) GPU hint in framer's transform */}
-                    <motion.div
-                      animate={shakeControls}
-                      className="w-14 h-14 rounded-full overflow-hidden border border-white/20 flex-shrink-0 cursor-pointer select-none"
-                      style={{ z: 0, backfaceVisibility: 'hidden' }}
-                      onClick={handleProfileClick}
-                    >
-                      <img src={profile} alt="Portrait of Michael Rubin" className="block w-full h-full object-cover object-top pointer-events-none" style={{ imageRendering: 'auto' }} />
-                    </motion.div>
+                    <div className="relative flex-shrink-0">
+                      <motion.div
+                        animate={shakeControls}
+                        className="w-14 h-14 rounded-full overflow-hidden border border-white/20 cursor-pointer select-none"
+                        style={{ z: 0, backfaceVisibility: 'hidden' }}
+                        onClick={handleProfileClick}
+                      >
+                        <img src={profile} alt="Portrait of Michael Rubin" className="block w-full h-full object-cover object-top pointer-events-none" style={{ imageRendering: 'auto' }} />
+                      </motion.div>
+                      <ProfileProgressDots progress={clickProgress} />
+                    </div>
                     <div className="flex flex-col gap-1 flex-1 min-w-0 text-left">
                       <h1 className="text-xs font-bold text-white leading-none">Michael Rubin</h1>
                       <p className="text-white/80 text-[10px] leading-tight">Mechanical/Controls Engineer @ MPC lab</p>
@@ -502,19 +527,22 @@ export default function About() {
                   /* Portrait / desktop: original layout */
                   <>
                     {/* Fix: Issue #51 / F-10 — z:0 keeps the translateZ(0) GPU hint in framer's transform */}
-                    <motion.div
-                      animate={shakeControls}
-                      className="w-32 h-32 md:w-52 md:h-52 rounded-full overflow-hidden border border-white/20 mb-1 md:mb-3 flex-shrink-0 cursor-pointer select-none"
-                      style={{ z: 0, backfaceVisibility: 'hidden' }}
-                      onClick={handleProfileClick}
-                    >
-                      <img
-                        src={profile}
-                        alt="Portrait of Michael Rubin"
-                        className="block w-full h-full object-cover object-top pointer-events-none"
-                        style={{ imageRendering: 'auto' }}
-                      />
-                    </motion.div>
+                    <div className="relative mb-1 md:mb-3 flex-shrink-0">
+                      <motion.div
+                        animate={shakeControls}
+                        className="w-32 h-32 md:w-52 md:h-52 rounded-full overflow-hidden border border-white/20 cursor-pointer select-none"
+                        style={{ z: 0, backfaceVisibility: 'hidden' }}
+                        onClick={handleProfileClick}
+                      >
+                        <img
+                          src={profile}
+                          alt="Portrait of Michael Rubin"
+                          className="block w-full h-full object-cover object-top pointer-events-none"
+                          style={{ imageRendering: 'auto' }}
+                        />
+                      </motion.div>
+                      <ProfileProgressDots progress={clickProgress} />
+                    </div>
                     <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
                     <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab </p>
                     <div className="flex items-center gap-2 mb-1">
@@ -851,7 +879,7 @@ export default function About() {
 
       {breakoutActive && (
         <BreakoutGame
-          onClose={() => setBreakoutActive(false)}
+          onClose={() => { setBreakoutActive(false); setClickProgress(0); }}
           widgetRects={widgetRects}
           widgetSnapshots={widgetSnapshots}
         />
