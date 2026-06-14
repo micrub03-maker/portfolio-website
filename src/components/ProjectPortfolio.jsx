@@ -771,7 +771,10 @@ const honourItems = [
     title: 'Model Predictive Torque Control for a Balancing Robot',
     media: [{ src: '/images/MPC-twowheeledrobot.mp4', label: 'MPC two-wheeled robot', videoAspect: 'aspect-[10/7]', fluid: true, hoverLabel: 'Circle steering control on robot' }],
     sideText: { heading: 'Why not PID?', body: 'We used MPC as a research tool to evaluate whether it could outperform a simpler controller on a self-balancing two-wheeled robot with slope and steering dynamics.' },
-    links: [{ label: 'Paper', href: '/images/C231A_project.pdf' }],
+    links: [
+      { label: 'Paper', href: '/images/C231A_project.pdf' },
+      { label: 'Video', href: 'https://www.youtube.com/watch?v=xH82VY5cUp4' },
+    ],
   },
   {
     id: 'sproutup',
