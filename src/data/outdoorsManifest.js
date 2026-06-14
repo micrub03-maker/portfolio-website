@@ -18,7 +18,7 @@ export const outdoorsPhotos = [
   { id: 17, src: '/images/Highway 1 rocks.JPG',                alt: 'Highway 1 rocks',                ar: 1.510 },
   { id: 18, src: '/images/Yosemite Daphne.jpg',                alt: 'Yosemite Daphne',                ar: 1.333 },
   { id: 19, src: '/images/Yosemite, USA.JPG',                  alt: 'Yosemite, USA',                  ar: 1.333 },
-  { id: 20, src: '/images/Norway cabin trip.jpg',             alt: 'Norway cabin trip',              ar: 0.750 },
+  { id: 20, src: '/images/norway cabin trip.jpg',             alt: 'Norway cabin trip',              ar: 0.750 },
   { id: 21, src: '/images/Norway mampap hike.jpg',            alt: 'Norway mampap hike',             ar: 0.562 },
   { id: 22, src: '/images/norway boat.jpg',                    alt: 'Norway boat',                    ar: 1.333 },
   { id: 23, src: '/images/norway snowman pap.jpg',             alt: 'Norway snowman pap',             ar: 0.750 },

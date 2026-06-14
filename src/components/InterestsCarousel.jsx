@@ -42,7 +42,7 @@ const slides = [
   },
   {
     id: 'winter-sports',
-    title: 'Outdoors & winter sports',
+    title: 'Outdoors & Winter Sports',
     mediaLabel: 'TEMP: outdoors',
     mediaSrc: null,
     description:
