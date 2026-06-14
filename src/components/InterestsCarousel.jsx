@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import TravelMap from './TravelMap';
 import { MediaSlot } from "./MediaSlot";
-import DoodleJump from './DoodleJump';
+import JugglingGame from './JugglingGame';
 import SpotifyPlaylistsAPI from './SpotifyPlaylistsAPI';
 import SpotifyPlaylists from './SpotifyPlaylists';
 import PhotographyShowcase from './PhotographyShowcase';
@@ -12,8 +12,6 @@ const hasSpotifyCredentials =
     !!import.meta.env?.VITE_SPOTIFY_CLIENT_ID &&
     !!import.meta.env?.VITE_SPOTIFY_CLIENT_SECRET;
 const SpotifyWidget = hasSpotifyCredentials ? SpotifyPlaylistsAPI : SpotifyPlaylists;
-
-const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
 
 const slides = [
   {
@@ -58,13 +56,9 @@ const slides = [
   },
 ];
 
-export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
+export default function InterestsCarousel({ jumpToTravel = 0 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [showGame, setShowGame] = useState(false);
-  const glowControls = useAnimation();
-  const skateClicks = useRef(0);
-  const konamiBuffer = useRef([]);
-  const sectionRef = useRef(null);
+  const [showJuggle, setShowJuggle] = useState(false);
 
   useEffect(() => {
     const link = document.createElement('link');
@@ -79,52 +73,6 @@ export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
     const idx = slides.findIndex(s => s.id === 'traveling');
     if (idx !== -1) setCurrentIndex(idx);
   }, [jumpToTravel]);
-
-  const openGame = () => {
-    onRequestOpen?.();
-    const idx = slides.findIndex(s => s.id === 'skateboarding');
-    if (idx !== -1) setCurrentIndex(idx);
-    setShowGame(true);
-    setTimeout(() => {
-      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
-  };
-
-  useEffect(() => {
-    const handler = (e) => {
-      konamiBuffer.current = [...konamiBuffer.current, e.key].slice(-KONAMI.length);
-      if (konamiBuffer.current.join(',') === KONAMI.join(',')) {
-        openGame();
-        konamiBuffer.current = [];
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  // Fix: Issue #27 — don't let stale clicks accumulate across slide visits
-  useEffect(() => {
-    if (slides[currentIndex].id !== 'skateboarding') {
-      skateClicks.current = 0;
-    }
-  }, [currentIndex]);
-
-  const handleSkateClick = () => {
-    skateClicks.current += 1;
-    if (skateClicks.current >= 5) {
-      skateClicks.current = 0;
-      openGame();
-    } else {
-      glowControls.start({
-        filter: [
-          'drop-shadow(0 0 0px rgba(59,130,246,0))',
-          'drop-shadow(0 0 14px rgba(59,130,246,0.9))',
-          'drop-shadow(0 0 0px rgba(59,130,246,0))',
-        ],
-        transition: { duration: 0.5 },
-      });
-    }
-  };
 
   const touchStartX = useRef(null);
 
@@ -142,8 +90,27 @@ export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
 
   const active = slides[currentIndex];
 
+  // On the skateboarding slide, "juggle" is a hidden trigger for the juggling game.
+  const renderPara = (text) => {
+    if (active.id !== 'skateboarding') return text;
+    const idx = text.toLowerCase().indexOf('juggle');
+    if (idx === -1) return text;
+    return (
+      <>
+        {text.slice(0, idx)}
+        <span
+          onClick={() => setShowJuggle(true)}
+          className="cursor-pointer"
+        >
+          {text.slice(idx, idx + 6)}
+        </span>
+        {text.slice(idx + 6)}
+      </>
+    );
+  };
+
   return (
-    <section ref={sectionRef}>
+    <section>
       <div
         className="max-w-5xl mx-auto rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl overflow-hidden"
         onTouchStart={handleTouchStart}
@@ -230,35 +197,17 @@ export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
             ) : active.mediaSrc ? (
               <div className="flex flex-col min-[480px]:flex-row gap-3 min-[480px]:gap-4 items-start">
                 {/* Fix: Issue #28 — stack video + text below 480px so neither column is cramped */}
-                <div
-                  className="w-full min-[480px]:w-2/5 flex-shrink-0"
-                  onClick={active.id === 'skateboarding' && !showGame ? handleSkateClick : undefined}
-                  style={active.id === 'skateboarding' && !showGame ? { cursor: 'pointer' } : undefined}
-                >
-                  {active.id === 'skateboarding' && showGame
-                    ? (
-                      /* Fix: Issue #26 — keep game touches from triggering carousel swipes */
-                      <div
-                        onTouchStart={(e) => e.stopPropagation()}
-                        onTouchEnd={(e) => e.stopPropagation()}
-                        onTouchMove={(e) => e.stopPropagation()}
-                      >
-                        <DoodleJump inline onClose={() => setShowGame(false)} />
-                      </div>
-                    )
-                    : (
-                      <motion.div animate={glowControls} initial={false} className="select-none">
-                        {/* Skate clip is portrait — keep 9/16 explicitly now that MediaImage defaults to landscape (Issue #39) */}
-                        <MediaSlot label={active.mediaLabel} src={active.mediaSrc} videoAspect="aspect-[9/16]" />
-                      </motion.div>
-                    )
-                  }
+                <div className="w-full min-[480px]:w-2/5 flex-shrink-0">
+                  <div className="select-none">
+                    {/* Skate clip is portrait — keep 9/16 explicitly now that MediaImage defaults to landscape (Issue #39) */}
+                    <MediaSlot label={active.mediaLabel} src={active.mediaSrc} videoAspect="aspect-[9/16]" />
+                  </div>
                 </div>
                 <div className="flex-1 flex flex-col justify-end pb-2">
                   <h3 className="text-xl md:text-2xl font-bold text-gray-900">{active.title}</h3>
                   {active.description.split('\n \n').map((para, i) => (
                     <p key={i} className={`mt-2 text-sm md:text-base text-gray-700 leading-relaxed${i > 0 ? ' hidden md:block' : ''}`}>
-                      {para.trim()}
+                      {renderPara(para.trim())}
                     </p>
                   ))}
                 </div>
@@ -276,6 +225,7 @@ export default function InterestsCarousel({ jumpToTravel = 0, onRequestOpen }) {
         </AnimatePresence>
       </div>
 
+      {showJuggle && <JugglingGame onClose={() => setShowJuggle(false)} />}
     </section>
   );
 }

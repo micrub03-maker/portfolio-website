@@ -317,23 +317,6 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
         {/* Fix: Issue #5 — tighter horizontal padding at ≤375px so the card breathes */}
         <div className="relative px-4 sm:px-8 md:px-12 py-7 bg-black/70 border border-cyan-400/35 rounded-sm shadow-[0_0_40px_rgba(34,211,238,0.08),inset_0_0_40px_rgba(34,211,238,0.03)]">
 
-          {/* Corner brackets */}
-          <span className="absolute top-0 left-0 w-5 h-5 border-l-2 border-t-2 border-cyan-400/70" />
-          <span className="absolute top-0 right-0 w-5 h-5 border-r-2 border-t-2 border-cyan-400/70" />
-          <span className="absolute bottom-0 left-0 w-5 h-5 border-l-2 border-b-2 border-cyan-400/70" />
-          <span className="absolute bottom-0 right-0 w-5 h-5 border-r-2 border-b-2 border-cyan-400/70" />
-
-          {/* Header label */}
-          <div className="absolute -top-3 left-5 bg-[#050a10] px-2 font-mono text-xs tracking-widest text-cyan-400/70 select-none">
-            // PROFILE.init()
-          </div>
-
-          {/* Status indicator */}
-          <div className="absolute -top-[7px] right-5 bg-[#050a10] px-2 flex items-center gap-1.5 select-none">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="font-mono text-[10px] text-cyan-400/60 tracking-widest">ONLINE</span>
-          </div>
-
           <div className="flex flex-col items-center gap-3 font-mono">
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
               Hey there! I&apos;m Michael

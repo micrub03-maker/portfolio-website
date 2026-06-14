@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MediaSlot } from "./MediaSlot";
 import AssemblyGuide from "./AssemblyGuide";
 import { NESTED_LEVEL2_STYLES } from '../main.jsx';
+import { T } from '../i18n';
 
 // Lets each open Dropdown report when its title button has scrolled out of view,
 // so ProjectPortfolio can show a single floating "close" chip for the deepest one.
@@ -990,7 +991,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
   return (
     <section ref={sectionRef}>
       <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">
-        project portfolio
+        <T>project portfolio</T>
       </h2>
 
       <div

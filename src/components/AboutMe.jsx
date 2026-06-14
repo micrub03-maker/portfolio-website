@@ -1,10 +1,11 @@
 import React from 'react';
+import { T } from '../i18n';
 
 export default function AboutMe() {
   return (
     <section id="about">
       <h2 className="text-center mb-6 text-2xl md:text-3xl font-bold text-gray-400">
-        about me
+        <T>about me</T>
       </h2>
 
       <div className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-6 md:p-8">

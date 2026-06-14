@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { T } from '../i18n';
 
 const entries = [
   {
@@ -62,7 +63,7 @@ const entries = [
 export default function Education() {
   return (
     <div>
-      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Education</h3>
+      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide"><T>Education</T></h3>
       <div className="flex flex-col gap-4">
         {entries.map((entry, i) => (
           <motion.div

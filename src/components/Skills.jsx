@@ -1,4 +1,5 @@
 import React from 'react';
+import { T } from '../i18n';
 
 const cards = [
   {
@@ -42,7 +43,7 @@ const cards = [
 export default function Skills() {
   return (
     <div>
-      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Skills</h3>
+      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide"><T>Skills</T></h3>
 
       {/* Row 1: Mechanical + Manufacturing */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">

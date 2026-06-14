@@ -3,6 +3,8 @@ import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from "r
 import About from "./pages/About";
 import ResumePage from "./pages/ResumePage";
 import { Loader } from "./components/Loader";
+import BlueprintMode from "./components/BlueprintMode";
+import { LanguageProvider } from "./i18n";
 import { BackgroundProvider, useBackground } from "./contexts/BackgroundContext";
 import { Analytics } from "@vercel/analytics/react";
 
@@ -36,6 +38,7 @@ function AppContent() {
       </Routes>
 
       {showLoader && <Loader onEnterComplete={() => setLoaderDone(true)} />}
+      <BlueprintMode />
     </main>
   );
 }
@@ -44,8 +47,10 @@ export default function App() {
   return (
     <Router>
       <BackgroundProvider>
-        <AppContent />
-        <Analytics />
+        <LanguageProvider>
+          <AppContent />
+          <Analytics />
+        </LanguageProvider>
       </BackgroundProvider>
     </Router>
   );

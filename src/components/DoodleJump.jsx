@@ -1,4 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { fetchHighScore, submitHighScore } from '../lib/leaderboard';
+
+const GAME_ID = 'doodlejump';
 
 const W = 340;
 const H = 480;
@@ -6,6 +9,8 @@ const PLAT_W = 68;
 const PLAT_H = 10;
 const P_W = 38;
 const P_H = 36;
+const ENEMY_W = 30;
+const ENEMY_H = 30;
 const GRAVITY = 0.35;
 const JUMP_V = -11.5;
 const MOVE_SPEED = 3.8;
@@ -16,7 +21,25 @@ const TARGET_PLATS = 12;
 
 const PLAT_TYPES = ['rail', 'ledge', 'kicker'];
 
-// Decorative twinkling stars for the overlay sky (near the purple top)
+// Engineering / blueprint mode (Konami code, see BlueprintMode.jsx) re-skins the
+// whole site as a cyan-on-navy technical drawing. When it's on we swap the game's
+// field, platforms and skater onto that same blueprint palette so it reads as part
+// of the drawing rather than a colourful pop-out — mirroring BreakoutGame.
+const isBlueprint = () => document.documentElement.classList.contains('blueprint-mode');
+
+// The game now lives behind the DROP (skate committee) logo, so the normal skin is
+// built around it: a dark night field with the hand-drawn DROP mark as a watermark
+// and white line-art obstacles. Cached module-level so the canvas can draw it.
+let _dropLogo = null;
+function dropLogoImg() {
+  if (!_dropLogo) {
+    _dropLogo = new Image();
+    _dropLogo.src = '/images/DROP-logo-white.png';
+  }
+  return _dropLogo;
+}
+
+// Decorative twinkling stars for the overlay night sky
 const STARS = [
   { left: '14%', top: '10%', s: 3, d: '0s' },
   { left: '32%', top: '18%', s: 2, d: '0.4s' },
@@ -26,20 +49,54 @@ const STARS = [
   { left: '24%', top: '28%', s: 2, d: '0.6s' },
 ];
 
-function randPlat(y) {
-  return {
+// Platforms gain behaviour the higher you climb. `solid` always bounces; `moving`
+// slides side to side (a rolling rail); `crumble` (a sketchy curb) gives one bounce
+// then breaks away. Probabilities ramp with score and are capped so it stays fair.
+function randPlat(y, { score = 0, solid = false } = {}) {
+  const p = {
     x: Math.random() * (W - PLAT_W),
     y,
     type: PLAT_TYPES[Math.floor(Math.random() * PLAT_TYPES.length)],
+    behavior: 'solid',
   };
+  if (solid) return p;
+
+  const movingChance = Math.min(0.12 + score / 4500, 0.30);
+  const crumbleChance = Math.min(0.10 + score / 5500, 0.24);
+  const r = Math.random();
+  if (r < movingChance) {
+    p.behavior = 'moving';
+    p.type = 'rail';
+    p.vx = (Math.random() < 0.5 ? -1 : 1) * (0.7 + Math.random() * 1.0);
+  } else if (r < movingChance + crumbleChance) {
+    p.behavior = 'crumble';
+    p.type = 'ledge';
+    p.broken = false;
+  }
+  return p;
+}
+
+// Floating cone hazard. Bounce on top to squash it; touch its side and you bail.
+// Spawns only past an early grace height, with a chance that ramps with score.
+function maybeSpawnEnemy(s, y) {
+  if (s.score < 250) return;
+  const chance = Math.min(0.10 + s.score / 6000, 0.24);
+  if (Math.random() >= chance) return;
+  s.enemies.push({
+    x: Math.random() * (W - ENEMY_W),
+    y: y - 24,
+    vx: (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 1.1),
+    alive: true,
+  });
 }
 
 function initPlatforms() {
-  const plats = [{ x: W / 2 - PLAT_W / 2, y: H - 80, type: 'ledge' }];
+  const plats = [{ x: W / 2 - PLAT_W / 2, y: H - 80, type: 'ledge', behavior: 'solid' }];
   let y = H - 80;
   while (plats.length < TARGET_PLATS) {
     y -= GAP_MIN + Math.random() * (GAP_MAX - GAP_MIN);
-    plats.push(randPlat(y));
+    // Keep the first few steps solid so the launch is never a trap.
+    plats.push(randPlat(y, { solid: plats.length < 4 }));
   }
   return plats;
 }
@@ -51,12 +108,15 @@ function initGame() {
     vy: JUMP_V,
     score: 0,
     platforms: initPlatforms(),
+    enemies: [],
     alive: true,
   };
 }
 
-// Shared skater sprite — drawn at top-left (X, Y) in a 38×42 box.
-function drawSkater(ctx, X, Y) {
+// Shared skater sprite — drawn at top-left (X, Y) in a 38×42 box. Pass `mono`
+// ({ ink, fill }) to render him as a single-colour line drawing for blueprint mode.
+function drawSkater(ctx, X, Y, mono) {
+  if (mono) { drawSkaterMono(ctx, X, Y, mono); return; }
   ctx.save();
   ctx.strokeStyle = '#000';
   ctx.lineWidth = 1.5;
@@ -118,16 +178,98 @@ function drawSkater(ctx, X, Y) {
   ctx.restore();
 }
 
+// Same skater geometry, drawn as a cyan line drawing (hollow fills) so he sits
+// inside the blueprint without colour. `ink` = line colour, `fill` = field colour.
+function drawSkaterMono(ctx, X, Y, { ink, fill }) {
+  ctx.save();
+  ctx.strokeStyle = ink;
+  ctx.fillStyle = fill;
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+  const outline = (path) => { path(); ctx.fill(); ctx.stroke(); };
+
+  // Head + hair cap
+  outline(() => { ctx.beginPath(); ctx.arc(X + 19, Y + 8, 6, 0, Math.PI * 2); });
+  outline(() => { ctx.beginPath(); ctx.arc(X + 19, Y + 5, 6.5, Math.PI, 0, false); ctx.closePath(); });
+
+  // Eyes — solid ink dots
+  ctx.fillStyle = ink;
+  ctx.beginPath();
+  ctx.arc(X + 16, Y + 7, 1.2, 0, Math.PI * 2);
+  ctx.arc(X + 22, Y + 7, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fill;
+
+  // Shirt
+  outline(() => { ctx.beginPath(); ctx.roundRect(X + 7, Y + 14, 22, 13, 3); });
+
+  // Arms
+  ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(X + 9,  Y + 17); ctx.lineTo(X + 0,  Y + 24); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(X + 27, Y + 17); ctx.lineTo(X + 36, Y + 24); ctx.stroke();
+  ctx.lineWidth = 1.5;
+
+  // Pants + shoes
+  outline(() => { ctx.beginPath(); ctx.roundRect(X + 9,  Y + 26, 8, 8, 2); });
+  outline(() => { ctx.beginPath(); ctx.roundRect(X + 21, Y + 26, 8, 8, 2); });
+  outline(() => { ctx.beginPath(); ctx.roundRect(X + 6,  Y + 32, 11, 3, 1); });
+  outline(() => { ctx.beginPath(); ctx.roundRect(X + 21, Y + 32, 11, 3, 1); });
+
+  // Skateboard deck + wheels
+  outline(() => { ctx.beginPath(); ctx.roundRect(X - 2, Y + 34, P_W + 4, 5, 3); });
+  outline(() => { ctx.beginPath(); ctx.arc(X + 6,       Y + 41, 3, 0, Math.PI * 2); });
+  outline(() => { ctx.beginPath(); ctx.arc(X + P_W - 6, Y + 41, 3, 0, Math.PI * 2); });
+
+  ctx.restore();
+}
+
+// Traffic-cone hazard. Orange with a reflective stripe in the DROP skin, cyan
+// line-art in blueprint so it sits inside the drawing like everything else.
+function drawCone(ctx, e, blueprint) {
+  const cx = e.x + ENEMY_W / 2;
+  const baseY = e.y + ENEMY_H;
+  ctx.save();
+  ctx.lineWidth = 1.5;
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = blueprint ? '#7dd3fc' : '#7c2d12';
+  ctx.fillStyle = blueprint ? 'rgba(11,46,99,0.6)' : '#fb923c';
+
+  // Base
+  ctx.beginPath();
+  ctx.roundRect(e.x + 1, baseY - 5, ENEMY_W - 2, 5, 2);
+  ctx.fill(); ctx.stroke();
+
+  // Cone body
+  ctx.beginPath();
+  ctx.moveTo(cx, e.y + 1);
+  ctx.lineTo(cx + ENEMY_W * 0.30, baseY - 4);
+  ctx.lineTo(cx - ENEMY_W * 0.30, baseY - 4);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  // Reflective stripe
+  ctx.fillStyle = blueprint ? '#7dd3fc' : '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(cx - ENEMY_W * 0.17, e.y + ENEMY_H * 0.40);
+  ctx.lineTo(cx + ENEMY_W * 0.17, e.y + ENEMY_H * 0.40);
+  ctx.lineTo(cx + ENEMY_W * 0.22, e.y + ENEMY_H * 0.55);
+  ctx.lineTo(cx - ENEMY_W * 0.22, e.y + ENEMY_H * 0.55);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+}
+
 // Static skater sprite for the overlay — drawn in a 48×52 box (skater at 4,3).
-function SkaterSprite({ bailed = false }) {
+function SkaterSprite({ bailed = false, mono }) {
   const ref = useRef(null);
   useEffect(() => {
     const c = ref.current;
     if (!c) return;
     const ctx = c.getContext('2d');
     ctx.clearRect(0, 0, c.width, c.height);
-    drawSkater(ctx, 4, 3);
-  }, []);
+    drawSkater(ctx, 4, 3, mono);
+  }, [mono]);
   return (
     <canvas
       ref={ref}
@@ -151,6 +293,11 @@ export default function DoodleJump({ onClose, inline = false }) {
   const [trackFill, setTrackFill] = useState(0);
   const bestRef = useRef(0);
   const [tiltEnabled, setTiltEnabled] = useState(false);
+  // Global record to beat, shown in the corner. Mirrored into a ref so the canvas
+  // draw loop (deps []) can read it without re-subscribing.
+  const [globalBest, setGlobalBest] = useState(0);
+  const globalBestRef = useRef(0);
+  const configuredRef = useRef(false);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -160,87 +307,104 @@ export default function DoodleJump({ onClose, inline = false }) {
 
     ctx.clearRect(0, 0, W, H);
 
-    // Sunset sky — site gradient #551764 → #FFA07A
-    const sky = ctx.createLinearGradient(0, 0, 0, H);
-    sky.addColorStop(0, '#551764');
-    sky.addColorStop(1, '#FFA07A');
-    ctx.fillStyle = sky;
-    ctx.fillRect(0, 0, W, H);
+    const blueprint = isBlueprint();
 
-    // Soft translucent cloud-glow blobs scrolling with height
-    const cloudPositions = [[30,90],[180,55],[110,180],[265,125],[55,260],[220,310]];
-    const cScroll = (s.score * 1.5) % H;
-    for (const [cx, cy] of cloudPositions) {
-      const sy = ((cy - cScroll) % H + H) % H;
-      const glow = ctx.createRadialGradient(cx, sy, 0, cx, sy, 34);
-      glow.addColorStop(0, 'rgba(255,255,255,0.32)');
-      glow.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath();
-      ctx.ellipse(cx, sy, 34, 20, 0, 0, Math.PI * 2);
-      ctx.fill();
+    // Field. Engineering mode = flat blueprint navy; normal = dark DROP night.
+    if (blueprint) {
+      ctx.fillStyle = '#0b2e63';
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      const night = ctx.createLinearGradient(0, 0, 0, H);
+      night.addColorStop(0, '#15171c');
+      night.addColorStop(1, '#2b2f37');
+      ctx.fillStyle = night;
+      ctx.fillRect(0, 0, W, H);
     }
 
-    // Skate obstacles — frosted-glass-at-sunset family.
-    // Shared rule: translucent fill, soft ring, one bright top edge
-    // (the grindable surface), and a soft blue underglow.
-    const BLUE = '#84A4FC';
+    // Scrolling graph-paper grid — gives the climb its sense of motion (replaces
+    // the old sunset clouds) and reads as drafting paper in both skins.
+    const GRID = 34;
+    const gOff = (s.score * 1.5) % GRID;
+    ctx.strokeStyle = blueprint ? 'rgba(125,211,252,0.13)' : 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx <= W; gx += GRID) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+    }
+    for (let gy = -GRID + gOff; gy <= H; gy += GRID) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+    }
+
+    // DROP logo watermark, centred behind the play field
+    const logo = dropLogoImg();
+    if (logo.complete && logo.naturalWidth) {
+      const lw = W * 0.72;
+      const lh = lw * (logo.naturalHeight / logo.naturalWidth);
+      ctx.globalAlpha = blueprint ? 0.20 : 0.16;
+      ctx.drawImage(logo, (W - lw) / 2, H * 0.40 - lh / 2, lw, lh);
+      ctx.globalAlpha = 1;
+    }
+
+    // Skate obstacles as line-art so they sit inside the drawing. One accent for
+    // both skins — cyan ink for blueprint, white chalk for DROP — over the shared
+    // rule: translucent fill, soft ring, one bright top edge (the grindable surface).
+    const PT = blueprint
+      ? { glow: 'rgba(125,211,252,0.45)', fill: 'rgba(125,211,252,0.12)', edge: '#7dd3fc', ring: 'rgba(125,211,252,0.55)' }
+      : { glow: 'rgba(255,255,255,0.28)', fill: 'rgba(255,255,255,0.14)', edge: '#ffffff', ring: 'rgba(255,255,255,0.5)' };
     for (const p of s.platforms) {
       ctx.save();
 
-      // Soft blue underglow shared by every platform
-      ctx.shadowColor = 'rgba(59,130,246,0.5)';
+      // A breaking curb fades out as it tumbles away after its one bounce.
+      if (p.broken) ctx.globalAlpha = Math.max(0, 1 - (p.vy || 0) / 9);
+
+      // Soft underglow shared by every platform
+      ctx.shadowColor = PT.glow;
       ctx.shadowBlur = 10;
       ctx.shadowOffsetY = 2;
 
       if (p.type === 'rail') {
-        // Translucent posts
-        ctx.fillStyle = 'rgba(255,255,255,0.45)';
+        // Posts
+        ctx.fillStyle = PT.fill;
         ctx.fillRect(p.x + 8,           p.y + 3, 3, 12);
         ctx.fillRect(p.x + PLAT_W - 11, p.y + 3, 3, 12);
-        // Frosted glass bar with rounded caps
-        ctx.fillStyle = 'rgba(255,255,255,0.62)';
+        // Bar with rounded caps
         ctx.beginPath();
         ctx.roundRect(p.x, p.y, PLAT_W, 6, 3);
         ctx.fill();
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        // Bright blue grind highlight along the top
-        ctx.fillStyle = BLUE;
+        // Bright grind highlight along the top
+        ctx.fillStyle = PT.edge;
         ctx.beginPath();
         ctx.roundRect(p.x + 3, p.y + 0.5, PLAT_W - 6, 1.5, 1);
         ctx.fill();
         // Soft ring
-        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.strokeStyle = PT.ring;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.roundRect(p.x + 0.5, p.y + 0.5, PLAT_W - 1, 5, 3);
         ctx.stroke();
 
       } else if (p.type === 'ledge') {
-        // Frosted translucent body
-        ctx.fillStyle = 'rgba(255,255,255,0.55)';
+        // Body
+        ctx.fillStyle = PT.fill;
         ctx.beginPath();
         ctx.roundRect(p.x, p.y, PLAT_W, PLAT_H + 6, 4);
         ctx.fill();
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        // Waxed coping = blue top edge (shared highlight rule)
-        ctx.fillStyle = BLUE;
+        // Waxed coping = bright top edge (shared highlight rule)
+        ctx.fillStyle = PT.edge;
         ctx.beginPath();
         ctx.roundRect(p.x, p.y, PLAT_W, 3, 2);
         ctx.fill();
         // Soft ring
-        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.strokeStyle = PT.ring;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.roundRect(p.x + 0.5, p.y + 0.5, PLAT_W - 1, PLAT_H + 5, 4);
         ctx.stroke();
 
       } else {
-        // Kicker — warm sunset wedge under a flat deck (slope = identity)
-        const warm = ctx.createLinearGradient(p.x, p.y, p.x, p.y + PLAT_H + 16);
-        warm.addColorStop(0, 'rgba(255,215,0,0.55)');   // gold deck side
-        warm.addColorStop(1, 'rgba(255,160,122,0.45)'); // salmon base
-        ctx.fillStyle = warm;
+        // Kicker — wedge under a flat deck (slope = identity)
+        ctx.fillStyle = PT.fill;
         ctx.beginPath();
         ctx.moveTo(p.x,          p.y + PLAT_H);
         ctx.lineTo(p.x + PLAT_W, p.y + PLAT_H);
@@ -248,30 +412,52 @@ export default function DoodleJump({ onClose, inline = false }) {
         ctx.lineTo(p.x,          p.y + PLAT_H + 3);
         ctx.closePath();
         ctx.fill();
-        // Frosted deck
-        ctx.fillStyle = 'rgba(255,253,208,0.6)'; // cream
+        // Deck
         ctx.beginPath();
         ctx.roundRect(p.x, p.y, PLAT_W, PLAT_H, 3);
         ctx.fill();
         ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        // Faint gold grip line on the deck surface
-        ctx.fillStyle = 'rgba(255,215,0,0.85)';
+        // Faint grip dots along the deck surface
+        ctx.fillStyle = PT.edge;
+        ctx.globalAlpha = 0.7;
         for (let gx = p.x + 6; gx < p.x + PLAT_W - 4; gx += 7) {
           ctx.fillRect(gx, p.y + 4, 2, 2);
         }
+        ctx.globalAlpha = 1;
         // Soft ring
-        ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.strokeStyle = PT.ring;
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.roundRect(p.x + 0.5, p.y + 0.5, PLAT_W - 1, PLAT_H - 1, 3);
         ctx.stroke();
       }
 
+      // Behaviour cues so moving / breaking platforms read at a glance.
+      if (p.behavior === 'moving') {
+        // Little wheels — it rolls.
+        ctx.fillStyle = PT.edge;
+        ctx.beginPath(); ctx.arc(p.x + 13, p.y + PLAT_H + 2, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x + PLAT_W - 13, p.y + PLAT_H + 2, 2.5, 0, Math.PI * 2); ctx.fill();
+      } else if (p.behavior === 'crumble') {
+        // Cracks — it won't hold.
+        ctx.strokeStyle = PT.ring;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(p.x + PLAT_W * 0.34, p.y + 1); ctx.lineTo(p.x + PLAT_W * 0.46, p.y + PLAT_H);
+        ctx.moveTo(p.x + PLAT_W * 0.62, p.y + 1); ctx.lineTo(p.x + PLAT_W * 0.52, p.y + PLAT_H);
+        ctx.stroke();
+      }
+
       ctx.restore();
     }
 
-    // Player
-    drawSkater(ctx, s.px, s.py);
+    // Cone hazards
+    for (const e of s.enemies) {
+      if (e.alive) drawCone(ctx, e, blueprint);
+    }
+
+    // Player — cyan line-art in blueprint mode, full colour otherwise
+    drawSkater(ctx, s.px, s.py, blueprint ? { ink: '#7dd3fc', fill: 'rgba(11,46,99,0.65)' } : undefined);
 
     // Score — Lexend, white with soft shadow
     ctx.font = '600 18px Lexend, sans-serif';
@@ -281,6 +467,17 @@ export default function DoodleJump({ onClose, inline = false }) {
     ctx.shadowOffsetY = 1;
     ctx.fillStyle = '#fff';
     ctx.fillText(`${Math.floor(s.score)}`, 14, 12);
+
+    // Global record — top-right, the number to beat. Gold in the DROP skin, cyan
+    // in blueprint so it stays inside the drawing.
+    const gb = globalBestRef.current;
+    if (gb > 0) {
+      ctx.font = '700 13px Lexend, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillStyle = blueprint ? '#7dd3fc' : '#FFD700';
+      ctx.fillText(`★ ${gb} ft`, W - 14, 15);
+      ctx.textAlign = 'left'; // restore default for next frame's score
+    }
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
   }, []);
@@ -303,9 +500,28 @@ export default function DoodleJump({ onClose, inline = false }) {
     s.vy += GRAVITY;
     s.py += s.vy;
 
+    // Move sliding platforms; let broken curbs tumble away.
+    for (const p of s.platforms) {
+      if (p.behavior === 'moving' && !p.broken) {
+        p.x += p.vx;
+        if (p.x < 0) { p.x = 0; p.vx *= -1; }
+        else if (p.x > W - PLAT_W) { p.x = W - PLAT_W; p.vx *= -1; }
+      }
+      if (p.broken) { p.vy = (p.vy || 0) + 0.4; p.y += p.vy; }
+    }
+
+    // Drift the cones side to side.
+    for (const e of s.enemies) {
+      if (!e.alive) continue;
+      e.x += e.vx;
+      if (e.x < 0) { e.x = 0; e.vx *= -1; }
+      else if (e.x > W - ENEMY_W) { e.x = W - ENEMY_W; e.vx *= -1; }
+    }
+
     // Platform bounce (only while falling)
     if (s.vy > 0) {
       for (const p of s.platforms) {
+        if (p.broken) continue;
         const prevBottom = s.py + P_H - s.vy;
         if (
           prevBottom <= p.y + 2 &&
@@ -314,8 +530,28 @@ export default function DoodleJump({ onClose, inline = false }) {
           s.px < p.x + PLAT_W - 4
         ) {
           s.vy = JUMP_V;
+          // A crumble curb gives this one bounce, then breaks away.
+          if (p.behavior === 'crumble') { p.broken = true; p.vy = 1; }
           break;
         }
+      }
+    }
+
+    // Cone collisions — ollie onto the top to squash, clip the side and you bail.
+    for (const e of s.enemies) {
+      if (!e.alive) continue;
+      const hit =
+        s.px + P_W > e.x + 4 &&
+        s.px < e.x + ENEMY_W - 4 &&
+        s.py + P_H > e.y + 4 &&
+        s.py < e.y + ENEMY_H - 2;
+      if (!hit) continue;
+      const prevBottom = s.py + P_H - s.vy;
+      if (s.vy > 0 && prevBottom <= e.y + 10) {
+        e.alive = false;
+        s.vy = JUMP_V;
+      } else {
+        s.alive = false;
       }
     }
 
@@ -325,23 +561,33 @@ export default function DoodleJump({ onClose, inline = false }) {
       s.py = SCROLL_LINE;
       s.score += shift * 0.12;
       for (const p of s.platforms) p.y += shift;
+      for (const e of s.enemies) e.y += shift;
 
       s.platforms = s.platforms.filter(p => p.y < H + 20);
+      s.enemies = s.enemies.filter(e => e.alive && e.y < H + 20);
 
       while (s.platforms.length < TARGET_PLATS) {
         const topY = Math.min(...s.platforms.map(p => p.y));
-        s.platforms.push(randPlat(topY - GAP_MIN - Math.random() * (GAP_MAX - GAP_MIN)));
+        const ny = topY - GAP_MIN - Math.random() * (GAP_MAX - GAP_MIN);
+        s.platforms.push(randPlat(ny, { score: s.score }));
+        maybeSpawnEnemy(s, ny);
       }
     }
 
-    // Death
-    if (s.py > H) {
+    // Death (fell off the bottom, or clipped a cone)
+    if (s.py > H || !s.alive) {
       s.alive = false;
       const final = Math.floor(s.score);
       const beaten = final > bestRef.current && final > 0;
       setScore(final);
       setIsNewBest(beaten);
       if (final > bestRef.current) { bestRef.current = final; setBest(final); }
+      // Beat the world record? Push it (anonymously) and update the corner.
+      if (configuredRef.current && final > globalBestRef.current) {
+        submitHighScore(GAME_ID, final).then(high => {
+          if (high != null) { globalBestRef.current = high; setGlobalBest(high); }
+        });
+      }
       setPhase('over');
       return;
     }
@@ -373,6 +619,15 @@ export default function DoodleJump({ onClose, inline = false }) {
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
   }, [phase, tick, draw]);
+
+  // Pull the global record once on mount (degrades to 0 / hidden with no backend).
+  useEffect(() => {
+    fetchHighScore(GAME_ID).then(({ high, configured }) => {
+      configuredRef.current = configured;
+      globalBestRef.current = high;
+      setGlobalBest(high);
+    });
+  }, []);
 
   // Altitude track — animate the marker up to this run's height on game over
   useEffect(() => {
@@ -441,17 +696,44 @@ export default function DoodleJump({ onClose, inline = false }) {
     return () => window.removeEventListener('deviceorientation', handler);
   }, [tiltEnabled]);
 
+  // Theme to match the canvas: blueprint navy + cyan in engineering mode, dark
+  // DROP night otherwise. The skater on the overlay mirrors the in-game player.
+  const blueprint = isBlueprint();
+  const skaterMono = blueprint ? { ink: '#7dd3fc', fill: 'rgba(11,46,99,0.65)' } : undefined;
+  const ui = blueprint
+    ? {
+        bg: '#0b2e63',
+        panel: 'bg-[#0b2e63]/80 ring-1 ring-sky-300/30',
+        title: 'text-sky-100', sub: 'text-sky-300/80', body: 'text-sky-200', strong: 'text-white',
+        btn: 'bg-sky-400 hover:bg-sky-300 text-[#0b2e63]',
+      }
+    : {
+        bg: 'linear-gradient(180deg, #15171c 0%, #2b2f37 100%)',
+        panel: 'bg-white/70 ring-1 ring-black/5',
+        title: 'text-gray-900', sub: 'text-gray-500', body: 'text-gray-700', strong: 'text-gray-900',
+        btn: 'bg-blue-500 hover:bg-blue-600 text-white',
+      };
+
   const overlay = phase !== 'play' && (
     <div
       className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden p-5"
       style={{
-        background: 'linear-gradient(180deg, #551764 0%, #FFA07A 100%)',
+        background: ui.bg,
         borderRadius: inline ? 12 : 16,
       }}
     >
-      {/* Living sunset — drifting glow + blinking stars */}
+      {/* DROP mark watermark behind everything */}
+      <img
+        src="/images/DROP-logo-white.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute left-1/2 top-[38%] -translate-x-1/2 -translate-y-1/2 w-[72%] max-w-none pointer-events-none select-none"
+        style={{ opacity: blueprint ? 0.2 : 0.16 }}
+      />
+
+      {/* Soft drifting glow; twinkling stars only in the DROP night sky */}
       <div className="widget-gradient" />
-      {STARS.map((st, i) => (
+      {!blueprint && STARS.map((st, i) => (
         <span
           key={i}
           className="absolute rounded-full bg-white animate-blink"
@@ -469,7 +751,7 @@ export default function DoodleJump({ onClose, inline = false }) {
           height: `${(52 / H) * 100}%`,
         }}
       >
-        <SkaterSprite bailed={phase === 'over'} />
+        <SkaterSprite bailed={phase === 'over'} mono={skaterMono} />
         {phase === 'over' && (
           <span className="best-pop absolute left-full top-1/2 -translate-y-1/2 ml-1 whitespace-nowrap rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-bold text-rose-600 shadow-md ring-1 ring-black/5 -rotate-6">
             Bailed!
@@ -478,7 +760,7 @@ export default function DoodleJump({ onClose, inline = false }) {
       </div>
 
       {/* Frosted glass panel */}
-      <div className="relative z-10 rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl px-6 py-5 text-center max-w-[85%]">
+      <div className={`relative z-10 rounded-2xl ${ui.panel} backdrop-blur-md shadow-xl px-6 py-5 text-center max-w-[85%]`}>
         {/* Altitude track (game over only) */}
         {phase === 'over' && (
           <div className="absolute left-2.5 top-4 bottom-4 w-1 rounded-full bg-black/10 overflow-hidden">
@@ -486,7 +768,9 @@ export default function DoodleJump({ onClose, inline = false }) {
               className="absolute bottom-0 left-0 w-full rounded-full transition-[height] duration-700 ease-out"
               style={{
                 height: `${trackFill * 100}%`,
-                background: 'linear-gradient(180deg, #84A4FC 0%, #FFD700 100%)',
+                background: blueprint
+                  ? 'linear-gradient(180deg, #7dd3fc 0%, #38bdf8 100%)'
+                  : 'linear-gradient(180deg, #84A4FC 0%, #FFD700 100%)',
               }}
             />
           </div>
@@ -494,27 +778,33 @@ export default function DoodleJump({ onClose, inline = false }) {
 
         {phase === 'start' && (
           <>
-            <h3 className="text-lg font-bold text-gray-900 leading-tight">How high can you ollie?</h3>
-            <p className="mt-1.5 text-xs text-gray-500 flex items-center justify-center gap-1.5">
+            <h3 className={`text-lg font-bold ${ui.title} leading-tight`}>How high can you ollie?</h3>
+            <p className={`mt-1.5 text-xs ${ui.sub} flex items-center justify-center gap-1.5`}>
               <span className="nudge-left inline-block">←</span>
               <span className="nudge-right inline-block">→</span>
               keys · tap to move
             </p>
+            <p className={`mt-1 text-[11px] ${ui.sub}`}>ollie cones, watch for breaking ledges</p>
           </>
         )}
 
         {phase === 'over' && (
           <>
-            <h3 className="text-lg font-bold text-gray-900">Game over</h3>
+            <h3 className={`text-lg font-bold ${ui.title}`}>Game over</h3>
             {isNewBest ? (
               <p className="best-pop mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
                 ★ New best! {score} ft
               </p>
             ) : (
               <>
-                <p className="mt-2 text-sm text-gray-700">You reached <span className="font-semibold text-gray-900">{score} ft</span></p>
-                {best > 0 && <p className="text-xs text-gray-500">Best {best} ft</p>}
+                <p className={`mt-2 text-sm ${ui.body}`}>You reached <span className={`font-semibold ${ui.strong}`}>{score} ft</span></p>
+                {best > 0 && <p className={`text-xs ${ui.sub}`}>Best {best} ft</p>}
               </>
+            )}
+            {globalBest > 0 && (
+              <p className={`mt-1 text-xs ${ui.sub}`}>
+                {score >= globalBest ? '★ World record!' : `World record ${globalBest} ft`}
+              </p>
             )}
           </>
         )}
@@ -522,7 +812,7 @@ export default function DoodleJump({ onClose, inline = false }) {
         <div className="mt-4">
           <button
             onClick={start}
-            className="cta-glow px-5 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold shadow-md transition active:translate-y-0.5"
+            className={`cta-glow px-5 py-2 rounded-full ${ui.btn} text-sm font-semibold shadow-md transition active:translate-y-0.5`}
           >
             {phase === 'over' ? 'Try again' : 'Start'}
           </button>

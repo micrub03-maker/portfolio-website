@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import { printConsoleSignature } from './consoleSignature'
 
 // Nested "insight" (level-2) dropdown styling. Flip this one value to restyle every
 // project's nested dropdowns: 'A' = inset card (original colours + Option 1 border/shadow),
@@ -16,6 +17,10 @@ if (rootElement) {
     </React.StrictMode>,
   );
 }
+
+// Devtools easter egg — runs once at module load (not affected by StrictMode's
+// double-render of components).
+printConsoleSignature();
 
 // Level-2 dropdown styles. Switch the whole site via NESTED_LEVEL2_SOLUTION above.
 // Consumed at render time by ProjectPortfolio's Dropdown, keyed by variant.

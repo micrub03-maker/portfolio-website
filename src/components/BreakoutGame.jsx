@@ -1,4 +1,26 @@
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { fetchLeaderboard, submitScore } from '../lib/leaderboard';
+import { notifyLeaderboardEntry } from '../lib/leaderboardEmail';
+
+const GAME_ID = 'breakout';
+const BOARD_SIZE = 5;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// ISO-3166 alpha-2 country code → flag emoji (regional indicator letters).
+function countryFlag(cc) {
+  if (!cc || cc.length !== 2 || !/^[A-Za-z]{2}$/.test(cc)) return '';
+  return String.fromCodePoint(...[...cc.toUpperCase()].map(c => 0x1f1e6 + c.charCodeAt(0) - 65));
+}
+
+// "📍 San Francisco, US" style hint from the server-stamped geo fields.
+function locationLabel(row) {
+  const place = row.city || row.region || '';
+  const flag  = countryFlag(row.country);
+  if (place && flag) return `${flag} ${place}`;
+  if (place)         return place;
+  if (row.country)   return `${flag} ${row.country}`.trim();
+  return '';
+}
 
 const WIDGET_AREAS = [
   { label: 'Profile',  color: '#818cf8', colStart: 0, rowStart: 0, colSpan: 4, rowSpan: 6 },
@@ -10,12 +32,14 @@ const WIDGET_AREAS = [
 
 const GRID_COLS = 12;
 const GRID_ROWS = 6;
-const PAD = 3;
+const PAD = 3;                 // resting gap between bricks once they're in the grid
+const START_INSET = 9;         // wider gap the tiles hold at launch, so the "cut" reads clearly
 
 const FLY_STAGGER = 100;  // ms between each widget's bricks starting flight
 const FLY_DUR     = 650;  // ms for each brick's flight
-const FLY_START   = 500;  // ms pause so the background settles before bricks move
-const ANIM_TOTAL  = FLY_START + (WIDGET_AREAS.length - 1) * FLY_STAGGER + FLY_DUR;
+const FADE_DUR    = 300;  // ms: the widget fades in as a seamless whole
+const CUT_DUR     = 280;  // ms: gaps open up, slicing the widget into its brick grid
+const ANIM_TOTAL  = FADE_DUR + CUT_DUR + (WIDGET_AREAS.length - 1) * FLY_STAGGER + FLY_DUR;
 
 function getWidget(col, row) {
   return WIDGET_AREAS.find(
@@ -50,13 +74,54 @@ function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
 function easeInCubic(t)  { return t * t * t; }
 function lerp(a, b, t)   { return a + (b - a) * t; }
 
+// Implicit heart curve (y up): (x²+y²−1)³ ≤ x²y³ → filled.
+function heartMask(nx, ny) {
+  const x = (nx - 0.5) * 2.8;
+  const y = (0.5 - ny) * 2.8;
+  const v = x * x + y * y - 1;
+  return v * v * v - x * x * y * y * y <= 0;
+}
+
+// Cell-occupancy masks over a normalized grid (nx, ny = cell centre in [0,1],
+// c/r = integer cell indices). After the first cleared board the bricks are
+// rebuilt into one of these silhouettes — square cells, so shapes aren't squished.
+const SHAPES = [
+  { name: 'DIAMOND', cols: 13, rows: 11, mask: (nx, ny) => Math.abs(nx - 0.5) + Math.abs(ny - 0.5) <= 0.5 },
+  { name: 'CIRCLE',  cols: 13, rows: 11, mask: (nx, ny) => ((nx - 0.5) * 2) ** 2 + ((ny - 0.5) * 2) ** 2 <= 1 },
+  { name: 'HEART',   cols: 15, rows: 13, mask: heartMask },
+  { name: 'PYRAMID', cols: 13, rows: 10, mask: (nx, ny) => Math.abs(nx - 0.5) <= ny * 0.5 + 0.03 },
+  { name: 'CROSS',   cols: 11, rows: 11, mask: (nx, ny) => Math.abs(nx - 0.5) < 0.17 || Math.abs(ny - 0.5) < 0.17 },
+  { name: 'RINGS',   cols: 13, rows: 11, mask: (nx, ny) => { const d = Math.hypot((nx - 0.5) * 2, (ny - 0.5) * 2); return d <= 1 && (d < 0.4 || d > 0.7); } },
+  { name: 'CHECKER', cols: 12, rows: 8,  mask: (nx, ny, c, r) => (c + r) % 2 === 0 },
+];
+
+// Engineering / blueprint mode (Konami code, see BlueprintMode.jsx) flattens the
+// whole site to a single blueprint-blue field with no colour. When it's active we
+// drop the sunset photo and collapse every widget colour onto one blueprint cyan,
+// so the game reads as part of the drawing rather than a colourful pop-out.
+const BLUEPRINT_FIELD = '#0b2e63';
+const BLUEPRINT_BRICK = '#7dd3fc';
+const isBlueprint = () => document.documentElement.classList.contains('blueprint-mode');
+
 export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) {
   const canvasRef         = useRef(null);
   const snapshotsRef      = useRef(widgetSnapshots);
   const onCloseRef        = useRef(onClose);
   const widgetRectsRef    = useRef(widgetRects);
-  // Survives StrictMode's simulated unmount/remount so the intro plays exactly once per open.
-  const hasPlayedIntroRef = useRef(false);
+  // Persists the intro's start time across StrictMode's mount/cleanup/mount so the
+  // surviving mount *continues* the same animation instead of skipping it. (A boolean
+  // here would let the first, immediately-cancelled mount "use up" the intro, leaving
+  // the real mount to render bricks already in their final grid spots.)
+  const introStartRef = useRef(null);
+
+  // Game-over → React bridge. The canvas loop sets `result` when a round ends; the
+  // overlay below then fetches the global board and (if the score qualifies) lets the
+  // player log their initials. `initGameRef` lets the overlay's Replay button reach
+  // back into the canvas loop, and `overlayOpenRef` tells the loop's key/click
+  // handlers to stand down while the overlay owns the screen.
+  const [result, setResult]   = useState(null); // { status: 'won' | 'lost', score } | null
+  const initGameRef           = useRef(null);
+  const overlayOpenRef        = useRef(false);
 
   // Keep refs current without re-running the canvas effect.
   useEffect(() => { snapshotsRef.current   = widgetSnapshots; }, [widgetSnapshots]);
@@ -75,9 +140,91 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
     let status    = 'playing';
     let animStart = 0;
     let startTime = 0;
+    let particles = [];          // transient debris from brick breaks
+    let popups    = [];          // floating "+10" score labels
+    let score     = 0;
+    let round     = 1;           // clearing the board scrambles the image + speeds up the next round
+    let banner    = null;        // big centre flash, e.g. "ROUND 2 / SCRAMBLED"
+    const blueprint = isBlueprint();
+    const isTouch   = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+    // Ball speed grows ~16% per cleared round.
+    const roundSpeed = () => Math.max(canvas.width, canvas.height) * 0.003 * Math.pow(1.16, round - 1);
+
+    // ── particle / popup helpers ────────────────────────────────────────────────
+    function spawnParticles(cx, cy, color, count, speed) {
+      for (let i = 0; i < count; i++) {
+        const a    = Math.random() * Math.PI * 2;
+        const s    = speed * (0.35 + Math.random() * 0.9);
+        const life = 28 + Math.random() * 22;
+        particles.push({
+          x: cx, y: cy,
+          vx: Math.cos(a) * s,
+          vy: Math.sin(a) * s - speed * 0.4,  // slight upward bias
+          life, maxLife: life,
+          size: 1.5 + Math.random() * 2.5,
+          color,
+        });
+      }
+    }
+    function spawnPopup(cx, cy, text) {
+      popups.push({ x: cx, y: cy, text, vy: -0.9, life: 48, maxLife: 48 });
+    }
+
+    // A random tile of a random widget's imagery — used to scramble the photos
+    // across whatever shape the next round rebuilds the bricks into.
+    function randomSample() {
+      const w   = WIDGET_AREAS[Math.floor(Math.random() * WIDGET_AREAS.length)];
+      const tx  = Math.floor(Math.random() * w.colSpan);
+      const ty  = Math.floor(Math.random() * w.rowSpan);
+      return {
+        color:       blueprint ? BLUEPRINT_BRICK : w.color,
+        label:       null,
+        widgetIdx:   WIDGET_AREAS.indexOf(w),
+        widgetLabel: w.label,
+        snapRatioX:  tx / w.colSpan,
+        snapRatioY:  ty / w.rowSpan,
+        snapRatioW:  1 / w.colSpan,
+        snapRatioH:  1 / w.rowSpan,
+      };
+    }
+
+    // Rebuild the bricks as a silhouette: square cells fit to the vertical band,
+    // centred, keeping the chosen shape's aspect ratio undistorted.
+    function makeShapeBricks(shape) {
+      const W = canvas.width;
+      const H = canvas.height;
+      const bandTop = H * 0.08;
+      const bandH   = H * 0.46;
+      const maxW    = W * 0.92;
+      let cell = bandH / shape.rows;
+      if (shape.cols * cell > maxW) cell = maxW / shape.cols;
+      const gridW = shape.cols * cell;
+      const gridH = shape.rows * cell;
+      const left  = (W - gridW) / 2;
+      const top   = bandTop + (bandH - gridH) / 2;
+
+      const out = [];
+      for (let r = 0; r < shape.rows; r++) {
+        for (let c = 0; c < shape.cols; c++) {
+          if (!shape.mask((c + 0.5) / shape.cols, (r + 0.5) / shape.rows, c, r)) continue;
+          out.push({
+            x: left + c * cell + PAD,
+            y: top  + r * cell + PAD,
+            w: cell - PAD * 2,
+            h: cell - PAD * 2,
+            alive: true,
+            ...randomSample(),
+          });
+        }
+      }
+      return out;
+    }
 
     // ── initGame ──────────────────────────────────────────────────────────────
     function initGame(skipAnimation = false) {
+      setResult(null);
+      overlayOpenRef.current = false;
       const W = canvas.width;
       const H = canvas.height;
 
@@ -88,7 +235,12 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       const bW = (areaRight - areaLeft) / GRID_COLS;
       const bH = areaH / GRID_ROWS;
 
-      bricks = [];
+      bricks    = [];
+      particles = [];
+      popups    = [];
+      score     = 0;
+      round     = 1;
+      banner    = null;
       for (let row = 0; row < GRID_ROWS; row++) {
         for (let col = 0; col < GRID_COLS; col++) {
           const widget = getWidget(col, row);
@@ -105,19 +257,21 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
           const finalW = bW - PAD * 2;
           const finalH = bH - PAD * 2;
 
+          // Launch tiles sit with a wider gap (START_INSET) than their resting grid
+          // gap (PAD), so the moment the widget is "cut" into bricks reads clearly.
           const srcRect = widgetRectsRef.current?.[widget.label];
           let startX = finalX, startY = finalY, startW = finalW, startH = finalH;
           if (srcRect && srcRect.width > 0 && srcRect.height > 0) {
-            startX = srcRect.left + (colInWidget / widget.colSpan) * srcRect.width  + PAD;
-            startY = srcRect.top  + (rowInWidget / widget.rowSpan) * srcRect.height + PAD;
-            startW = srcRect.width  / widget.colSpan - PAD * 2;
-            startH = srcRect.height / widget.rowSpan - PAD * 2;
+            startX = srcRect.left + (colInWidget / widget.colSpan) * srcRect.width  + START_INSET;
+            startY = srcRect.top  + (rowInWidget / widget.rowSpan) * srcRect.height + START_INSET;
+            startW = srcRect.width  / widget.colSpan - START_INSET * 2;
+            startH = srcRect.height / widget.rowSpan - START_INSET * 2;
           }
 
           bricks.push({
             x: finalX, y: finalY, w: finalW, h: finalH,
             startX, startY, startW, startH,
-            color: widget.color,
+            color: blueprint ? BLUEPRINT_BRICK : widget.color,
             label: (isCenterCol && isCenterRow) ? widget.label : null,
             widgetIdx,
             widgetLabel: widget.label,
@@ -125,13 +279,13 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
             snapRatioY: rowInWidget / widget.rowSpan,
             snapRatioW: 1 / widget.colSpan,
             snapRatioH: 1 / widget.rowSpan,
-            flyDelay: FLY_START + widgetIdx * FLY_STAGGER,
+            flyDelay: FADE_DUR + CUT_DUR + widgetIdx * FLY_STAGGER,
             alive: true,
           });
         }
       }
 
-      const speed = Math.max(W, H) * 0.003;
+      const speed = roundSpeed();
       ball.r  = Math.max(6, Math.min(10, W * 0.009));
       ball.x  = W / 2;
       ball.y  = H * 0.72;
@@ -144,21 +298,58 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       paddle.y = H * 0.88;
       mouseX   = W / 2;
 
-      // hasPlayedIntroRef persists across StrictMode remounts; once true, skip intro on re-runs.
-      const shouldAnimate = !hasPlayedIntroRef.current && !skipAnimation && !!widgetRectsRef.current;
-      if (shouldAnimate) hasPlayedIntroRef.current = true;
+      // Intro plays once per open, anchored to a persisted start time so a
+      // StrictMode remount resumes mid-animation rather than re-running or skipping it.
+      const canAnimate = !skipAnimation && !!widgetRectsRef.current;
+      if (canAnimate) {
+        if (introStartRef.current == null) introStartRef.current = Date.now();
+        animStart = introStartRef.current;
+      }
 
-      if (shouldAnimate) {
-        status    = 'animating';
-        animStart = Date.now();
+      if (canAnimate && Date.now() - animStart < ANIM_TOTAL) {
+        status = 'animating';
       } else {
         status    = 'playing';
         startTime = Date.now();
       }
     }
 
+    // ── nextRound ───────────────────────────────────────────────────────────────
+    // Clearing the board doesn't end the run: the bricks come back rebuilt into a
+    // fresh silhouette (diamond, heart, rings…) with the widget photos scrambled
+    // across the cells. Score carries over and the ball relaunches faster each round.
+    function nextRound() {
+      round += 1;
+      const shape = SHAPES[(round - 2) % SHAPES.length];
+      bricks = makeShapeBricks(shape);
+
+      const W = canvas.width;
+      const H = canvas.height;
+      const speed = roundSpeed();
+      ball.x  = W / 2;
+      ball.y  = H * 0.72;
+      ball.vx = speed * (Math.random() > 0.5 ? 0.8 : -0.8);
+      ball.vy = -speed;
+      paddle.x = W / 2 - paddle.w / 2;
+
+      banner = { text: `ROUND ${round}`, sub: shape.name, life: 90, maxLife: 90 };
+      status = 'playing';
+    }
+
     // ── update ────────────────────────────────────────────────────────────────
     function update() {
+      // Effects advance every frame, whatever the status.
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy;
+        p.vy += 0.12;          // gravity
+        p.vx *= 0.99;
+        p.life--;
+      }
+      if (particles.length) particles = particles.filter(p => p.life > 0);
+      for (const q of popups) { q.y += q.vy; q.life--; }
+      if (popups.length) popups = popups.filter(q => q.life > 0);
+      if (banner) { banner.life--; if (banner.life <= 0) banner = null; }
+
       if (status === 'animating') {
         if (Date.now() - animStart >= ANIM_TOTAL) {
           status    = 'playing';
@@ -192,13 +383,23 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
         ball.y  = paddle.y - ball.r;
       }
 
-      if (ball.y - ball.r > H) { status = 'lost'; return; }
+      if (ball.y - ball.r > H) {
+        status = 'lost';
+        overlayOpenRef.current = true;
+        setResult({ status: 'lost', score });
+        return;
+      }
 
       for (const b of bricks) {
         if (!b.alive) continue;
         if (ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w &&
             ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h) {
           b.alive = false;
+          score += 10;
+          const cx = b.x + b.w / 2;
+          const cy = b.y + b.h / 2;
+          spawnParticles(cx, cy, b.color, 12, 3.5);
+          spawnPopup(cx, cy, '+10');
           const overL = ball.x + ball.r - b.x;
           const overR = b.x + b.w - (ball.x - ball.r);
           const overT = ball.y + ball.r - b.y;
@@ -210,7 +411,8 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
         }
       }
 
-      if (bricks.every(b => !b.alive)) status = 'won';
+      // Board cleared → scramble the bricks back in and play on, faster, same score.
+      if (bricks.every(b => !b.alive)) nextRound();
     }
 
     // ── draw helpers ──────────────────────────────────────────────────────────
@@ -228,14 +430,14 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       const snapshot = snapshotsRef.current?.[b.widgetLabel];
 
       if (snapshot && snapshot.width > 0) {
+        // Draw the real widget imagery untinted, so the bricks read as the widget.
         const sx = b.snapRatioX * snapshot.width;
         const sy = b.snapRatioY * snapshot.height;
         const sw = b.snapRatioW * snapshot.width;
         const sh = b.snapRatioH * snapshot.height;
         ctx.drawImage(snapshot, sx, sy, sw, sh, dx, dy, dw, dh);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, 0.18)`;
-        ctx.fillRect(dx, dy, dw, dh);
       } else {
+        // No snapshot, so fall back to the widget's colour so the brick is still visible.
         ctx.fillStyle = `rgba(${r}, ${g}, ${bl}, 0.18)`;
         ctx.fillRect(dx, dy, dw, dh);
       }
@@ -254,10 +456,6 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       rrect(ctx, dx, dy, dw, dh, radius);
       ctx.stroke();
 
-      ctx.strokeStyle = `rgba(${r}, ${g}, ${bl}, 0.45)`;
-      ctx.lineWidth   = 0.75;
-      ctx.stroke();
-
       if (b.label && !snapshot) {
         const fs = Math.max(9, Math.min(14, dh * 0.45));
         ctx.fillStyle    = 'rgba(255,255,255,0.80)';
@@ -270,11 +468,65 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       ctx.globalAlpha = 1;
     }
 
+    function drawParticles() {
+      for (const p of particles) {
+        const { r, g, b: bl } = hexToRgb(p.color);
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle   = `rgb(${r}, ${g}, ${bl})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawPopups(W) {
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font         = `bold ${Math.min(16, W * 0.022)}px monospace`;
+      for (const q of popups) {
+        ctx.globalAlpha = Math.max(0, q.life / q.maxLife);
+        ctx.fillStyle   = '#fff';
+        ctx.fillText(q.text, q.x, q.y);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function drawScore(W) {
+      ctx.font         = `bold ${Math.min(18, W * 0.024)}px monospace`;
+      ctx.textBaseline = 'top';
+      ctx.fillStyle    = 'rgba(255,255,255,0.85)';
+      ctx.textAlign    = 'left';
+      ctx.fillText(`SCORE ${score}`, W * 0.04, W * 0.02);
+      ctx.textAlign    = 'right';
+      ctx.fillText(`ROUND ${round}`, W * 0.96, W * 0.02);
+    }
+
+    // Big centre flash announcing a freshly scrambled round; fades out over its life.
+    function drawBanner(W, H) {
+      if (!banner) return;
+      const t = banner.life / banner.maxLife;
+      ctx.globalAlpha  = Math.min(1, t * 2);   // hold, then fade in the final stretch
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle    = 'rgba(255,255,255,0.95)';
+      ctx.font         = `bold ${Math.min(40, W * 0.05)}px monospace`;
+      ctx.fillText(banner.text, W / 2, H * 0.32);
+      ctx.fillStyle    = 'rgba(255,255,255,0.6)';
+      ctx.font         = `bold ${Math.min(16, W * 0.02)}px monospace`;
+      ctx.fillText(banner.sub, W / 2, H * 0.32 + Math.min(34, W * 0.042));
+      ctx.globalAlpha  = 1;
+    }
+
     // ── draw ──────────────────────────────────────────────────────────────────
     function draw() {
       const W = canvas.width;
       const H = canvas.height;
       ctx.clearRect(0, 0, W, H);
+
+      // Round over: the React GameOverPanel owns the screen. Leave the canvas blank
+      // behind it, otherwise surviving bricks bleed through the overlay as filled squares.
+      if (status === 'lost' || status === 'won') return;
 
       const elapsed = Date.now() - animStart;
 
@@ -283,7 +535,7 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
           if (!b.alive) continue;
           const bElapsed = elapsed - b.flyDelay;
           if (bElapsed > 0) {
-            // Bricks accelerate into the grid — no slow settle at the end.
+            // Phase 2: fully-opaque bricks accelerate into the grid.
             const t = easeInCubic(Math.min(1, bElapsed / FLY_DUR));
             paintBrick(b,
               lerp(b.startX, b.x, t),
@@ -292,19 +544,35 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
               lerp(b.startH, b.h, t),
             );
           } else {
-            // Fade in at the widget's old position before flying.
-            const alpha = easeOutCubic(Math.min(1, elapsed / 380));
-            if (alpha > 0.01) paintBrick(b, b.startX, b.startY, b.startW, b.startH, alpha);
+            // Phase 1a (fade): the widget reassembles as a seamless whole, tiles
+            // edge-to-edge, reconstructing the real widget image.
+            // Phase 1b (cut): gaps open from zero to START_INSET, slicing it into
+            // the brick grid, then it holds there until this widget's flight begins.
+            const alpha = easeOutCubic(Math.min(1, elapsed / FADE_DUR));
+            const cut   = easeOutCubic(Math.min(1, Math.max(0, (elapsed - FADE_DUR) / CUT_DUR)));
+            if (alpha > 0.01) {
+              paintBrick(b,
+                lerp(b.startX - START_INSET,     b.startX, cut),
+                lerp(b.startY - START_INSET,     b.startY, cut),
+                lerp(b.startW + START_INSET * 2, b.startW, cut),
+                lerp(b.startH + START_INSET * 2, b.startH, cut),
+                alpha,
+              );
+            }
           }
         }
         return;
       }
 
-      // Playing / won / lost — draw bricks at final game positions.
+      // Playing / won / lost: draw bricks at final game positions.
       for (const b of bricks) {
         if (!b.alive) continue;
         paintBrick(b, b.x, b.y, b.w, b.h);
       }
+      drawParticles();
+      drawPopups(W);
+      drawScore(W);
+      drawBanner(W, H);
 
       if (status === 'playing') {
         ctx.fillStyle = 'rgba(255,255,255,0.92)';
@@ -324,19 +592,13 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
           ctx.font         = `${Math.min(13, W * 0.018)}px monospace`;
           ctx.textAlign    = 'center';
           ctx.textBaseline = 'bottom';
-          ctx.fillText('move your mouse to control the paddle', W / 2, paddle.y - 16);
+          const hint = isTouch ? 'move finger to play' : 'move mouse to play';
+          ctx.fillText(hint, W / 2, paddle.y - 16);
         }
       }
 
-      if (status === 'won' || status === 'lost') {
-        ctx.fillStyle = 'rgba(0,0,0,0.52)';
-        ctx.fillRect(0, 0, W, H);
-        ctx.fillStyle    = 'rgba(255,255,255,0.65)';
-        ctx.font         = `${Math.min(18, W * 0.025)}px monospace`;
-        ctx.textAlign    = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('press R or click to replay  ·  ESC to close', W / 2, H / 2);
-      }
+      // The won/lost screen (score, global leaderboard, initials entry) is a React
+      // overlay rendered below (see GameOverPanel), so nothing is drawn here.
     }
 
     function loop() { update(); draw(); animId = requestAnimationFrame(loop); }
@@ -347,12 +609,18 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
       e.preventDefault();
       mouseX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
     };
+    initGameRef.current = initGame;
+
     const onKey = e => {
       if (e.key === 'Escape') onCloseRef.current();
-      if ((e.key === 'r' || e.key === 'R') && status !== 'animating') initGame(true);
+      // While the game-over overlay is up, Replay lives on a real button so 'r'
+      // doesn't fire mid-keystroke when someone is typing their initials.
+      if ((e.key === 'r' || e.key === 'R') && status !== 'animating' && !overlayOpenRef.current) {
+        initGame(true);
+      }
     };
     const onClick = () => {
-      if (status !== 'playing' && status !== 'animating') initGame(true);
+      if (status !== 'playing' && status !== 'animating' && !overlayOpenRef.current) initGame(true);
     };
     const onResize = () => {
       canvas.width  = canvas.offsetWidth  || window.innerWidth;
@@ -383,16 +651,22 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
   }, []); // game loop is self-contained; all props accessed via refs
 
   // ── render ────────────────────────────────────────────────────────────────
+  // In engineering mode, drop the sunset photo for a flat blueprint-blue field.
+  const blueprint = isBlueprint();
   return (
     <>
       <div
         className="fixed inset-0 z-[49] pointer-events-none"
-        style={{
-          backgroundColor: '#111',
-          backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/sunset.jpg')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
+        style={
+          blueprint
+            ? { backgroundColor: BLUEPRINT_FIELD }
+            : {
+                backgroundColor: '#111',
+                backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/sunset.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }
+        }
       />
       <div className="fixed inset-0 z-50">
         <button
@@ -407,7 +681,204 @@ export default function BreakoutGame({ onClose, widgetRects, widgetSnapshots }) 
           className="w-full h-full block"
           style={{ background: 'transparent', cursor: 'none' }}
         />
+        {result && (
+          <GameOverPanel
+            result={result}
+            blueprint={blueprint}
+            onReplay={() => initGameRef.current?.(true)}
+            onClose={onClose}
+          />
+        )}
       </div>
     </>
+  );
+}
+
+// ── game-over overlay ─────────────────────────────────────────────────────────
+// Shown when a round ends: final score, the global top-5, and, when the score is
+// good enough and the backend is live, a "claim your spot" form (name, company,
+// optional email) aimed at recruiters competing for the board. Location is stamped
+// server-side from edge geo headers. All network calls degrade silently (see
+// ../lib/leaderboard), so with no backend the panel just shows score + Replay/Close.
+function GameOverPanel({ result, blueprint, onReplay, onClose }) {
+  const { status, score } = result;
+  const [scores, setScores]     = useState([]);
+  const [configured, setConfig] = useState(false);
+  const [loading, setLoading]   = useState(true);
+  const [form, setForm]         = useState({ name: '', company: '', email: '' });
+  const [phase, setPhase]       = useState('idle'); // 'idle' | 'submitting' | 'submitted'
+  const [outcome, setOutcome]   = useState(null);   // mode frozen at submit ('board' | 'contact')
+  const inputRef = useRef(null);
+
+  // 'board':   score cracks the visible top-5, offer to claim a spot.
+  // 'contact': it didn't, but they played, so still invite them to leave contact info.
+  // Either way the goal is a recruiter's details; only the framing/required field differ.
+  const madeBoard = score > 0 &&
+    (scores.length < BOARD_SIZE || score > scores[scores.length - 1].score);
+  const mode = madeBoard ? 'board' : 'contact';
+  const showForm = configured && score > 0 && phase !== 'submitted';
+  // Board mode needs a name (it's displayed); contact mode needs a real email (the
+  // whole point is reaching them).
+  const canSubmit = mode === 'board'
+    ? !!form.name.trim()
+    : EMAIL_RE.test(form.email.trim());
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetchLeaderboard(GAME_ID).then(({ scores: s, configured: c }) => {
+      if (cancelled) return;
+      setScores(s);
+      setConfig(c);
+      setLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => { if (showForm) inputRef.current?.focus(); }, [showForm]);
+
+  const setField = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  async function handleSubmit(e) {
+    e?.preventDefault();
+    if (phase === 'submitting' || !canSubmit) return;
+    setPhase('submitting');
+    setOutcome(mode); // freeze: the board refresh below can flip `mode` afterwards
+    if (mode === 'board') {
+      const updated = await submitScore(GAME_ID, score, form);
+      // If they left an email, route it to the contact inbox like a normal message.
+      if (form.email.trim()) {
+        notifyLeaderboardEntry({ ...form, score, madeBoard: true });
+      }
+      setScores(updated ?? (await fetchLeaderboard(GAME_ID)).scores);
+    } else {
+      // Didn't make the board, so no leaderboard entry, just send their details on.
+      await notifyLeaderboardEntry({ ...form, score, madeBoard: false });
+    }
+    setPhase('submitted');
+  }
+
+  const accent  = blueprint ? 'text-sky-300' : 'text-amber-300';
+  const panelBg = blueprint ? 'bg-[#0b2e63]/85 border-sky-300/30' : 'bg-black/65 border-white/15';
+  const field   = 'w-full rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-sm outline-none placeholder:text-white/35 focus:border-white/60';
+  const submittedName = form.name.trim() || 'Anonymous';
+
+  return (
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/55 backdrop-blur-sm font-mono text-white">
+      <div className={`max-h-[92vh] w-[min(94vw,440px)] overflow-y-auto rounded-2xl border ${panelBg} px-7 py-6 shadow-2xl`}>
+        <div className="text-center">
+          <div className={`text-sm tracking-[0.3em] ${accent}`}>
+            {status === 'won' ? 'CLEARED' : 'GAME OVER'}
+          </div>
+          <div className="mt-1 text-4xl font-bold">{score}</div>
+        </div>
+
+        {showForm && (
+          <form onSubmit={handleSubmit} className="mt-5 space-y-2">
+            <div className="text-center text-xs text-white/60">
+              {mode === 'board'
+                ? `Top ${BOARD_SIZE} score! Claim your spot`
+                : `Didn't crack the top ${BOARD_SIZE}. Recruiting or want to connect? Leave your details and it comes straight to me.`}
+            </div>
+            <input
+              ref={inputRef}
+              value={form.name}
+              onChange={setField('name')}
+              maxLength={24}
+              placeholder={mode === 'board' ? 'Name' : 'Name (optional)'}
+              className={field}
+            />
+            <input
+              value={form.company}
+              onChange={setField('company')}
+              maxLength={40}
+              placeholder="Company"
+              className={field}
+            />
+            <input
+              value={form.email}
+              onChange={setField('email')}
+              type="email"
+              maxLength={120}
+              placeholder={mode === 'board' ? 'Email (optional, private)' : 'Email (private)'}
+              className={field}
+            />
+            <button
+              type="submit"
+              disabled={!canSubmit || phase === 'submitting'}
+              className={`w-full rounded-lg border border-current py-1.5 text-sm font-bold ${accent} disabled:opacity-40`}
+            >
+              {phase === 'submitting'
+                ? 'Sending…'
+                : mode === 'board' ? 'Save my score' : 'Get in touch'}
+            </button>
+            <p className="text-center text-[10px] leading-tight text-white/35">
+              {mode === 'board'
+                ? 'Location is added from your region. Email is never shown publicly.'
+                : 'Goes to my inbox like a contact message. Email is never shown publicly.'}
+            </p>
+          </form>
+        )}
+
+        {phase === 'submitted' && (
+          <div className="mt-5 text-center text-sm text-white/70">
+            {outcome === 'board' ? 'Saved to the board 🎉' : "Thanks! I'll be in touch 🙌"}
+          </div>
+        )}
+
+        <div className="mt-5">
+          <div className="mb-2 text-center text-xs tracking-[0.25em] text-white/40">
+            GLOBAL TOP {BOARD_SIZE}
+          </div>
+          {loading ? (
+            <div className="py-4 text-center text-sm text-white/40">loading…</div>
+          ) : scores.length === 0 ? (
+            <div className="py-4 text-center text-sm text-white/40">
+              {configured ? 'be the first to make the board' : 'leaderboard offline'}
+            </div>
+          ) : (
+            <ol className="space-y-1 text-sm">
+              {scores.map((row, i) => {
+                const mine = phase === 'submitted' && row.score === score && row.name === submittedName;
+                const place = locationLabel(row);
+                return (
+                  <li
+                    key={i}
+                    className={`flex items-baseline gap-2 rounded px-2 py-1 ${mine ? 'bg-white/15' : ''}`}
+                  >
+                    <span className="w-4 shrink-0 text-white/40">{i + 1}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block truncate ${mine ? 'font-bold' : ''}`}>
+                        {row.name}
+                        {row.company && <span className="text-white/50"> · {row.company}</span>}
+                      </span>
+                      {place && <span className="block truncate text-[11px] text-white/40">{place}</span>}
+                    </span>
+                    <span className={`shrink-0 tabular-nums ${mine ? `font-bold ${accent}` : ''}`}>
+                      {row.score}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            onClick={onReplay}
+            className="rounded-lg border border-white/25 px-5 py-1.5 text-sm font-bold hover:bg-white/10"
+          >
+            Replay
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded-lg px-5 py-1.5 text-sm text-white/60 hover:text-white"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

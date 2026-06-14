@@ -1,4 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { fetchHighScore, submitHighScore } from '../lib/leaderboard';
+
+const GAME_ID = 'dino';
+
+// Engineering / blueprint mode (Konami code, see BlueprintMode.jsx) re-skins the
+// whole site as a cyan-on-navy technical drawing. When it's on we swap the runner's
+// field, ground, dino and cacti onto that same blueprint palette so it reads as part
+// of the drawing rather than the stock white runner — mirroring the other games.
+const isBlueprint = () => document.documentElement.classList.contains('blueprint-mode');
+const BP_FIELD = '#0b2e63';
+const BP_INK   = '#7dd3fc';
 
 const GND_OFFSET = 30;
 const DINO_X = 32;
@@ -10,13 +21,30 @@ const JUMP_VEL = -10.5;
 const INIT_SPEED = 3.0;
 
 function drawFrame(ctx, s, W, H, groundY) {
-  const night = s.score > 200 && Math.floor(s.score / 200) % 2 === 1;
-  const bg = night ? '#1a1a2e' : '#fafaf7';
-  const fg = night ? '#eee' : '#555';
-  const dim = night ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+  const blueprint = isBlueprint();
+  // Engineering mode wins over the day/night cycle: flat navy field, cyan ink.
+  const night = !blueprint && s.score > 200 && Math.floor(s.score / 200) % 2 === 1;
+  const bg = blueprint ? BP_FIELD : night ? '#1a1a2e' : '#fafaf7';
+  const fg = blueprint ? BP_INK  : night ? '#eee'     : '#555';
+  const dim = blueprint ? 'rgba(125,211,252,0.12)' : night ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
 
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
+
+  // Drafting-paper grid — only in blueprint, scrolling left with the run so it
+  // reads as motion over the page rather than a static backdrop.
+  if (blueprint) {
+    const GRID = 28;
+    const gOff = (s.frame * 0.6) % GRID;
+    ctx.strokeStyle = 'rgba(125,211,252,0.13)';
+    ctx.lineWidth = 1;
+    for (let gx = -gOff; gx <= W; gx += GRID) {
+      ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+    }
+    for (let gy = 0; gy <= H; gy += GRID) {
+      ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+    }
+  }
 
   // clouds
   ctx.fillStyle = dim;
@@ -33,7 +61,7 @@ function drawFrame(ctx, s, W, H, groundY) {
   }
 
   // ground line
-  ctx.strokeStyle = night ? '#555' : '#ccc';
+  ctx.strokeStyle = blueprint ? 'rgba(125,211,252,0.5)' : night ? '#555' : '#ccc';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, groundY);
@@ -48,7 +76,7 @@ function drawFrame(ctx, s, W, H, groundY) {
   // eye
   ctx.fillStyle = bg;
   ctx.fillRect(DINO_X + DINO_W + 1, s.dinoY + 2, 3, 3);
-  ctx.fillStyle = '#333';
+  ctx.fillStyle = blueprint ? BP_INK : '#333';
   ctx.fillRect(DINO_X + DINO_W + 2, s.dinoY + 3, 2, 2);
   // tail
   ctx.fillStyle = fg;
@@ -64,7 +92,7 @@ function drawFrame(ctx, s, W, H, groundY) {
   }
 
   // cacti
-  ctx.fillStyle = night ? '#5aaa6a' : '#4a7c35';
+  ctx.fillStyle = blueprint ? BP_INK : night ? '#5aaa6a' : '#4a7c35';
   for (const c of s.cacti) {
     const mid = c.x + Math.floor((CAC_W - 4) / 2);
     // trunk
@@ -78,11 +106,16 @@ function drawFrame(ctx, s, W, H, groundY) {
     ctx.fillRect(c.x + CAC_W - 3, groundY - Math.round(c.h * 0.5) - 6, 3, 6);
   }
 
-  // score
-  ctx.fillStyle = night ? 'rgba(255,255,255,0.3)' : '#bbb';
+  // score — with the global record shown as "HI <best>", like the real runner.
   ctx.font = 'bold 11px monospace';
   ctx.textAlign = 'right';
+  if (s.globalBest > 0) {
+    ctx.fillStyle = blueprint ? 'rgba(125,211,252,0.45)' : night ? 'rgba(255,255,255,0.22)' : '#cfcfcf';
+    ctx.fillText(`HI ${String(s.globalBest).padStart(5, '0')}`, W - 70, 15);
+  }
+  ctx.fillStyle = blueprint ? 'rgba(125,211,252,0.7)' : night ? 'rgba(255,255,255,0.3)' : '#bbb';
   ctx.fillText(String(s.score).padStart(5, '0'), W - 8, 15);
+  ctx.textAlign = 'left'; // restore default
 }
 
 function makeState(W, H, groundY) {
@@ -98,6 +131,7 @@ function makeState(W, H, groundY) {
     speed: INIT_SPEED,
     frame: 0,
     score: 0,
+    globalBest: 0, // synced from the ref each frame so drawFrame can show "HI <best>"
     nextCactus: 110 + Math.random() * 60,
     dead: false,
   };
@@ -109,6 +143,20 @@ export default function DinoGame({ height = 220, onExit }) {
   const [dead, setDead]           = useState(false);
   const [finalScore, setFinalScore] = useState(0);
   const [runKey, setRunKey]       = useState(0);
+  // Global record to beat, shown as "HI <best>". Held in refs so the rAF loop can
+  // read/update them without restarting; mirrored to state for the game-over panel.
+  const [globalBest, setGlobalBest] = useState(0);
+  const globalBestRef = useRef(0);
+  const configuredRef = useRef(false);
+
+  // Pull the global record once on mount (degrades to 0 / hidden with no backend).
+  useEffect(() => {
+    fetchHighScore(GAME_ID).then(({ high, configured }) => {
+      configuredRef.current = configured;
+      globalBestRef.current = high;
+      setGlobalBest(high);
+    });
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -135,6 +183,7 @@ export default function DinoGame({ height = 220, onExit }) {
       s.frame++;
       s.speed = Math.min(INIT_SPEED + s.frame * 0.0022, 9);
       s.score = Math.floor(s.frame / 6);
+      s.globalBest = globalBestRef.current;
 
       // physics
       s.dinoVY += GRAVITY;
@@ -173,6 +222,12 @@ export default function DinoGame({ height = 220, onExit }) {
           s.dead = true;
           setDead(true);
           setFinalScore(s.score);
+          // Beat the world record? Push it (anonymously) and update the corner.
+          if (configuredRef.current && s.score > globalBestRef.current) {
+            submitHighScore(GAME_ID, s.score).then(high => {
+              if (high != null) { globalBestRef.current = high; setGlobalBest(high); }
+            });
+          }
           drawFrame(ctx, s, W, H, groundY);
           return;
         }
@@ -197,6 +252,15 @@ export default function DinoGame({ height = 220, onExit }) {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  // Match the game-over panel to the canvas: navy + cyan in engineering mode.
+  const blueprint = isBlueprint();
+  const panel = blueprint
+    ? { box: 'bg-[#0b2e63]/85 border-sky-300/30', label: 'text-sky-300/70', score: 'text-sky-100',
+        rec: 'text-sky-300/70', btn: 'border-sky-300/40 text-sky-100 hover:bg-sky-300/10', btnDim: 'text-sky-300/50' }
+    : { box: 'bg-white/90 border-gray-200', label: 'text-gray-400', score: 'text-gray-800',
+        rec: 'text-gray-400', btn: 'border-gray-300 text-gray-700 hover:bg-gray-50', btnDim: 'text-gray-400' };
+  const beatRecord = globalBest > 0 && finalScore >= globalBest;
+
   return (
     <div className="relative select-none" style={{ height }}>
       <canvas
@@ -208,18 +272,24 @@ export default function DinoGame({ height = 220, onExit }) {
       />
       {dead && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-white/90 backdrop-blur-sm rounded-lg px-5 py-4 text-center border border-gray-200 shadow-sm">
-            <p className="font-mono text-[10px] text-gray-400 mb-0.5 uppercase tracking-widest">Game Over</p>
-            <p className="font-mono text-xl font-bold text-gray-800 mb-3">{String(finalScore).padStart(5, '0')}</p>
+          <div className={`${panel.box} backdrop-blur-sm rounded-lg px-5 py-4 text-center border shadow-sm`}>
+            <p className={`font-mono text-[10px] ${panel.label} mb-0.5 uppercase tracking-widest`}>Game Over</p>
+            <p className={`font-mono text-xl font-bold ${panel.score} mb-1`}>{String(finalScore).padStart(5, '0')}</p>
+            {globalBest > 0 && (
+              <p className={`font-mono text-[10px] ${panel.rec} mb-3 uppercase tracking-widest`}>
+                {beatRecord ? '★ World record!' : `HI ${String(globalBest).padStart(5, '0')}`}
+              </p>
+            )}
+            {globalBest <= 0 && <div className="mb-3" />}
             <div className="flex gap-2 justify-center">
               <button
-                className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+                className={`px-3 py-1 text-[10px] font-mono uppercase tracking-wider border rounded transition-colors ${panel.btn}`}
                 onClick={() => { setDead(false); setRunKey(k => k + 1); }}
               >
                 Restart
               </button>
               <button
-                className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider border border-gray-300 rounded hover:bg-gray-50 transition-colors text-gray-400"
+                className={`px-3 py-1 text-[10px] font-mono uppercase tracking-wider border rounded transition-colors ${panel.btn} ${panel.btnDim}`}
                 onClick={onExit}
               >
                 Exit

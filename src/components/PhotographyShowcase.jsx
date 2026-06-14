@@ -7,7 +7,7 @@ const MAX_H = 420;
 const MIN_H = 180;
 const MIN_TWO_ROW_H = 140;
 const DEFAULT_W = 520;
-const ROTATE_MS = 6000;
+const ROTATE_MS = 4500;
 const PRELOAD_CAP_MS = 3000; // never block a swap longer than this on a slow file
 
 // ─── IMAGE PRELOAD CACHE ──────────────────────────────────────────────────────

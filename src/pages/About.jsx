@@ -14,6 +14,7 @@ import ProjectPortfolio from "../components/ProjectPortfolio";
 import RecentReads from "../components/RecentReads";
 import Skills from "../components/Skills";
 import InterestsCarousel from "../components/InterestsCarousel";
+import { T } from "../i18n";
 // Using public directory paths directly for Vite
 const profile = "/images/profile.jpg";
 const Delft = "/images/tu-delft-logo-black.png"
@@ -70,7 +71,6 @@ export default function About() {
   const [showLessChipVisible, setShowLessChipVisible] = useState(false);
   const [interestsOpen, setInterestsOpen] = useState(false);
   const [breakoutActive, setBreakoutActive] = useState(false);
-  const [widgetsHiding, setWidgetsHiding] = useState(false);
   const [widgetRects, setWidgetRects] = useState(null);
   const [widgetSnapshots, setWidgetSnapshots] = useState(null);
   // Fix: Issue #51 / F-10 — animation controls avoid remounting the photo on each shake
@@ -105,10 +105,9 @@ export default function About() {
         Reads:    readsRef.current?.getBoundingClientRect(),
       });
       setWidgetSnapshots(null);
-      // Fade the widgets out immediately for instant feedback. This only changes
-      // ancestor opacity, not layout, so html2canvas still captures full-size
-      // widgets below — and the game overlay covers them once it mounts.
-      setWidgetsHiding(true);
+      // Widgets stay fully visible until the game overlay covers them, so the
+      // handoff into the game reads as a clean swap (and html2canvas captures the
+      // widgets at full opacity rather than mid-fade).
 
       const TARGETS = [
         ['Profile',  profileCardRef],
@@ -128,7 +127,6 @@ export default function About() {
       const beginGame = () => {
         if (started) return;
         started = true;
-        setWidgetsHiding(false);
         setBreakoutActive(true);
       };
       const fallback = setTimeout(beginGame, 600);
@@ -457,8 +455,7 @@ export default function About() {
           {/* Hero Dashboard - Redesigned */}
           <div className={`w-full flex-1 min-h-0 flex items-center justify-center ${isLandscapeMobile ? 'px-2 py-1' : 'px-4 md:px-8 pt-0 md:pt-1 pb-4 md:pb-6'}`}>
             <div
-              className={`w-full transition-opacity duration-300 ${isLandscapeMobile ? 'grid grid-cols-2 min-h-0 gap-2' : 'max-w-7xl w-full min-h-0 grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:auto-rows-fr md:min-h-[75vh] gap-2 md:gap-3'}`}
-              style={{ opacity: widgetsHiding ? 0 : 1 }}
+              className={`w-full ${isLandscapeMobile ? 'grid grid-cols-2 min-h-0 gap-2' : 'max-w-7xl w-full min-h-0 grid grid-cols-1 md:grid-cols-12 grid-rows-auto md:auto-rows-fr md:min-h-[75vh] gap-2 md:gap-3'}`}
             >
               
               {/* Profile Card - Left side spanning 4 columns, 6 rows */}
@@ -479,8 +476,8 @@ export default function About() {
                       <h1 className="text-xs font-bold text-white leading-none">Michael Rubin</h1>
                       <p className="text-white/80 text-[10px] leading-tight">Mechanical/Controls Engineer @ MPC lab</p>
                       <div className="flex items-center gap-1">
-                        <img src={berkeley} alt="UC Berkeley" className="h-5 w-auto opacity-80" />
-                        <img src={Delft} alt="TU Delft" className="h-5 w-auto opacity-80" />
+                        <span role="img" aria-label="UC Berkeley" data-html2canvas-ignore="true" className="inline-block h-5 opacity-40" style={{ backgroundColor: '#FDB515', aspectRatio: '735 / 260', WebkitMaskImage: `url(${berkeley})`, maskImage: `url(${berkeley})`, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }} />
+                        <span role="img" aria-label="TU Delft" data-html2canvas-ignore="true" className="inline-block h-5 opacity-40" style={{ backgroundColor: '#00A6D6', aspectRatio: '400 / 120', WebkitMaskImage: `url(${Delft})`, maskImage: `url(${Delft})`, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }} />
                       </div>
                       <div className="flex gap-1 flex-wrap">
                         <a href="https://github.com/micrub03-maker" target="_blank" rel="noreferrer" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all border border-white/20">
@@ -525,8 +522,8 @@ export default function About() {
                     <h1 className="text-sm md:text-2xl font-bold text-white mb-1">Michael Rubin</h1>
                     <p className="text-white/80 text-xs md:text-base mb-1">Mechanical/Controls Engineer @ MPC lab </p>
                     <div className="flex items-center gap-2 mb-1">
-                      <img src={berkeley} alt="UC Berkeley" className="h-8 md:h-14 w-auto opacity-80" />
-                      <img src={Delft} alt="TU Delft" className="h-8 md:h-14 w-auto opacity-80" />
+                      <span role="img" aria-label="UC Berkeley" data-html2canvas-ignore="true" className="inline-block h-8 md:h-14 opacity-40" style={{ backgroundColor: '#FDB515', aspectRatio: '735 / 260', WebkitMaskImage: `url(${berkeley})`, maskImage: `url(${berkeley})`, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }} />
+                      <span role="img" aria-label="TU Delft" data-html2canvas-ignore="true" className="inline-block h-8 md:h-14 opacity-40" style={{ backgroundColor: '#00A6D6', aspectRatio: '400 / 120', WebkitMaskImage: `url(${Delft})`, maskImage: `url(${Delft})`, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }} />
                     </div>
                     <p className="text-white/70 text-xs md:text-sm mt-1 mb-1 md:mb-4 leading-relaxed">
                       From Antwerp, Belgium
@@ -629,7 +626,7 @@ export default function About() {
             onClick={handleResumeToggle}
             className="w-full flex items-center justify-center gap-3 mb-8 group"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors">resume overview</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors"><T>resume overview</T></h2>
             <motion.span
               animate={{ rotate: resumeOpen ? 180 : 0 }}
               transition={{ duration: 0.2 }}
@@ -662,7 +659,7 @@ export default function About() {
             onClick={() => setInterestsOpen((o) => !o)}
             className="w-full flex items-center justify-center gap-3 mb-8 group"
           >
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors">interests</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-400 group-hover:text-gray-300 transition-colors"><T>interests</T></h2>
             <motion.span
               animate={{ rotate: interestsOpen ? 180 : 0 }}
               transition={{ duration: 0.2 }}
@@ -681,7 +678,7 @@ export default function About() {
                 transition={{ duration: 0.35, ease: "easeInOut" }}
                 style={{ overflow: "hidden" }}
               >
-                <InterestsCarousel jumpToTravel={travelJump} onRequestOpen={() => setInterestsOpen(true)} />
+                <InterestsCarousel jumpToTravel={travelJump} />
               </motion.div>
             )}
           </AnimatePresence>
@@ -770,7 +767,7 @@ export default function About() {
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-gray-600">First Name</label>
+                    <label className="text-xs font-medium text-gray-600">Name</label>
                     <input
                       type="text"
                       name="firstName"

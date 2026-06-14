@@ -98,3 +98,117 @@ html, body {
 .best-pop {
     animation: bestPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* ───────────────────────── Engineering / blueprint mode ─────────────────────────
+   Toggled by the Konami code (see BlueprintMode.jsx, which adds `blueprint-mode`
+   to <html>). Re-skins the whole site as an engineering drawing: blueprint-blue
+   field, graph-paper grid, line-drawing cards, monospace ink, and cyan duotone
+   imagery. Everything is scoped under html.blueprint-mode and reverts cleanly. */
+
+@keyframes bpFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+html.blueprint-mode,
+html.blueprint-mode body {
+    background-color: #0b2e63 !important;
+    transition: background-color 0.5s ease;
+}
+
+/* The full-screen background lives on <main>; flatten its gradient/fill */
+html.blueprint-mode main {
+    background-color: #0b2e63 !important;
+    background-image: none !important;
+    font-family: ui-monospace, "Courier New", monospace !important;
+}
+
+/* The hero (#home) paints the sunset via an inline background-image; an
+   !important rule still beats an inline style without one, so swap it out. */
+html.blueprint-mode #home {
+    background-color: #0b2e63 !important;
+    background-image: none !important;
+}
+
+/* Graph-paper grid drawn over the page (major + minor lines, vellum overlay) */
+html.blueprint-mode body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9990;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(147, 197, 253, 0.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(147, 197, 253, 0.10) 1px, transparent 1px),
+        linear-gradient(rgba(147, 197, 253, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(147, 197, 253, 0.05) 1px, transparent 1px);
+    background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+    animation: bpFadeIn 0.5s ease both;
+}
+
+/* Frosted-glass cards → blueprint line drawings */
+html.blueprint-mode .bg-white\/70,
+html.blueprint-mode .bg-white\/60,
+html.blueprint-mode .bg-white\/40,
+html.blueprint-mode .bg-white\/30 {
+    background-color: rgba(13, 59, 130, 0.20) !important;
+    border: 1px solid rgba(147, 197, 253, 0.55) !important;
+    box-shadow: inset 0 0 24px rgba(147, 197, 253, 0.06),
+                0 0 0 1px rgba(147, 197, 253, 0.12) !important;
+}
+
+/* Ink: collapse the gray text ramp onto a single blueprint cyan-white */
+html.blueprint-mode .text-gray-900,
+html.blueprint-mode .text-gray-800,
+html.blueprint-mode .text-gray-700,
+html.blueprint-mode .text-gray-600,
+html.blueprint-mode .text-gray-500,
+html.blueprint-mode .text-gray-400 {
+    color: #dbeafe !important;
+}
+
+/* Imagery → clean monochrome on the blueprint field, no colour tint. */
+html.blueprint-mode img,
+html.blueprint-mode video {
+    filter: grayscale(1) brightness(0.95) contrast(1.05);
+    opacity: 0.94;
+}
+
+/* Visited countries on the travel maps go from green to blueprint cyan.
+   jsvectormap sets the region colour as a `fill` presentation attribute, which
+   author CSS overrides; the hover green is recoloured too. Covers both the
+   TravelMap and the LifeStory map. */
+html.blueprint-mode path[fill="#558071"] {
+    fill: #7dd3fc !important;
+}
+html.blueprint-mode path[fill="#78ab9a"] {
+    fill: #bae6fd !important;
+}
+
+/* AssemblyGuide is a light "document window"; darken its surfaces so it joins
+   the blueprint instead of glowing white (its gray text is already recoloured
+   to blueprint ink by the rules above). Scoped to the widget so other gray
+   surfaces are left alone. */
+html.blueprint-mode .assembly-guide {
+    background-color: rgba(13, 59, 130, 0.20) !important;
+    border-color: rgba(147, 197, 253, 0.45) !important;
+}
+html.blueprint-mode .assembly-guide .bg-white\/80 {
+    background-color: rgba(8, 30, 68, 0.6) !important;
+}
+html.blueprint-mode .assembly-guide .bg-white {
+    background-color: rgba(8, 30, 68, 0.92) !important;
+}
+html.blueprint-mode .assembly-guide .bg-gray-100 {
+    background-color: rgba(147, 197, 253, 0.10) !important;
+}
+html.blueprint-mode .assembly-guide .bg-gray-200 {
+    background-color: rgba(147, 197, 253, 0.18) !important;
+}
+html.blueprint-mode .assembly-guide .border-gray-200,
+html.blueprint-mode .assembly-guide .border-gray-300 {
+    border-color: rgba(147, 197, 253, 0.4) !important;
+}
+html.blueprint-mode .assembly-guide hr {
+    border-color: rgba(147, 197, 253, 0.25) !important;
+}

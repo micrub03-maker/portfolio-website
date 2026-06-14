@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MediaSlot } from "./MediaSlot";
+import DoodleJump from './DoodleJump';
+import { T } from '../i18n';
 
 const mainEntries = [
   {
@@ -97,6 +99,8 @@ const moreEntries = [
     logoHeight: 'h-[95px]',
     logoFit: 'object-cover',
     logoPadding: 'py-[2.5px]',
+    // Hidden easter egg — clicking the DROP logo opens the skate DoodleJump game.
+    easterEgg: true,
     role: 'External Relations Manager – Skate Committee (DROP Delft) · Sept 2021 – June 2022',
     bullets: [
       'Built partnerships with local shops and brands while organizing weekly training sessions and events',
@@ -132,7 +136,7 @@ const moreEntries = [
   },
 ];
 
-function ExperienceCard({ entry, index = 0 }) {
+function ExperienceCard({ entry, index = 0, onEasterEgg }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -141,7 +145,10 @@ function ExperienceCard({ entry, index = 0 }) {
       className={`flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl hover:shadow-2xl transition-shadow ${entry.compactCard ? 'py-2 px-4 md:py-3 md:px-6' : 'p-4 md:p-6'}`}
     >
       {/* Logo */}
-      <div className="w-44 flex-shrink-0 flex flex-row gap-1 mx-auto sm:mx-0">
+      <div
+        className={`w-44 flex-shrink-0 flex flex-row gap-1 mx-auto sm:mx-0${entry.easterEgg ? ' cursor-pointer' : ''}`}
+        onClick={entry.easterEgg ? onEasterEgg : undefined}
+      >
         {entry.logoSrcs
           ? entry.logoSrcs.map((logo) => (
               <div key={logo.label} className={`flex-1 min-w-0 flex flex-col overflow-hidden ${entry.logoSrcsHeight ?? 'h-[100px]'}`}>
@@ -179,6 +186,7 @@ function ExperienceCard({ entry, index = 0 }) {
 export default function Experience({ onShowLessChipChange }) {
   const [showMore, setShowMore] = useState(false);
   const [toggleVisible, setToggleVisible] = useState(true);
+  const [showGame, setShowGame] = useState(false);
   const toggleRef = useRef(null);
 
   // Report when our sticky "show less" chip is actually on screen (dropdown open
@@ -208,7 +216,7 @@ export default function Experience({ onShowLessChipChange }) {
   return (
     /* Fix: Issue #17 — collapsing happens only via the toggle button and sticky chip */
     <div>
-      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide">Experience</h3>
+      <h3 className="text-center mb-4 text-lg font-semibold text-gray-400 uppercase tracking-wide"><T>Experience</T></h3>
 
       <div className="flex flex-col gap-4">
         {mainEntries.map((entry, i) => (
@@ -247,7 +255,7 @@ export default function Experience({ onShowLessChipChange }) {
             >
               <div className="flex flex-col gap-4">
                 {moreEntries.map((entry, i) => (
-                  <ExperienceCard key={entry.key} entry={entry} index={i} />
+                  <ExperienceCard key={entry.key} entry={entry} index={i} onEasterEgg={() => setShowGame(true)} />
                 ))}
               </div>
             </motion.div>
@@ -277,6 +285,8 @@ export default function Experience({ onShowLessChipChange }) {
           </motion.button>
         )}
       </AnimatePresence>
+
+      {showGame && <DoodleJump onClose={() => setShowGame(false)} />}
     </div>
   );
 }

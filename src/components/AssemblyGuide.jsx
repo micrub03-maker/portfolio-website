@@ -124,7 +124,7 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      className="rounded-xl border border-gray-200 bg-gray-50 overflow-hidden my-3 flex flex-col"
+      className="assembly-guide rounded-xl border border-gray-200 bg-gray-50 overflow-hidden my-3 flex flex-col"
       style={{ height: containerHeight, transition: outerReady ? 'height 0.35s ease' : 'none', clipPath: 'inset(0 round 0.75rem)' }}
       onClick={e => e.stopPropagation()}
     >
