@@ -69,3 +69,32 @@ html, body {
     background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
     animation: widgetGradientFlow 10s ease-in-out infinite reverse;
 }
+
+/* DoodleJump overlay micro-interactions */
+@keyframes ctaGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+    50%      { box-shadow: 0 0 14px 2px rgba(59, 130, 246, 0.55); }
+}
+.cta-glow {
+    animation: ctaGlow 2.2s ease-in-out infinite;
+}
+
+@keyframes nudgeLeft {
+    0%, 100% { transform: translateX(0); }
+    50%      { transform: translateX(-3px); }
+}
+@keyframes nudgeRight {
+    0%, 100% { transform: translateX(0); }
+    50%      { transform: translateX(3px); }
+}
+.nudge-left  { animation: nudgeLeft 1.2s ease-in-out infinite; }
+.nudge-right { animation: nudgeRight 1.2s ease-in-out infinite; }
+
+@keyframes bestPop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    60%  { transform: scale(1.12); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.best-pop {
+    animation: bestPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}

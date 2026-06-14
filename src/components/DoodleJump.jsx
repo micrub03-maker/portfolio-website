@@ -16,6 +16,16 @@ const TARGET_PLATS = 12;
 
 const PLAT_TYPES = ['rail', 'ledge', 'kicker'];
 
+// Decorative twinkling stars for the overlay sky (near the purple top)
+const STARS = [
+  { left: '14%', top: '10%', s: 3, d: '0s' },
+  { left: '32%', top: '18%', s: 2, d: '0.4s' },
+  { left: '68%', top: '8%',  s: 3, d: '0.8s' },
+  { left: '82%', top: '20%', s: 2, d: '0.2s' },
+  { left: '50%', top: '6%',  s: 2, d: '1.1s' },
+  { left: '24%', top: '28%', s: 2, d: '0.6s' },
+];
+
 function randPlat(y) {
   return {
     x: Math.random() * (W - PLAT_W),
@@ -108,8 +118,8 @@ function drawSkater(ctx, X, Y) {
   ctx.restore();
 }
 
-// Idle skater for the overlay panel — bobs on start, flips when bailed.
-function SkaterSprite({ bailed = false, size = 72 }) {
+// Static skater sprite for the overlay — drawn in a 48×52 box (skater at 4,3).
+function SkaterSprite({ bailed = false }) {
   const ref = useRef(null);
   useEffect(() => {
     const c = ref.current;
@@ -123,8 +133,7 @@ function SkaterSprite({ bailed = false, size = 72 }) {
       ref={ref}
       width={48}
       height={52}
-      className={bailed ? 'rotate-180' : 'slow-bounce'}
-      style={{ width: size, height: (size * 52) / 48 }}
+      className={`w-full h-full${bailed ? ' rotate-180' : ''}`}
     />
   );
 }
@@ -329,8 +338,10 @@ export default function DoodleJump({ onClose, inline = false }) {
     if (s.py > H) {
       s.alive = false;
       const final = Math.floor(s.score);
+      const beaten = final > bestRef.current && final > 0;
       setScore(final);
-      setBest(prev => Math.max(prev, final));
+      setIsNewBest(beaten);
+      if (final > bestRef.current) { bestRef.current = final; setBest(final); }
       setPhase('over');
       return;
     }
@@ -362,6 +373,16 @@ export default function DoodleJump({ onClose, inline = false }) {
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
   }, [phase, tick, draw]);
+
+  // Altitude track — animate the marker up to this run's height on game over
+  useEffect(() => {
+    if (phase !== 'over') { setTrackFill(0); return; }
+    const target = best > 0 ? Math.min(score / best, 1) : (score > 0 ? 1 : 0);
+    setTrackFill(0);
+    let id2;
+    const id1 = requestAnimationFrame(() => { id2 = requestAnimationFrame(() => setTrackFill(target)); });
+    return () => { cancelAnimationFrame(id1); cancelAnimationFrame(id2); };
+  }, [phase, score, best]);
 
   // Keyboard
   useEffect(() => {
@@ -428,29 +449,84 @@ export default function DoodleJump({ onClose, inline = false }) {
         borderRadius: inline ? 12 : 16,
       }}
     >
+      {/* Living sunset — drifting glow + blinking stars */}
+      <div className="widget-gradient" />
+      {STARS.map((st, i) => (
+        <span
+          key={i}
+          className="absolute rounded-full bg-white animate-blink"
+          style={{ left: st.left, top: st.top, width: st.s, height: st.s, animationDelay: st.d, opacity: 0.8 }}
+        />
+      ))}
+
+      {/* Skater placed exactly where the game spawns him, for a seamless start */}
+      <div
+        className="absolute z-10"
+        style={{
+          left: `${((W / 2 - P_W / 2 - 4) / W) * 100}%`,
+          top: `${((H - 130 - 3) / H) * 100}%`,
+          width: `${(48 / W) * 100}%`,
+          height: `${(52 / H) * 100}%`,
+        }}
+      >
+        <SkaterSprite bailed={phase === 'over'} />
+        {phase === 'over' && (
+          <span className="best-pop absolute left-full top-1/2 -translate-y-1/2 ml-1 whitespace-nowrap rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-bold text-rose-600 shadow-md ring-1 ring-black/5 -rotate-6">
+            Bailed!
+          </span>
+        )}
+      </div>
+
       {/* Frosted glass panel */}
-      <div className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl px-6 py-5 text-center max-w-[85%]">
+      <div className="relative z-10 rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl px-6 py-5 text-center max-w-[85%]">
+        {/* Altitude track (game over only) */}
+        {phase === 'over' && (
+          <div className="absolute left-2.5 top-4 bottom-4 w-1 rounded-full bg-black/10 overflow-hidden">
+            <div
+              className="absolute bottom-0 left-0 w-full rounded-full transition-[height] duration-700 ease-out"
+              style={{
+                height: `${trackFill * 100}%`,
+                background: 'linear-gradient(180deg, #84A4FC 0%, #FFD700 100%)',
+              }}
+            />
+          </div>
+        )}
+
         {phase === 'start' && (
           <>
             <h3 className="text-lg font-bold text-gray-900 leading-tight">How high can you ollie?</h3>
-            <p className="mt-1.5 text-xs text-gray-500">← → keys · tap to move</p>
+            <p className="mt-1.5 text-xs text-gray-500 flex items-center justify-center gap-1.5">
+              <span className="nudge-left inline-block">←</span>
+              <span className="nudge-right inline-block">→</span>
+              keys · tap to move
+            </p>
           </>
         )}
 
         {phase === 'over' && (
           <>
             <h3 className="text-lg font-bold text-gray-900">Game over</h3>
-            <p className="mt-2 text-sm text-gray-700">Score <span className="font-semibold text-gray-900">{score}</span></p>
-            {best > 0 && <p className="text-xs text-gray-500">Best {best}</p>}
+            {isNewBest ? (
+              <p className="best-pop mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-sm font-semibold text-amber-700">
+                ★ New best! {score} ft
+              </p>
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-gray-700">You reached <span className="font-semibold text-gray-900">{score} ft</span></p>
+                {best > 0 && <p className="text-xs text-gray-500">Best {best} ft</p>}
+              </>
+            )}
           </>
         )}
 
-        <button
-          onClick={start}
-          className="mt-4 px-5 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold shadow-md transition active:translate-y-0.5"
-        >
-          {phase === 'over' ? 'Try again' : 'Start'}
-        </button>
+        <div className="mt-4">
+          <button
+            onClick={start}
+            className="cta-glow px-5 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold shadow-md transition active:translate-y-0.5"
+          >
+            {phase === 'over' ? 'Try again' : 'Start'}
+          </button>
+        </div>
       </div>
     </div>
   );

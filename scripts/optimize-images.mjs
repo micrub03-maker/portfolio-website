@@ -1,17 +1,21 @@
-// Optimize the gallery images referenced by the photo manifests.
+// Optimize raster images under public/ to reduce payload and page lag.
 //
-// Why: the manifests point at raw camera originals (up to ~30 MP / multi-MB).
-// Those are downscaled to small collage cells in the browser, so shipping them
-// full-size wastes bandwidth and stalls the rotating showcase. This script
-// resizes any oversized referenced image to fit within MAX_EDGE on its longest
-// side and re-encodes it (mozjpeg q85) — visually lossless at display size.
+// Why: many images are raw camera originals (up to ~30 MP / multi-MB) shown in
+// far smaller slots. Shipping them full-size wastes bandwidth and stalls first
+// paint, scrolling, and the rotating photo showcase.
 //
-// It edits files in place but keeps the same filename/format, so the manifest
-// `src` paths never change. Aspect ratios are preserved (EXIF orientation is
-// baked in via .rotate()), so the manifest `ar` values stay valid too.
+// What it does, in place (filenames/formats unchanged, so no code path edits):
+//   - Resizes anything whose longest edge exceeds MAX_EDGE to fit within it.
+//   - JPEG  -> re-encode mozjpeg q85 (visually lossless at display size).
+//   - PNG   -> re-encode lossless (no palette quantization), so diagrams,
+//              screenshots, posters and photographic PNGs never band/posterize.
+//   - Bakes EXIF orientation into pixels (.rotate()), so orientation is
+//     consistent everywhere and matches the manifest aspect ratios.
+//   - Leaves SVG / GIF / WebP / video / PDF untouched.
 //
-// Idempotent: images already within MAX_EDGE are skipped, so re-running after
-// adding new photos won't re-compress (and degrade) the existing ones.
+// Idempotent: images already within MAX_EDGE and under SKIP_BYTES are skipped,
+// and a re-encode that would grow a file (and didn't resize) is discarded — so
+// re-running after adding new images won't degrade or bloat existing ones.
 //
 // Usage:
 //   node scripts/optimize-images.mjs            # optimize in place
@@ -21,21 +25,25 @@ import sharp from 'sharp';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { photos } from '../src/data/photoManifest.js';
-import { outdoorsPhotos } from '../src/data/outdoorsManifest.js';
 
-const MAX_EDGE = 2048; // longest side, in px — retina-crisp for the largest cell
+const MAX_EDGE = 2560;          // longest side in px — crisp even for hero backgrounds
 const JPEG_QUALITY = 85;
+const SKIP_BYTES = 800 * 1024;  // already-small files (under this AND within MAX_EDGE) are left alone
 const DRY_RUN = process.argv.includes('--dry-run');
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const srcs = [...new Set([...photos, ...outdoorsPhotos].map((p) => p.src))];
+const publicDir = path.join(root, 'public');
+
+const entries = await fs.readdir(publicDir, { recursive: true, withFileTypes: true });
+const files = entries
+  .filter((e) => e.isFile() && /\.(jpe?g|png)$/i.test(e.name))
+  .map((e) => path.join(e.parentPath ?? e.path, e.name));
 
 const mb = (b) => (b / 1048576).toFixed(2);
-let before = 0, after = 0, resized = 0, skipped = 0, errors = 0;
+let before = 0, after = 0, resized = 0, recompressed = 0, skipped = 0, errors = 0;
 
-for (const src of srcs) {
-  const file = path.join(root, 'public', src);
+for (const file of files) {
+  const rel = path.relative(publicDir, file).replace(/\\/g, '/');
   try {
     // Read into a buffer first: on Windows sharp keeps the source file mmap'd,
     // which blocks writing back to the same path. A detached buffer avoids that.
@@ -45,40 +53,45 @@ for (const src of srcs) {
     const longest = Math.max(meta.width, meta.height);
     before += orig;
 
-    if (longest <= MAX_EDGE && orig < 600 * 1024) {
+    if (longest <= MAX_EDGE && orig < SKIP_BYTES) {
       skipped++; after += orig;
-      continue; // already small in both dimensions and bytes — leave untouched
+      continue;
     }
 
     const ext = path.extname(file).toLowerCase();
+    const willResize = longest > MAX_EDGE;
     let pipe = sharp(input).rotate(); // bake EXIF orientation into pixels
-    if (longest > MAX_EDGE) {
+    if (willResize) {
       pipe = pipe.resize({ width: MAX_EDGE, height: MAX_EDGE, fit: 'inside', withoutEnlargement: true });
     }
-    if (ext === '.png') {
-      pipe = pipe.png({ compressionLevel: 9, palette: true });
-    } else {
-      pipe = pipe.jpeg({ quality: JPEG_QUALITY, mozjpeg: true });
-    }
+    pipe = ext === '.png'
+      ? pipe.png({ compressionLevel: 9 })            // lossless
+      : pipe.jpeg({ quality: JPEG_QUALITY, mozjpeg: true });
 
     const buf = await pipe.toBuffer();
+
+    // If we didn't resize and the re-encode wouldn't shrink it, keep the original.
+    if (!willResize && buf.length >= orig) {
+      skipped++; after += orig;
+      continue;
+    }
+
     after += buf.length;
-    resized++;
+    if (willResize) resized++; else recompressed++;
     const out = await sharp(buf).metadata();
-    const ar = +(out.width / out.height).toFixed(3);
     console.log(
-      `${DRY_RUN ? '[dry] ' : ''}${src}\n` +
-      `      ${meta.width}x${meta.height} ${mb(orig)}MB  ->  ${out.width}x${out.height} ${mb(buf.length)}MB  (ar ${ar})`
+      `${DRY_RUN ? '[dry] ' : ''}${rel}\n` +
+      `      ${meta.width}x${meta.height} ${mb(orig)}MB  ->  ${out.width}x${out.height} ${mb(buf.length)}MB`
     );
     if (!DRY_RUN) await fs.writeFile(file, buf);
   } catch (e) {
     errors++;
-    console.log(`ERR ${src}: ${e.message}`);
+    console.log(`ERR ${rel}: ${e.message}`);
   }
 }
 
 console.log(
-  `\n${DRY_RUN ? 'DRY RUN — ' : ''}${srcs.length} manifest images: ` +
-  `${resized} optimized, ${skipped} skipped, ${errors} errors`
+  `\n${DRY_RUN ? 'DRY RUN — ' : ''}${files.length} raster files scanned: ` +
+  `${resized} resized, ${recompressed} recompressed, ${skipped} skipped, ${errors} errors`
 );
 console.log(`Total: ${mb(before)}MB -> ${mb(after)}MB  (saved ${mb(before - after)}MB)`);
