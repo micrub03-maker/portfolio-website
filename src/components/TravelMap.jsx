@@ -4,6 +4,7 @@ import { useMediaQuery } from 'react-responsive';
 import 'jsvectormap/dist/jsvectormap.min.css';
 import travelData from '../data/travel.json';
 import LifeStoryEasterEgg from './LifeStoryEasterEgg';
+import { trackPageview } from '../lib/analytics';
 
 const ZOOM_MAX = 8;
 
@@ -297,6 +298,12 @@ const TravelMap = ({ compact = false, onNavigate }) => {
   const isMobile = useMediaQuery({ query: '(max-width: 767px)' });
   const mapRef = useRef(null);
   const [lifeStoryOpen, setLifeStoryOpen] = useState(false);
+
+  // Report opening the hidden life-story easter egg as a virtual pageview. An
+  // effect (rather than each "countries lived" click site) keeps it to one call.
+  useEffect(() => {
+    if (lifeStoryOpen) trackPageview('/about/easter-eggs/life-story');
+  }, [lifeStoryOpen]);
   const [showCountryList, setShowCountryList] = useState(false); // Fix: Issue #32
 
   // Tooltip state: only visible/name trigger re-renders.

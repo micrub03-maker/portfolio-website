@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { trackPageview } from '../lib/analytics';
 
 // Konami code → toggles a site-wide "engineering / blueprint" skin. The visual
 // treatment lives in index.css under `html.blueprint-mode`; this component only
@@ -103,6 +104,11 @@ export default function BlueprintMode() {
     const root = document.documentElement;
     root.classList.toggle('blueprint-mode', active);
     return () => root.classList.remove('blueprint-mode');
+  }, [active]);
+
+  // Report each time engineering/blueprint mode is switched on (Vercel "Pages").
+  useEffect(() => {
+    if (active) trackPageview('/about/easter-eggs/blueprint-mode');
   }, [active]);
 
   if (!active) return null;

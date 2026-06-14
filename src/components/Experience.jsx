@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MediaSlot } from "./MediaSlot";
 import DoodleJump from './DoodleJump';
 import { T } from '../i18n';
+import { trackPageview } from '../lib/analytics';
 
 const mainEntries = [
   {
@@ -255,7 +256,7 @@ export default function Experience({ onShowLessChipChange }) {
             >
               <div className="flex flex-col gap-4">
                 {moreEntries.map((entry, i) => (
-                  <ExperienceCard key={entry.key} entry={entry} index={i} onEasterEgg={() => setShowGame(true)} />
+                  <ExperienceCard key={entry.key} entry={entry} index={i} onEasterEgg={() => { setShowGame(true); trackPageview('/about/easter-eggs/doodlejump'); }} />
                 ))}
               </div>
             </motion.div>

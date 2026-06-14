@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import DinoGame from './DinoGame';
+import { trackPageview } from '../lib/analytics';
 
 const TITLE_H = 36;
 
@@ -66,6 +67,11 @@ export default function AssemblyGuide({ src = '/assembly-guide.md' }) {
 
   // 'launch' = yellow button (doc → game), 'exit' = exit button (game → doc)
   const desktopIntent = useRef('launch');
+
+  // Report reaching the hidden Dino game as a virtual pageview (Vercel "Pages").
+  useEffect(() => {
+    if (mode === 'game') trackPageview('/about/easter-eggs/dino');
+  }, [mode]);
 
   // desktop animation
   const [cursorPos,      setCursorPos]      = useState({ x: 22, y: 68 });

@@ -15,6 +15,7 @@ import RecentReads from "../components/RecentReads";
 import Skills from "../components/Skills";
 import InterestsCarousel from "../components/InterestsCarousel";
 import { T } from "../i18n";
+import { trackPageview } from "../lib/analytics";
 // Using public directory paths directly for Vite
 const profile = "/images/profile.jpg";
 const Delft = "/images/tu-delft-logo-black.png"
@@ -146,6 +147,9 @@ export default function About() {
         if (started) return;
         started = true;
         setBreakoutActive(true);
+        // Report reaching the hidden Breakout game (5 profile clicks) as a
+        // virtual pageview (Vercel "Pages").
+        trackPageview('/about/easter-eggs/breakout');
       };
       const fallback = setTimeout(beginGame, 600);
 

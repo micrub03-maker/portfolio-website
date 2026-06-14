@@ -108,7 +108,7 @@ export default function InterestsCarousel({ jumpToTravel = 0 }) {
       <>
         {text.slice(0, idx)}
         <span
-          onClick={() => setShowJuggle(true)}
+          onClick={() => { setShowJuggle(true); trackPageview('/about/easter-eggs/juggling'); }}
           className="cursor-pointer"
         >
           {text.slice(idx, idx + 6)}
