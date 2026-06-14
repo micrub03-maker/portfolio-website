@@ -17,13 +17,12 @@
 // fields are sanitized and length-capped; a malformed email is dropped rather than
 // failing the whole submission.
 //
-// Env (Vercel Upstash integration injects the first pair; KV_* names also accepted):
-//   UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN
-//   KV_REST_API_URL        / KV_REST_API_TOKEN
-//   LEADERBOARD_ADMIN_TOKEN  (optional, gates email access)
+// Env (the Vercel Redis store injects the connection string; generic names also accepted):
+//   leaderboard_REDIS_URL / REDIS_URL   (rediss:// TCP connection string)
+//   LEADERBOARD_ADMIN_TOKEN             (optional, gates email access)
 // With no Redis env configured the endpoint degrades to an empty board.
 
-import { Redis } from '@upstash/redis';
+import Redis from 'ioredis';
 
 const TOP_N  = 5;    // entries returned to the client
 const KEEP_N = 100;  // entries retained in Redis (trimmed on each write)
@@ -44,10 +43,24 @@ const GAMES = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Cache the client across warm invocations so we open one socket per container, not
+// one per request. `rediss://` auto-enables TLS in ioredis. Keep retries/timeouts
+// tight so a dead connection fails fast (and we fall back to an empty board) rather
+// than hanging the function.
+let _redis = null;
 function getRedis() {
-  const url   = process.env.UPSTASH_REDIS_REST_URL   || process.env.KV_REST_API_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-  return url && token ? new Redis({ url, token }) : null;
+  const url = process.env.leaderboard_REDIS_URL || process.env.REDIS_URL;
+  if (!url) return null;
+  if (!_redis) {
+    _redis = new Redis(url, {
+      maxRetriesPerRequest: 2,
+      connectTimeout: 5000,
+      enableReadyCheck: false,
+      lazyConnect: false,
+    });
+    _redis.on('error', err => console.error('redis connection error', err));
+  }
+  return _redis;
 }
 
 const keyFor = game => `leaderboard:${game}`;
@@ -90,7 +103,8 @@ function parseMember(member) {
 }
 
 async function topScores(redis, game, includeEmail) {
-  const flat = await redis.zrange(keyFor(game), 0, TOP_N - 1, { rev: true, withScores: true });
+  // ioredis returns a flat [member, score, member, score, …] array, highest first.
+  const flat = await redis.zrevrange(keyFor(game), 0, TOP_N - 1, 'WITHSCORES');
   const rows = [];
   for (let i = 0; i < flat.length; i += 2) {
     rows.push(publicRow(parseMember(flat[i]), Number(flat[i + 1]), includeEmail));
@@ -138,7 +152,7 @@ export default async function handler(req, res) {
     };
 
     try {
-      await redis.zadd(keyFor(game), { score, member: JSON.stringify(entry) });
+      await redis.zadd(keyFor(game), score, JSON.stringify(entry));
       await redis.zremrangebyrank(keyFor(game), 0, -(KEEP_N + 1)); // keep only the highest KEEP_N
       return res.status(200).json({ scores: await topScores(redis, game, false), configured: true });
     } catch (err) {
