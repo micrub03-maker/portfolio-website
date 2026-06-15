@@ -27,6 +27,15 @@ const slides = [
     src: "/images/Axiris-logo.png",
     projectKey: "axiris",
   },
+  {
+    title: "Design Engineer @ AdLap lab",
+    description:
+      "Developing a compact, detachable light module delivering visible and infrared illumination for a robotic surgery system",
+    src: "/images/adlap-licht-in-buik.jpg",
+    // Subject (light module + robotic arm) sits on the left; crop from the right.
+    objectPosition: "left",
+    projectKey: "adlap",
+  },
 ];
 
 export default function ProjectOverview({ onProjectClick, onNavigate }) {
@@ -143,7 +152,7 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
               <video // Fix: Issue #48
                 ref={(el) => { videoRefs.current[idx] = el; }} src={slide.src} className="w-full h-full object-cover" style={{ transform: 'scale(1.05)' }} autoPlay loop muted playsInline preload="auto" />
             ) : slide.src ? (
-              <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" />
+              <img src={slide.src} alt={slide.title} className="w-full h-full object-cover" style={slide.objectPosition ? { objectPosition: slide.objectPosition } : undefined} />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <span className="text-white/50 text-xs font-medium">{slide.title}</span>
