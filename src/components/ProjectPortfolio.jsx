@@ -26,6 +26,36 @@ function Bullets({ items }) {
   );
 }
 
+// Project-level reflection shown after the case-study dropdowns. Labelled and
+// styled distinctly from the per-case-study "Points of improvement:" lists so it
+// reads as a project-level footer rather than part of any open deep-dive.
+function ProjectImprovements({ items }) {
+  return (
+    <div className="mt-5 pt-4 border-t border-black/10">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Overall room for improvement</p>
+      <Bullets items={items} />
+    </div>
+  );
+}
+
+// Small non-interactive pill chips listing the tools/skills used on a project.
+// Visual sibling of the paper/link buttons above, minus the hover affordance so
+// they don't read as clickable.
+function ToolChips({ items, className = 'mt-4' }) {
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`}>
+      {items.map((t) => (
+        <span
+          key={t}
+          className="text-[9px] uppercase tracking-wide text-gray-500 bg-white/40 ring-1 ring-black/[0.06] font-medium px-2 py-0.5 rounded-full whitespace-nowrap"
+        >
+          {t}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function SideBySide({ pic, picWidth = 'w-1/2', picLeft = true, mobileImageBelow = false, children }) {
   // tw: md:w-1/2 md:w-[45%] md:w-[55%]
   const imageOrder = mobileImageBelow && picLeft ? 'order-last md:order-first' : '';
@@ -95,7 +125,7 @@ const NESTED_VARIANTS = {
 
 // Fix: Issue #20 — default noClickClose to true so body clicks don't collapse the
 // dropdown; only the header button toggles it. Pass noClickClose={false} to opt back in.
-function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, trackPath, variant = 'default', level = 1, children }) {
+function Dropdown({ summaryTitle, summaryDate, summarySubtitle, tools, onOpenChange, noClickClose = true, forceOpenTrigger, scrollTargetId, closeSignal, trackPath, variant = 'default', level = 1, children }) {
   const [open, setOpen] = useState(() => !!forceOpenTrigger);
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
@@ -127,15 +157,28 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
     if (open && trackPath) trackPageview(trackPath);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Close + scroll back to the target — the exact behaviour of the title button.
+  // Close + scroll back into view, measured after the collapse settles.
+  // Top-level projects (scrollTargetId 'projects') anchor the whole carousel with
+  // its bottom at the viewport bottom, so the projects widget ends at the bottom
+  // of the screen. Nested case-studies return to their parent project.
   const close = () => {
     setOpen(false);
     onOpenChange?.(false);
     setTimeout(() => {
-      const target = scrollTargetId ? document.getElementById(scrollTargetId) : buttonRef.current;
+      const vh = window.innerHeight;
+      const carousel = scrollTargetId === 'projects' ? document.getElementById('project-carousel') : null;
+      if (carousel) {
+        const rect = carousel.getBoundingClientRect();
+        const y = rect.bottom + window.pageYOffset - vh + 24;
+        window.scrollTo({ top: Math.max(y, 0), behavior: 'smooth' });
+        return;
+      }
+      const target = (scrollTargetId ? document.getElementById(scrollTargetId) : buttonRef.current) || containerRef.current;
       if (target) {
-        const y = target.getBoundingClientRect().top + window.pageYOffset - 80;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+        const rect = target.getBoundingClientRect();
+        const top = rect.top + window.pageYOffset;
+        const y = rect.height <= vh - 80 ? top + rect.height - vh + 24 : top - 80;
+        window.scrollTo({ top: Math.max(y, 0), behavior: 'smooth' });
       }
     }, 350);
   };
@@ -196,22 +239,38 @@ function Dropdown({ summaryTitle, summaryDate, summarySubtitle, onOpenChange, no
     ? (NESTED_LEVEL2_STYLES[variant] ?? group[1])
     : (group[level] ?? group[1]);
 
+  // Option 4 — lift the card when open: trade the inset shadow for an elevation and
+  // firm up the ring/fill, so an expanded dropdown reads as one raised panel rather
+  // than a button stacked on a body. Works for both nesting levels since each
+  // variant's container shares the shadow-inner / ring-black / bg-white pattern.
+  // tw: shadow-lg ring-black/10 bg-white/80
+  const containerClass = open
+    ? v.container
+        .replace('shadow-inner', 'shadow-lg')
+        .replace(/ring-black\/\d+/, 'ring-black/10')
+        .replace(/bg-white\/\d+/, 'bg-white/80')
+    : v.container;
+
   return (
-    <div ref={containerRef} className={v.container}>
+    <div ref={containerRef} className={`${containerClass} transition-all duration-300`}>
       <button
         ref={buttonRef}
         onClick={toggle}
         aria-expanded={open}
-        className={`w-full text-left px-4 py-3 flex items-start justify-between gap-3 ${v.toggle} transition-colors`}
+        className={`w-full text-left px-4 flex justify-between gap-3 ${open ? 'items-center py-2.5 bg-black/[0.02]' : 'items-start py-3'} ${v.toggle} transition-all`}
       >
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-800 text-sm">
+          <p className={`font-semibold text-gray-800 ${summaryDate ? 'text-base' : 'text-sm'}`}>
               {summaryTitle}
               {summaryDate && <span className="ml-2 font-normal text-gray-400 text-xs">{summaryDate}</span>}
             </p>
-          {summarySubtitle && (
+          {/* Option 1 — collapse to a slim bar when open: the subtitle and tool chips
+              orient you in the closed state, so drop them once expanded to leave just
+              the title + chevron as a light "you're inside this section" header. */}
+          {summarySubtitle && !open && (
             <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{summarySubtitle}</p>
           )}
+          {tools && !open && <ToolChips items={tools} className="mt-3" />}
         </div>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
@@ -288,7 +347,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/calsol">
+      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" tools={['SolidWorks', 'Topology Optimization', 'FEA', 'Hand Calculations', 'DFM', 'Physical Testing']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/calsol">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -334,10 +393,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               </a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              As <span className="font-semibold">Driver Safety Lead</span> for the Berkeley Solar car student team, I owned the design, analysis, and validation of the <span className="font-semibold">five-point seatbelt harness mounting system</span> for CalSol's GenXI solar vehicle, from regulation interpretation through physical testing and manufacturing handoff.
-              <br />
-              <br />
               Our seatbelt system was the <span className="font-semibold">first mechanical subsystem to pass scrutineering</span> for the 2026 race cycle.
+              <br />
+              <br />
+              As <span className="font-semibold">Driver Safety Lead</span> for the Berkeley Solar car student team, I owned the <span className="font-semibold">five-point seatbelt harness mounting system</span> for CalSol's GenXI solar vehicle end to end, from regulations to physical testing to manufacturing handoff.
             </p>
           </div>
         </div>
@@ -345,26 +404,82 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         <Dropdown
           variant="flat"
           level={2}
-          summaryTitle="An insight into lap-belt insert design and validation"
+          summaryTitle="Cutting 40% off the shoulder mount using topology optimization"
+          trackPath="/about/projects/calsol/shoulder"
+          summarySubtitle='TL;DR I designed a welded 4130 steel shoulder-belt anchorage, optimizing its weight while keeping the geometry waterjet-friendly.'
+          onOpenChange={onDd}
+          scrollTargetId="project-calsol"
+        >
+          <SideBySide picWidth="w-1/2" pic={
+            <div className="flex justify-center">
+              <HoverMediaOverlay className="w-full md:w-[73%]" caption="Shoulder anchorage in car">
+                <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" compact imageAspect="h-[184px] md:h-[202px]" />
+              </HoverMediaOverlay>
+            </div>
+          }>
+            For the shoulder harness, I designed an anchorage that bolts through the chassis and supports transverse "wrapping bolts" the belts loop around, <span className="font-semibold">eliminating single-point failure</span> by letting each strap wrap independently. It's <span className="font-semibold">simple and cheap</span>: just a waterjet cut, a weld, and off-the-shelf hardware.
+          </SideBySide>
+          <SideBySide picWidth="w-1/2" picLeft={false} pic={
+            <div className="flex justify-center">
+              <HoverMediaOverlay
+                className="w-full md:w-[73%]"
+                caption="Bolt bending: the governing load case"
+                gradientClassName="bg-gradient-to-t from-black/60 via-black/20 to-transparent"
+                captionClassName="absolute bottom-[15%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300"
+              >
+                <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" compact imageAspect="h-[184px] md:h-[240px]" />
+              </HoverMediaOverlay>
+            </div>
+          }>
+            I modeled the wrapping bolts as <span className="font-semibold">fixed-fixed beams</span> under the projected distributed load to size them against the governing failure mode, <span className="font-semibold">bending</span>, then designed the rest of the anchorage around them.
+          </SideBySide>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            Since the anchorage is welded, I chose <span className="font-semibold">annealed 4130 steel</span>: it welds cleanly without heat-affected-zone embrittlement and gives the strength and ductile failure a safety-critical load path needs. <span className="font-semibold">Aluminum would have been bulkier</span> at the required strength, negating its weight advantage, so I accepted the added density and clawed weight back through optimization.
+            </p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            With the baseline clearing all load cases, I ran a SolidWorks <span className="font-semibold">topology optimization</span> to strip non-critical material while keeping it manufacturable (uniform thickness, waterjet-friendly geometry, intact interfaces), <span className="font-semibold">cutting weight by roughly 40%</span> within safety margins.
+          </p>
+          <MediaSlot
+            src={'/images/calsol-topology.png'}
+            label="Shoulder belt CAD topology"
+            imageAspect="h-auto md:h-[245px]"
+          />
+          <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
+          <Bullets
+            items={[
+            'The design clears every load case in simulation; the clear next step is a physical pull test to confirm the modeled behavior before race use.',
+            ]}
+          />
+        </Dropdown>
+        <Dropdown
+          variant="flat"
+          level={2}
+          summaryTitle="Anchoring belts into thin carbon fiber with bonded inserts"
           trackPath="/about/projects/calsol/inserts"
-          summarySubtitle="TL;DR I designed bonded metal inserts, validated them analytically and with quasi-static pull-out tests to credibly meet the load requirement on the occupant cell."
+          summarySubtitle="TL;DR The thin carbon shell can't carry the concentrated belt loads alone, so I bonded in metal inserts to spread the load, validated by analysis and pull-out tests."
           onOpenChange={onDd}
           scrollTargetId="project-calsol"
         >
           <SideBySide picWidth="w-[45%]" pic={
-            <HoverMediaOverlay position="top" caption="Inserts flushed in shell">
+            <HoverMediaOverlay position="top" caption="Inserts sitting flush in the carbon shell">
               <MediaSlot src={'/images/Calsol-inserts.png'} label="inserts" compact imageAspect="aspect-[10/9] h-auto md:aspect-auto md:h-[288px]" />
             </HoverMediaOverlay>
           }>
             To safely anchor the lap- and sub-belts into the thin carbon fiber cell, I designed <span className="font-semibold">bonded metal inserts</span> that follow the shell curvature and sit sandwiched within the laminate. The belts clip into eyebolts threaded into these inserts.
             <br />
             <br />
-            I translated regulations into explicit load cases and analyzed the primary failure modes: thread stripping and laminate debonding.
+            I translated regulations into explicit <span className="font-semibold">load cases</span> and analyzed the primary failure modes: <span className="font-semibold">thread stripping</span> and <span className="font-semibold">laminate debonding</span>.
           </SideBySide>
           <p className="text-sm text-gray-700 leading-relaxed">
-           Without access to dynamic crash equipment, I identified the critical load case analytically and designed a conservative quasi-static pull-out test, measuring an <span className="font-semibold">average failure load of 6.11 kN</span> across four samples. Together with published dynamic CFRP insert data, this showed the design could credibly meet the required loads.
+           Without access to dynamic crash equipment, I identified the critical load case analytically and showed the design <span className="font-semibold">clears the regulated load with margin on paper</span>. To back that up, I designed a conservative <span className="font-semibold">quasi-static pull-out test</span>, measuring an average failure load of about <span className="font-semibold">70% of the regulated load</span> across four samples.
+            <br />
+            <br />
+            That figure is <span className="font-semibold">conservative by design</span>: a slow static pull underestimates real performance, and published data shows bonded CFRP inserts carry substantially more under dynamic crash loading.
+            <br />
+            <br />
+            With the analysis clearing the requirement and the test substantiated by that dynamic data, I'm confident the design credibly meets the load in a real impact.
           </p>
-          <HoverMediaOverlay className="shadow-md" position="top" captionColor="text-gray-800" caption="insert testing jig">
+          <HoverMediaOverlay className="shadow-md" position="top" captionColor="text-gray-800" caption="Quasi-static pull-out test jig">
             <div className="[&>div]:h-[128px] md:[&>div]:h-[320px] [&>div]:!p-1 [&>div]:my-0">
               <MediaSlot
                 src={'/images/insert testing jig picture.png'}
@@ -376,64 +491,23 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'Relying on quasi-static tests and literature to argue dynamic performance is not fully satisfying for a critical part. Next time I would add an extra validation step (e.g. higher-rate testing or an alternate experimental setup directly checking target load).',
-              "The insert is still relatively bulky; given the multi-axis machining already required for its manufacturing it's possible to design complex shapes to shed more weight.",
+              'The design meets the load in analysis and quasi-static testing; for a safety-critical part, a dynamic crash test would be the ideal final confirmation.',
+              "The insert is still bulky; since it already needs multi-axis machining, I could design a more complex shape to shed weight.",
             ]}
           />
         </Dropdown>
-        <Dropdown
-          variant="flat"
-          level={2}
-          summaryTitle="An insight into the topology-optimized shoulder-belt anchorage"
-          trackPath="/about/projects/calsol/shoulder"
-          summarySubtitle='TL;DR I designed a steel shoulder-belt mount holding wrapping bolts, cut mount weight by ~40% via topology optimization.'
-          onOpenChange={onDd}
-          scrollTargetId="project-calsol"
-        >
-          <SideBySide picWidth="w-1/2" pic={
-            <div className="flex justify-center">
-              <HoverMediaOverlay className="w-full md:w-[73%]" caption="Shoulder anchorage in car">
-                <MediaSlot src={'/images/shoulder-mount-calsol.png'} label="shoulder belt anchorage" compact imageAspect="h-[184px] md:h-[202px]" />
-              </HoverMediaOverlay>
-            </div>
-          }>
-            For the shoulder harness, I designed a steel anchorage that bolts through the chassis and supports transverse "wrapping bolts" around which the shoulder belts are looped, eliminating single-point failure by allowing each strap to wrap independently.
-          </SideBySide>
-          <SideBySide picWidth="w-1/2" picLeft={false} pic={
-            <div className="flex justify-center">
-              <HoverMediaOverlay
-                className="w-full md:w-[73%]"
-                caption="Bolt governing load case"
-                gradientClassName="bg-gradient-to-t from-black/60 via-black/20 to-transparent"
-                captionClassName="absolute bottom-[15%] left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300"
-              >
-                <MediaSlot src={'/images/shoulder-calcs.png'} label="Shoulder belt calcs" compact imageAspect="h-[184px] md:h-[240px]" />
-              </HoverMediaOverlay>
-            </div>
-          }>
-            I modeled the wrapping bolts as fixed-fixed beams under the projected distributed load to size them for the governing failure mode: bending. The rest of the anchorage was designed around these choices.
-          </SideBySide>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            Once the baseline design cleared all load cases, I ran a SolidWorks topology optimization on the backplate to strip non-critical material while preserving manufacturability (uniform thickness, waterjet-friendly geometry, intact interfaces), ultimately <span className="font-semibold">cutting weight by roughly 40%</span> while maintaining acceptable safety margins.
-          </p>
-          <MediaSlot
-            src={'/images/calsol-topology.png'}
-            label="Shoulder belt CAD topology"
-            imageAspect="h-auto md:h-[245px]"
-          />
-          <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
-          <Bullets
-            items={[
-            'Validation of this design relies entirely on simulation; physical testing should be added to confirm the modeled behavior.',
-            ]}
-          />
-        </Dropdown>
+        <ProjectImprovements
+          items={[
+            'Every anchorage has been validated at the component level through analysis and quasi-static tests; a full-harness dynamic sled test would be the ideal end-to-end confirmation before race deployment.',
+            "The mounts are tailored to GenXI's chassis geometry; a more parametric design would let the anchorages carry over to future car generations with less rework.",
+          ]}
+        />
       </Dropdown>
       </div>
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/axiris">
+      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" tools={['Optical Design', 'NIR Imaging', 'Python', 'Image Processing', 'Product Design', 'Rapid Prototyping']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/axiris">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <HoverMediaOverlay align="right" caption={<>Axiris current<br />design</>}>
@@ -450,7 +524,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               <a href="/images/Axiris-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
             </div>
             <p className="text-sm text-gray-700 leading-relaxed">
-              Axiris is a <span className="font-semibold">low-cost, handheld autorefractor</span> for vision screening in low-resource settings, where conventional 5,000–30,000-dollar systems are hard to deploy. As <span className="font-semibold">optical lead</span>, I chose a Scheiner-disk optical path with an external NIR camera and helped develop a Python image-processing stack to estimate refractive error, iterating through <span className="font-semibold">six prototypes over 13 weeks</span> to reach a <span className="font-semibold">574-dollar BOM</span>.
+              Axiris is a <span className="font-semibold">low-cost, handheld autorefractor</span> for vision screening in low-resource settings, where conventional 5,000–30,000-dollar systems are out of reach because they need a clinic, consistent grid power, and trained staff. As <span className="font-semibold">optical lead</span>, I chose a Scheiner-disk optical path with an external NIR camera and helped develop a Python image-processing stack to estimate refractive error, iterating through <span className="font-semibold">six prototypes over 13 weeks</span> to reach a <span className="font-semibold">574-dollar BOM</span>.
             </p>
           </div>
         </div>
@@ -458,7 +532,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         <Dropdown
           variant="stacked"
           level={2}
-          summaryTitle="An insight into my design process"
+          summaryTitle="From 50+ concepts to one device: my product design process"
           trackPath="/about/projects/axiris/process"
           summarySubtitle="TL;DR Stakeholder interviews, concept screening, and expert input allowed me to find the best product format."
           onOpenChange={onDd}
@@ -474,7 +548,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               />
             </HoverMediaOverlay>
           }>
-            Hundreds of millions of people live with avoidable vision loss, we started with a simple question: why?
+            <span className="font-semibold">Hundreds of millions of people</span> live with avoidable vision loss. We started with a simple question: why?
             <br />
             <br />
             Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate <span className="font-semibold">50+ concepts</span> to approach this problem at its root.
@@ -489,10 +563,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               />
             </HoverMediaOverlay>
           }>
-            Using a Pugh chart and expert feedback, we landed on a handheld concept based on dual pinholes: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
+            Using a <span className="font-semibold">Pugh chart</span> and expert feedback, we landed on a <span className="font-semibold">handheld concept based on dual pinholes</span>: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
             <br />
             <br />
-            I then started speccing the optical design step by step: selecting an 850 nm source to maximize retinal reflectance, folding the path with collimating optics to keep the device handheld and minimize signal loss through the optical path.
+            I then started speccing the optical design step by step: selecting an <span className="font-semibold">850 nm source</span> to maximize retinal reflectance, folding the path with <span className="font-semibold">collimating optics</span> to keep the device handheld and minimize signal loss through the optical path.
           </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
@@ -505,9 +579,9 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
         <Dropdown
           variant="stacked"
           level={2}
-          summaryTitle="An insight into my resilience under tight constraints"
+          summaryTitle="Building a model eye to calibrate without an optics lab"
           trackPath="/about/projects/axiris/model-eye"
-          summarySubtitle="TL;DR We didn't have access to an optics lab, so I proposed and built a modular model eye that gave us a stable, repeatable testbed to calibrate Axiris and de-risk the design before touching human subjects."
+          summarySubtitle="TL;DR I built a modular model eye with slide-in 'retinas' at known refractive states, giving a repeatable bench testbed to calibrate Axiris and de-risk the design before testing on people."
           onOpenChange={onDd}
           scrollTargetId="project-axiris"
         >
@@ -521,24 +595,45 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               />
             </HoverMediaOverlay>
           }>
-            Without a proper optics lab, I designed a modular model eye with an interchangeable lens and several "retina" slots where a mirror can slide in at known positions, each corresponding to a ground-truth refractive state. This allowed us to tune the image-processing pipeline and guide mechanical changes.
+            Without a proper optics lab, I designed a <span className="font-semibold">modular model eye</span> with an <span className="font-semibold">interchangeable lens</span> and several "retina" slots where a mirror can slide in at known positions, each corresponding to a <span className="font-semibold">ground-truth refractive state</span>. This allowed us to tune the image-processing pipeline and guide mechanical changes.
             <br />
             <br />
             We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment.
           </SideBySide>
+          <SideBySide picLeft={false} pic={
+            <HoverMediaOverlay captionColor="text-white" caption="Image Processing">
+              <MediaSlot
+                src={'/images/Axiris-Image-Processing.png'}
+                label="Axiris image processing issues and solutions"
+                natural
+                compact
+              />
+            </HoverMediaOverlay>
+          }>
+            With a repeatable testbed in hand, the hard part became reading the image. We back-calculate refractive error from the <span className="font-semibold">separation of two pinhole spots</span>, so locating them accurately is everything. Two failure modes dominated: <span className="font-semibold">ghost dots</span> from stray reflections, and <span className="font-semibold">defocus</span> that smeared each spot into a soft blob with no clear center.
+            <br />
+            <br />
+            I fixed the optics first, blocking stray light and locking focus for tight, high-contrast spots (bottom-right). On top of that we built a detection pipeline with swappable spot extractors, including <span className="font-semibold">sub-pixel Gaussian fitting</span> and <span className="font-semibold">blob detection</span>, that rejects ghosts and turns the spot separation into a refractive measurement. Each reading averages many frames with <span className="font-semibold">median + IQR outlier rejection</span> to stay robust across runs.
+          </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
           <Bullets
             items={[
-              'A more realistic model eye is needed for precise calibration in future. However, the simplicity and high reflectance of the current model eye was intentional, as it was ideal for early, rough validation.',
+              'A more realistic model eye is needed for precise calibration in the future. However, the simplicity and high reflectance of the current model eye was intentional, as it was ideal for early, rough validation.',
             ]}
           />
         </Dropdown>
+        <ProjectImprovements
+          items={[
+            'Validation so far has been on a model eye and bench setup; improving accuracy in a clinical study across real patients and a range of refractive errors is the next step toward a deployable device.',
+            'The 574-dollar BOM almost meets the cost target, but the device has not yet been through a design-for-manufacture pass for volume production.',
+          ]}
+        />
       </Dropdown>
       </div>
 
       {/* ── SUCTION CUP ── */}
       <div id="project-edg">
-      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" summaryDate="Sept 2025 – May 2026" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/edg">
+      <Dropdown summaryTitle="Tactile End Effector Capstone @ Embodied Dexterity Lab" summaryDate="Sept 2025 – May 2026" tools={['SolidWorks', 'PCB Design', 'Silicone Molding', 'DFM', 'Robotic End-Effectors', 'Design Validation']} onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/edg">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="flex gap-2">
@@ -564,16 +659,16 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             <p className="text-sm text-gray-700 leading-relaxed">
               The Smart Suction Cup is a multi-chamber, vacuum-based robotic end-effector that enables haptic feedback by sensing internal airflow, helping robots recover when vision-based grasping fails.
               <br />
-              <br /> For my graduate capstone, I improved its manufacturability and robustness: designing a custom PCB, standardizing the robot-arm interface, <span className="font-semibold">cutting the part count from 32 to 9</span> and <span className="font-semibold">reducing setup time from 15 minutes to 1:45</span> as we scaled from a research prototype to a production-ready run of <span className="font-semibold">over 1,000 units</span>.
+              <br /> For my graduate capstone, I improved its manufacturability and robustness: designing a custom Printed Circuit Board (PCB), standardizing the robot-arm interface, <span className="font-semibold">cutting the part count from 32 to 9</span> and <span className="font-semibold">reducing setup time from 15 minutes to 1min 45s</span> as we scaled from a research prototype to a production-ready run of <span className="font-semibold">over 1,000 units</span>.
             </p>
           </div>
         </div>
         {/* Full-width case-study dropdown */}
         <div ref={suctionDropdownRef}>
         <Dropdown
-          summaryTitle="An insight into how I design for manufacturability"
+          summaryTitle="Raising fabrication success with a five-part peeling mold"
           trackPath="/about/projects/edg/manufacturability"
-          summarySubtitle="TL;DR I redesigned the injection mold for the suction cup to achieve higher success rate in production."
+          summarySubtitle="TL;DR Cups kept tearing during demolding, so I designed a wedged mold that releases one chamber first and peels the rest of the cup out cleanly."
           onOpenChange={onDd}
           scrollTargetId="project-edg"
         >
@@ -587,10 +682,8 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               </div>
             </HoverMediaOverlay>
             <p className="text-sm text-gray-700 leading-relaxed">
-              To improve the manufacturability of the silicone suction cup, I switched to a three-chamber geometry and redesigned its mold.
-              <br/>
-              <br />
-              The new mold uses a five-part, wedged layout that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This reduced tearing and increased fabrication success.
+              An example of improved manufacturability was the silicone suction cup redesign, where I switched to a <span className="font-semibold">three-chamber geometry</span> and improved its mold.
+              The new mold uses a <span className="font-semibold">five-part, wedged layout</span> that lets one chamber release first and then allows "peeling" the rest of the cup out cleanly. This <span className="font-semibold">reduced tearing and increased fabrication success</span>.
             </p>
           </div>
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
@@ -614,15 +707,15 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               </div>
             </div>
           }>
-            Additionally, the new suction cup has a strategically designed ridge. This interfaces with a compliant clamping mechanism, enabling toolless cup mounting for rapid deployment and maintenance.
+            The cup also has a strategically placed ridge that interfaces with a compliant clamping mechanism, enabling <span className="font-semibold">toolless mounting</span> for rapid deployment and maintenance.
             <br />
             <br />
-            Overall, every design choice was made to reduce part count, ease handling, and support high-volume manufacturing.
+            Every design choice was made to <span className="font-semibold">reduce part count, ease handling, and support high-volume manufacturing</span>.
           </SideBySide>
           <SideBySide pic={
             <div className="flex flex-col md:flex-row gap-2">
               <div className="flex-1" style={{filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.28))'}}>
-                <HoverMediaOverlay caption="Maximum payload test">
+                <HoverMediaOverlay caption="Maximum-payload pick-and-place test">
                   <MediaSlot src={'/images/suction-cup-grab.mp4'} label="maximum payload suction cup" videoAspect="aspect-[45/64]" compact />
                 </HoverMediaOverlay>
               </div>
@@ -633,7 +726,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               </div>
             </div>
           }>
-            After implementing the new geometry, I verified that suction performance and chamber-level sensing were unchanged. I ran maximum payload and varied object pick-and-place tests on representative items and observed similar performance to the prior prototype.
+            After implementing the new geometry, I verified that suction and chamber-level sensing were unchanged, running maximum-payload and varied-object pick-and-place tests on representative items and observing <span className="font-semibold">performance on par with the prior prototype</span>.
           </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
@@ -643,27 +736,34 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           />
         </Dropdown>
         </div>
+        <ProjectImprovements
+          items={[
+            'The redesign was verified against the prior prototype, but long-run reliability across many grasp cycles (wear and fatigue) has not been characterized and would matter at production scale.',
+            'The PCB was optimized for compactness, but currently depends on costly professional assembly; enabling hand-soldering for low-volume production could reduce costs in future iterations.', ]}
+        />
       </Dropdown>
       </div>
 
       {/* ── ADLAP ── */}
       <div id="project-adlap">
-      <Dropdown summaryTitle="Light Module for Robotic Surgery System Capstone @ AdLap Lab" summaryDate="Feb 2024 – June 2024" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'adlap' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/adlap">
-        <div className="flex justify-end gap-2 flex-wrap">
-          <a href="/images/adlap-design-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
+      <Dropdown summaryTitle="Light Module for Robotic Surgery System Capstone @ AdLap Lab" summaryDate="Feb 2024 – June 2024" tools={['Thermal Design', 'Mechanism Design', 'Python Simulation', 'CNC Milling', '3D Printing', 'Medical Device Standards']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'adlap' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/adlap">
+        <div className="flex gap-3 items-start">
+          <p className="text-sm text-gray-700 leading-relaxed flex-1 min-w-0">
+            For my graduating project at TU Delft I developed a <span className="font-semibold">compact, detachable laparoscopic light module</span> for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints. The final prototype reached <span className="font-semibold">42% of a clinical xenon light source</span>, beating our 30% target, while adding infrared the original module never had.
+          </p>
+          <div className="flex gap-2 flex-wrap flex-shrink-0">
+            <a href="/images/adlap-design-paper.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
+          </div>
         </div>
-        <p className="text-sm text-gray-700 leading-relaxed">
-          For my graduating project at TU Delft I developed a <span className="font-semibold">compact, detachable laparoscopic light module</span> for the AdLap system, designed to deliver visible and infrared illumination while meeting strict size, thermal, and mounting constraints. The final prototype reached <span className="font-semibold">42% of a clinical xenon light source</span>, beating our 30% target, while adding infrared the original module never had.
-        </p>
         <div className="flex flex-col md:flex-row gap-2">
           <MediaItemCell m={{ src: '/images/adlap-final-design-details.png', label: 'adlap rendering', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' }} />
-          <MediaItemCell m={{ src: '/images/adlap-licht-in-buik.jpg', label: 'Adlap test op buik', hoverLabel: 'Our light module in action', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' }} />
+          <MediaItemCell m={{ src: '/images/adlap-licht-in-buik.jpg', label: 'AdLap light module illuminating tissue', hoverLabel: 'Our light module in action', imageAspect: 'aspect-[16/9] h-auto md:aspect-auto md:h-[258px]' }} />
         </div>
 
         {/* Insight 1 — switching mechanism */}
         <Dropdown
-          summaryTitle="An insight into rapid switching illumination switching"
-          summarySubtitle="TL;DR Surgery needs both white and near-infrared light, so I mounted two LEDs in our moduleand drove the swap with a single-motor pick-and-place mechanism (~0.8 s per switch)."
+          summaryTitle="Swapping white and IR light in 0.8s with a single servo"
+          summarySubtitle="TL;DR Only one source can face the fibre at a time, so I adapted a rotary pick-and-place mechanism to swap sources on demand."
           trackPath="/about/projects/adlap/switching"
           onOpenChange={onDd}
           scrollTargetId="project-adlap"
@@ -672,75 +772,202 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             Surgery lights need two wavelengths: <span className="font-semibold">white light</span> for normal viewing, and <span className="font-semibold">near-infrared</span>, which penetrates deeper and when combined with a fluorescent dye, reveals blood vessels invisible to the naked eye. After researching both and benchmarking against a clinical xenon source, I targeted at least 30% of its output in white light while also emitting IR.
           </p>
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
-            <HoverMediaOverlay caption="Pick-and-place principle (left) adapted into a rotary light-source switch (right)">
+            <HoverMediaOverlay captionColor="text-gray-800" position="top" caption="Pick-and-place principle (left) adapted into a rotary light-source switch (right)">
               <MediaSlot src={'/images/AdLap-pick-and-place.png'} label="pick and place mechanism" compact imageAspect="aspect-[2/1]" />
             </HoverMediaOverlay>
           }>
             Only one source can face the fibre inlet at a time, so I had a servo based mechanism that rotates the LEDs in place to swap them. To automate it I adapted a <span className="font-semibold">rotational pick-and-place mechanism</span> driven by a single servo, switching sources in about <span className="font-semibold">0.8 seconds</span> mid-operation.
           </SideBySide>
+          <SideBySide picWidth="w-1/2" picLeft={true} pic={
+            <HoverMediaOverlay captionColor="text-gray-800" position="top" caption="Ray-tracing and bench tests comparing connector shapes for light coupling into the endoscope" captionClassName="absolute top-0 left-1/3 right-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+              <MediaSlot src={'/images/AdLap-light-testing.png'} label="connector light-coupling testing" compact natural />
+            </HoverMediaOverlay>
+          }>
+            Coupling the LED output into the endoscope's fibre inlet was where most of the light could be lost, so the shape of the connector mattered. I used <span className="font-semibold">ray tracing</span> to model how different connector geometries gathered and redirected light toward the fibre, then ran <span className="font-semibold">simple bench tests</span> to measure the throughput of the most promising shapes. Iterating between simulation and measurement let me converge on the geometry that <span className="font-semibold">minimised light loss</span> at the coupling.
+          </SideBySide>
+          <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
+          <Bullets
+            items={[
+              'To keep costs down I dropped the optical components and relied on connector geometry alone; adding a collimating lens would have tightened the beam onto the fibre and likely recovered more of the lost light.',
+            ]}
+          />
         </Dropdown>
 
         {/* Insight 2 — thermal design */}
         <Dropdown
-          summaryTitle="An insight into how I kept a 20 W light cool enough to touch"
-          summarySubtitle="Calcs and heat-sink sims showed passive cooling couldn't hold the 41 °C safe-touch limit, so I milled an aluminium plate into a heat spreader routing heat to the fins and put the active fan behind the sterile line."
+          summaryTitle="Keeping a 20 W light cool enough to touch with a milled heat spreader"
+          summarySubtitle="TL;DR Passive cooling couldn't hold the 41 °C safe-touch limit, so I moved to active cooling, kept sterile-safe by placing the fan behind the sterile line."
           trackPath="/about/projects/adlap/thermal"
           onOpenChange={onDd}
           scrollTargetId="project-adlap"
         >
           <p className="text-sm text-gray-700 leading-relaxed">
-            A high-power LED dumps a lot of heat into our sub-241&nbsp;cm³ module, and DIN&nbsp;EN&nbsp;60601-1 caps any touchable surface at <span className="font-semibold">41 °C</span>. I estimated the dissipated heat and cooling duty, then checked whether passive fins could cope within the size envelope: they couldn't. To converge on the best active-cooling setup I trialled different heatsink sizings, fin compositions and air-flow rates: a small Python script swept the variables for rapid trial-and-error, and an open-source heat calculator/simulator that also accounts for conduction and radiation evaluated each candidate. The example below is one such configuration.
+            A high-power LED dumps a lot of heat into our sub-241&nbsp;cm³ module, and regulations (DIN&nbsp;EN&nbsp;60601-1) caps any touchable surface at <span className="font-semibold">41 °C</span>. I estimated the heat load and cooling duty, then checked whether <span className="font-semibold">passive fins</span> could cope within the size envelope. They couldn't, so I moved to <span className="font-semibold">active cooling</span>. A small <span className="font-semibold">Python script</span> swept heatsink sizes, fin materials, and airflow rates, and an open-source simulator accounting for conduction and radiation scored each candidate. The example below is one such configuration.
           </p>
           <div className="flex flex-col md:flex-row gap-2 md:items-start">
-            <HoverMediaOverlay className="flex-1" captionColor="text-gray-800" caption="Simulated temperature field for one heatsink + flow configuration">
-              <MediaSlot src={'/images/AdLap-heat-sim.png'} label="heatsink thermal simulation" padded compact imageAspect="aspect-[16/9]" />
+            <HoverMediaOverlay className="flex-1" captionColor="text-gray-800" position="top" caption="Simulated temperature field for one heatsink + flow configuration">
+              <MediaSlot src={'/images/AdLap-heat-sim.png'} label="heatsink thermal simulation" compact natural />
             </HoverMediaOverlay>
-            <HoverMediaOverlay className="flex-1" captionColor="text-gray-800" caption="A trialled sizing: 45×33×30 mm, 57.8 °C at 2.5 m/s air flow">
+            <HoverMediaOverlay className="flex-1" captionColor="text-white" position="top" caption="Rejected sizing: 45×33×30 mm reached 57.8 °C at 2.5 m/s, over the 41 °C limit">
               <MediaSlot src={'/images/AdLap-heat-sink-prototype.png'} label="heat sink prototype trial" compact imageAspect="aspect-[5/4]" />
             </HoverMediaOverlay>
           </div>
           <SideBySide picWidth="w-1/2" picLeft={true} pic={
-            <HoverMediaOverlay captionColor="text-gray-800" caption="Backplate: 3D model and the milled aluminium part">
-              <MediaSlot src={'/images/AdLap Backplate.png'} label="aluminium backplate" padded compact imageAspect="aspect-[16/9]" />
+            <HoverMediaOverlay captionColor="text-gray-800" position="top" caption="Backplate: 3D model and the milled aluminium part">
+              <MediaSlot src={'/images/AdLap Backplate.png'} label="aluminium backplate" compact natural />
             </HoverMediaOverlay>
           }>
-            To pull heat off the LEDs I designed a <span className="font-semibold">milled aluminium backplate</span> that doubles as a heat spreader: grooves seat both LEDs within and it is directly against the cooling unit to keep a short, conductive path from die to heatsink. The fan's own clip system snaps straight on.
+            To pull heat off the LEDs I designed a <span className="font-semibold">milled aluminium backplate</span> that doubles as a heat spreader: grooves seat both LEDs, and it sits directly against the cooling unit for a short, conductive path from die to heatsink. The fan's own clip system snaps straight on.
           </SideBySide>
           <SideBySide picWidth="w-1/2" picLeft={false} pic={
-            <HoverMediaOverlay captionColor="text-gray-800" caption="Final module: CAD vs printed prototype with the honeycomb cooling case">
-              <MediaSlot src={'/images/Adlap-final-design-CAD-and-physical.png'} label="final design with cooling case" padded compact imageAspect="aspect-[16/9]" />
+            <HoverMediaOverlay captionColor="text-gray-800" position="top" caption="Final module: CAD vs printed prototype with the honeycomb cooling case">
+              <MediaSlot src={'/images/Adlap-final-design-CAD-and-physical.png'} label="final design with cooling case" compact natural />
             </HoverMediaOverlay>
           }>
-            Active cooling posed a regulatory issue: a fan is hard to sterilise and its airflow holes clash with cleaning standards (ISO&nbsp;13485 — parts must survive chlorine with no deep crevices). Rather than fight it, I <span className="font-semibold">placed the cooling unit and its electronics behind the sterile line</span>, alongside the rest of the AdLap's electronics, so the fan never enters the sterile field. This keeps the cleanable part of the module simple.
+            Active cooling posed a regulatory issue: a fan is hard to sterilise and its airflow holes clash with cleaning standards (ISO&nbsp;13485 requires parts to survive chlorine with no deep crevices). Rather than fight it, I <span className="font-semibold">placed the cooling unit and its electronics behind the sterile line</span>, alongside the rest of the AdLap's electronics, so the fan never enters the sterile field, keeping the cleanable part of the module simple.
             <br />
             <br />
             For the exposed side I designed a snap-on case with <span className="font-semibold">honeycomb perforations</span> - enough open area to barely obstruct airflow while stopping anyone from touching the hot heatsink.
           </SideBySide>
-          <HoverMediaOverlay captionColor="text-gray-800" caption="One-hour thermal test — temperature plateaus near 35 °C, well under 41 °C">
-            <MediaSlot src={'/images/AdLap-heat-test-results.png'} label="long term heat test" padded compact imageAspect="aspect-[16/7]" />
-          </HoverMediaOverlay>
-        </Dropdown>
           <Bullets
             items={[
-              'The backplate is the most manufacturing-intensive part and is designed to work with one specific fan.',
+              'The backplate is the most manufacturing-intensive part and is currently tied to one specific fan; a more modular interface would simplify both sourcing and fabrication.',
+            ]}
+          />
+        </Dropdown>
+          <ProjectImprovements
+            items={[
               'The mount only fits a specific endoscope adapter; it is easily adapted but not yet universal.',
-              'Laser-diode sources were out of budget but show strong potential for a future version.',
+              'Laser-diode sources were out of budget but show strong potential for a future, higher-output version.',
             ]}
           />
       </Dropdown>
       </div>
 
-      {/* ── CNC ── */}
-      <div id="project-cnc">
-      <Dropdown summaryTitle="Sophomore Project: Building a CNC Machine" summaryDate="Sept 2022 – Nov 2022" onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/cnc">
-        <p className="text-sm text-gray-700 leading-relaxed">
-          In a team of 5, we designed and built a CNC machine using an <span className="font-semibold">H-bot single-belt architecture</span>, with cleverly integrated belt pre-tensioning and vibration damping. This is one of the coolest projects from my undergrad!
-        </p>
-        <div className="flex flex-col md:flex-row gap-2">
-          <MediaItemCell m={{ src: '/images/full CNC render.jpg', label: 'CNC image 1', hoverLabel: 'CNC rendering', imageAspect: 'h-[226px] md:h-[260px]', hoverTextColor: 'text-gray-800' }} />
-          <MediaItemCell m={{ src: '/images/full CNC physical.jpg', label: 'CNC image 2', hoverLabel: 'CNC fully assembled', imageAspect: 'h-[260px]' }} />
-          <MediaItemCell m={{ src: '/images/CNC video.mp4', label: 'CNC video', hoverLabel: 'Aron 3000 in action', fluid: true, videoAspect: 'aspect-[8/9]' }} />
+      {/* ── MPC BALANCING ROBOT ── */}
+      <div id="project-mpc" className="scroll-mt-32">
+      <Dropdown variant="inset" summaryTitle="Model Predictive Torque Control for a Balancing Robot" summaryDate="Sept 2025 – Dec 2025" tools={['Model Predictive Control', 'CasADi', 'MuJoCo', 'Python', 'Dynamics Modeling', 'Embedded (Raspberry Pi)']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'mpc' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/mpc">
+        {/* Two-column intro */}
+        <div className="flex flex-col md:flex-row gap-6 md:items-start">
+          <div className="w-full md:w-[60%] flex-shrink-0 flex flex-col sm:flex-row gap-2 items-start">
+            <HoverMediaOverlay className="flex-1 w-full" caption="Circle-steering test on the robot">
+              <MediaSlot src={'/images/MPC-twowheeledrobot.mp4'} label="MPC two-wheeled robot" videoAspect="aspect-[10/7]" fluid compact />
+            </HoverMediaOverlay>
+            <HoverMediaOverlay className="flex-1 w-full" caption="MuJoCo: perturbation recovery">
+              <MediaSlot src={'/images/Mujoco-sim-perturbation-recovery.gif'} label="MuJoCo perturbation recovery" natural compact />
+            </HoverMediaOverlay>
+          </div>
+          <div className="flex flex-col gap-3 flex-1 min-w-0">
+            <div className="flex justify-end gap-2 flex-wrap">
+              <a href="/images/C231A_project.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
+              <a href="https://www.youtube.com/watch?v=xH82VY5cUp4" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Video</a>
+            </div>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              For my graduate controls course (ME C231A) at Berkeley, I designed and simulated the controller that keeps a <span className="font-semibold">self-balancing two-wheeled robot</span> (think Segway) upright, a system that naturally wants to topple over. The controller, a Model Predictive Controller (MPC), plans the wheel torques a fraction of a second into the future, and I <span className="font-semibold">extended it to stay balanced on slopes and while steering</span>.
+            </p>
+          </div>
         </div>
+        <p className="text-sm text-gray-700 leading-relaxed">
+          I derived the dynamics, formulated the MPC in <span className="font-semibold">CasADi</span>, and validated it in <span className="font-semibold">MuJoCo</span> across balancing, drive-stop, slope, and circle-steering tests, using each scenario to study how the cost weights and horizon shape the controller's behaviour.
+        </p>
+        {/* Full-width case-study dropdowns */}
+        <Dropdown
+          variant="inset"
+          level={2}
+          summaryTitle="Running real-time MPC on a 6-state robot model"
+          trackPath="/about/projects/mpc/architecture"
+          summarySubtitle="TL;DR The full dynamics were too heavy to solve every control loop, so I stripped the model down to six states and a few simplifications that keep the controller solving in real time on a Raspberry Pi."
+          onOpenChange={onDd}
+          scrollTargetId="project-mpc"
+        >
+          <HoverMediaOverlay captionColor="text-gray-800" caption="Hardware & software architecture">
+            <MediaSlot src={'/images/hardware & code architecture.png'} label="MPC hardware and code architecture" natural compact />
+          </HoverMediaOverlay>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            I modeled the robot as a coupled <span className="font-semibold">6-state system</span>, position, pitch, heading and their rates, driven by the two wheel torques, with equation of motion M(q)q̈ = Fu − C − G. To keep it solvable in real time I deliberately <span className="font-semibold">simplified the model</span>: a constant yaw inertia, and neglecting the gyroscopic coupling and wheel inertia. <span className="font-semibold">CasADi</span> then builds the symbolic dynamics the controller solves against.
+            <br />
+            <br />
+            The MPC minimises a <span className="font-semibold">quadratic cost</span> on state error and control effort, with a <span className="font-semibold">terminal cost from the DARE</span> for stability, over a <span className="font-semibold">30-step horizon</span> at a <span className="font-semibold">65 ms sampling time (~15 Hz)</span>. Hard constraints keep the pitch, pitch rate and motor torque within the robot's physical limits, and a <span className="font-semibold">safety cutoff</span> halts all control once the pitch passes 30°.
+            <br />
+            <br />
+            As shown above, the solver runs on a <span className="font-semibold">Raspberry Pi</span> that talks over USB to the <span className="font-semibold">Balboa low-level board</span> handling the IMU, encoders and motors.
+          </p>
+          <SideBySide pic={
+            <HoverMediaOverlay captionColor="text-gray-800" caption="Optimization problem solved at each step">
+              <MediaSlot src={'/images/Optimization-problem-solved-at-every-step.png'} label="Receding-horizon optimization problem" natural compact />
+            </HoverMediaOverlay>
+          }>
+            At every control step the MPC <span className="font-semibold">re-solves this finite-horizon problem</span>: minimise the tracking and control-effort cost subject to the linearized dynamics, the measured current state, and the pitch, pitch-rate and torque limits. It then applies only the <span className="font-semibold">first optimal input</span> and repeats the whole optimization at the next step.
+          </SideBySide>
+          <SideBySide picLeft={false} pic={
+            <HoverMediaOverlay captionColor="text-gray-800" caption="Pitch trajectories vs. horizon length">
+              <MediaSlot src={'/images/Pitch-horizon-vs-trajectories.png'} label="Pitch trajectories vs horizon length" natural compact />
+            </HoverMediaOverlay>
+          }>
+            Picking the horizon was a direct <span className="font-semibold">trade-off</span>, which I studied by sweeping it against the resulting pitch trajectory. <span className="font-semibold">Short horizons</span> leave the controller too short-sighted to stabilise, so the pitch diverges and the robot falls. <span className="font-semibold">Intermediate horizons</span> recover, but slowly and with oscillation. <span className="font-semibold">Longer horizons</span> converge cleanly, with diminishing returns past a point. Together with a rise-time analysis (~20 samples within the 1.3 s rise), this settled my final choice: a <span className="font-semibold">0.065 s sampling time</span> and a <span className="font-semibold">30-step horizon</span>.
+          </SideBySide>
+          <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
+          <Bullets
+            items={[
+              'Linearizing online about the current state actually performed worse than a fixed linearization, since the simplified model breaks down when far from upright.',
+            ]}
+          />
+        </Dropdown>
+        <Dropdown
+          variant="inset"
+          level={2}
+          summaryTitle="Holding balance on slopes and cutting solve time ~64% with warm-starting"
+          trackPath="/about/projects/mpc/tests"
+          summarySubtitle="TL;DR On a slope the robot settles at a lean slightly shallower than the ground angle, and in a hard stop it stays well inside its safe pitch band."
+          onOpenChange={onDd}
+          scrollTargetId="project-mpc"
+        >
+          <div className="flex flex-col md:flex-row gap-6 md:items-start">
+            <div className="w-full md:w-[60%] flex-shrink-0 flex flex-col sm:flex-row gap-2 items-start">
+              <HoverMediaOverlay className="flex-1 w-full" captionColor="text-gray-800" caption="Stabilization across slopes">
+                <MediaSlot src={'/images/Stabilization on different slopes.png'} label="Stabilization on different slopes" natural compact />
+              </HoverMediaOverlay>
+              <HoverMediaOverlay className="flex-1 w-full" caption="MuJoCo: slope stabilization">
+                <MediaSlot src={'/images/mujoco-sim-slope-stabilization.gif'} label="MuJoCo slope stabilization" natural compact />
+              </HoverMediaOverlay>
+            </div>
+            <p className="text-sm text-gray-700 leading-relaxed flex-1 min-w-0 md:mt-8">
+              On an incline the controller has to <span className="font-semibold">hold position against gravity</span>, so I weight position and pitch rate most heavily. The robot settles at a <span className="font-semibold">lean slightly shallower than the slope itself</span> while its velocity returns to zero: to stay put, the wheels must hold an uphill torque that cancels the downhill pull of gravity, which requires leaning a touch further uphill than the ground angle. This settling is <span className="font-semibold">clean and consistent across 5°, 10° and 15° slopes</span>.
+            </p>
+          </div>
+          <div className="flex flex-col md:flex-row gap-6 md:items-start mt-3">
+            <p className="text-sm text-gray-700 leading-relaxed flex-1 min-w-0 md:mt-8">
+              In the drive-stop test the robot drives forward, then halts and re-balances. Here <span className="font-semibold">position and velocity dominate the weights</span>, with pitch kept moderate for lean compensation. The pitch stays comfortably inside the <span className="font-semibold">±10° safe zone</span> throughout, and the prediction tracks the response well while the motion is gradual. The <span className="font-semibold">brief wobble at the driving-to-stopping switch</span> (~5 s) is expected: the MPC cannot anticipate a discrete mode change and has to react to it after the fact.
+            </p>
+            <div className="w-full md:w-[60%] flex-shrink-0 flex flex-col sm:flex-row gap-2 items-start order-first md:order-last">
+              <HoverMediaOverlay className="flex-1 w-full" captionColor="text-gray-800" caption="Drive-stop pitch tracking">
+                <MediaSlot src={'/images/Drive stop test.png'} label="Drive-stop test" natural compact />
+              </HoverMediaOverlay>
+              <HoverMediaOverlay className="flex-1 w-full" caption="MuJoCo: drive-stop test">
+                <MediaSlot src={'/images/mujoco-sim-drive-stop-test.gif'} label="MuJoCo drive-stop test" natural compact />
+              </HoverMediaOverlay>
+            </div>
+          </div>
+          <SideBySide pic={
+            <HoverMediaOverlay captionColor="text-gray-800" caption="Cold vs warm-start solve times" captionClassName="absolute bottom-3 left-0 right-0 p-3 translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+              <MediaSlot src={'/images/warm start analysis.png'} label="Warm start solve-time analysis" natural compact />
+            </HoverMediaOverlay>
+          }>
+            Because this controller is meant for a real-time system, the worst-case solve time matters as much as the average. I warm-start each solve by seeding it with the previous step's shifted solution instead of starting from scratch. As the histogram shows, this <span className="font-semibold">cut the worst-case solve time by ~64%</span> and the 99th-percentile by ~20%, keeping every iteration comfortably inside the control loop's time budget.
+          </SideBySide>
+          <p className="text-sm font-semibold text-gray-800 mt-2">Point of improvement:</p>
+          <Bullets
+            items={[
+              'Circle steering never reached a steady turn despite valid open-loop torque commands, most likely a model-simulation mismatch (unmodeled wheel slip, friction coupling, neglected pitch-yaw cross terms). Modeling those effects to close the gap is the main piece of future work.',
+            ]}
+          />
+        </Dropdown>
+        <ProjectImprovements
+          items={[
+            'On real hardware, an observer such as a Kalman filter is needed for trustworthy state estimates; tuning the MPC has limited value without it.',
+            'Validation is in simulation and open-loop on the robot; closing the loop on the physical hardware, with proper state estimation, is the main remaining step.',
+          ]}
+        />
       </Dropdown>
       </div>
 
@@ -757,6 +984,7 @@ const honourItems = [
     title: 'SproutUp: An Assistive Standing Device',
     squareImages: true,
     mediaLayout: 'text-above',
+    tools: ['Mechatronics', 'Wearables', 'Sensing & Control', 'Prototyping'],
     description: 'An early proof of concept prototype of a wearable assistive seat that senses sit-to-stand motion and provides adaptive force assistance. A bit on the bulky side, because our budget had strong opinions.',
     media: [
       { src: '/images/Sprout-up-wearing.jpg', label: 'wearing sproutup', hoverLabel: 'Wearing SproutUp', imageAspect: 'aspect-[20/19]' },
@@ -772,9 +1000,10 @@ const honourItems = [
     date: 'Nov 2022 – Jan 2023',
     title: 'Phase Change Materials Based Cooling in Solar Panels',
     mediaLayout: 'text-above',
+    tools: ['Python', 'Thermal Modeling', 'Simulation', 'Solar / PV'],
     description: 'Built a Python model of a solar panel system with phase-change material cooling to analyze efficiency trends under varying environmental conditions.',
     media: [
-      { src: '/images/PCM-results.png', label: 'PCM results', hoverLabel: 'PV cell efficiency simulation results', imageAspect: 'aspect-[10/4.8]', hoverTextColor: 'text-gray-800', outerClassName: 'w-full md:w-[70%] flex-shrink-0' },
+      { src: '/images/PCM-results.png', label: 'PCM results', hoverLabel: 'PV cell efficiency simulation results', hoverPosition: 'top', imageAspect: 'aspect-[10/4.8]', hoverTextColor: 'text-gray-800', outerClassName: 'w-full md:w-[70%] flex-shrink-0' },
       { src: '/images/PCM-schema.png', label: 'PCM schema', hoverLabel: 'PCM-PV cell interactions', natural: true, hoverTextColor: 'text-gray-800', outerClassName: 'w-full md:w-[30%] flex-shrink-0' },
     ],
     links: [{ label: 'Paper', href: '/images/PCM_FINALREPORT.pdf' }],
@@ -791,6 +1020,7 @@ function MediaItemCell({ m, squareImages, outerClassName = 'flex-1 min-w-0' }) {
         <HoverMediaOverlay
           caption={m.hoverLabel}
           captionColor={m.hoverTextColor || 'text-white'}
+          position={m.hoverPosition === 'top' ? 'top' : 'bottom'}
           align={m.hoverAlign === 'right' ? 'right' : 'left'}
         >
           {media}
@@ -809,7 +1039,7 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/luci">
+      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="May 2026 – Present" tools={['CAD', '3D Printing', 'Robotics', 'Systems Integration', 'Technical Documentation']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/luci">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <HoverMediaOverlay caption="Full vehicle CAD">
@@ -851,9 +1081,9 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
         <Dropdown
           variant="inset"
           level={2}
-          summaryTitle="An insight into how I start new projects"
+          summaryTitle="Rebuilding the rover from scratch to surface every pain point"
           trackPath="/about/projects/luci/process"
-          summarySubtitle="TL;DR: I interviewed prior users, rebuilt my own robot from scratch to identify pain points firsthand, and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
+          summarySubtitle="TL;DR: I interviewed prior users, then captured every complication firsthand and turned those findings into an assembly guide, wiring diagram, and updated BOM to improve remote collaboration."
           onOpenChange={onDd}
           scrollTargetId="project-luci"
         >
@@ -864,13 +1094,13 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
             </HoverMediaOverlay>
             </div>
           }>
-            I began by interviewing everyone who had worked with the robot to understand recurring pain points, failure modes, and workflow bottlenecks. To really understand these issues, I rebuilt the rover from scratch and documented every complication, assembly dependency, and time-consuming step along the way.
+            I began by <span className="font-semibold">interviewing everyone who had worked with the robot</span> to surface recurring pain points, failure modes, and workflow bottlenecks. Then I <span className="font-semibold">rebuilt the rover from scratch</span>, documenting every complication, assembly dependency, and time-consuming step along the way.
           </SideBySide>
           <div className="flex flex-col md:flex-row gap-4 md:items-start">
             <p className="text-sm text-gray-700 leading-relaxed md:mt-8">
-              That process led me to create a detailed assembly guide and a cleaned-up wiring diagram to improve build repeatability, simplify component replacement, and support clearer communication with the NIWC collaborators at a distance.
+              That led me to create a detailed <span className="font-semibold">assembly guide</span> and cleaned-up <span className="font-semibold">wiring diagram</span>, documenting every step so the build is repeatable, components are easy to replace, and NIWC collaborators can follow along remotely.
               <br />
-              <br /> Before making design changes, I always focus on understanding a project's constraints, goals, and system-level issues. This reflects my documentation discipline, attention to detail, and user-centered engineering approach.
+              <br /> Before touching the design, I work to fully understand a project's users, constraints, and system-level issues, the kind of <span className="font-semibold">detail-oriented, user-centered</span> groundwork that ensures later changes solve the right problems.
             </p>
             <div className="w-full md:w-[55%] flex-shrink-0">
               <AssemblyGuide />
@@ -881,10 +1111,10 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
               <MediaSlot src={'/images/simple-mount-render-2.png'} label="simple mount" compact imageAspect="aspect-[4/3] h-auto md:aspect-auto md:h-[208px]" />
             </HoverMediaOverlay>
           }>
-            Doing all of this was the best way to get up to speed quickly. I now feel confident I have enough context to start the fun part!
+            Doing all of this was the fastest way to get up to speed, and I now have the context to start making meaningful design changes.
             <br />
             <br />
-            First solve: I designed a simple mount for the camera improving stability and crash resilience, and am working on including damping and an automated pan/tilt mechanism.
+            First improvement: I designed a <span className="font-semibold">simple camera mount</span> for better stability and crash resilience, and am now adding <span className="font-semibold">damping</span> and an <span className="font-semibold">automated pan/tilt mechanism</span>.
           </SideBySide>
         </Dropdown>
       </Dropdown>
@@ -892,117 +1122,20 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
 
       <p className="text-lg font-bold text-gray-800 mb-2 mt-6">Honorable mentions:</p>
 
-      {/* ── MPC BALANCING ROBOT ── */}
-      <div id="project-mpc">
-      <Dropdown variant="inset" summaryTitle="Model Predictive Torque Control for a Balancing Robot" summaryDate="Sept 2025 – Dec 2025" onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'mpc' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/mpc">
-        {/* Two-column intro */}
-        <div className="flex flex-col md:flex-row gap-6 md:items-start">
-          <div className="w-full md:w-[60%] flex-shrink-0 flex flex-col sm:flex-row gap-2 items-start">
-            <HoverMediaOverlay className="flex-1 w-full" caption="Circle steering control on robot">
-              <MediaSlot src={'/images/MPC-twowheeledrobot.mp4'} label="MPC two-wheeled robot" videoAspect="aspect-[10/7]" fluid compact />
-            </HoverMediaOverlay>
-            <HoverMediaOverlay className="flex-1 w-full" caption="MuJoCo: perturbation recovery">
-              <MediaSlot src={'/images/Mujoco-sim-perturbation-recovery.gif'} label="MuJoCo perturbation recovery" natural compact />
-            </HoverMediaOverlay>
-          </div>
-          <div className="flex flex-col gap-3 flex-1 min-w-0">
-            <div className="flex justify-end gap-2 flex-wrap">
-              <a href="/images/C231A_project.pdf" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Paper</a>
-              <a href="https://www.youtube.com/watch?v=xH82VY5cUp4" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="text-xs text-gray-800 bg-white/60 hover:bg-white/90 ring-1 ring-black/10 shadow-sm hover:shadow font-semibold px-3.5 py-1 rounded-full transition-all">Video</a>
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed">
-              For my graduate controls course (ME C231A) at Berkeley, I designed and simulated a Model Predictive Control (MPC) torque controller for a <span className="font-semibold">two-wheeled inverted-pendulum robot</span>, an inherently unstable, nonlinear system, and <span className="font-semibold">extended it to handle inclined slopes and yaw steering</span>.
-            </p>
-          </div>
-        </div>
+      {/* ── CNC ── */}
+      <div id="project-cnc">
+      <Dropdown variant="inset" summaryTitle="Sophomore Project: Building a CNC Machine" summaryDate="Sept 2022 – Nov 2022" tools={['Mechanical Design', 'Motion Systems', 'Vibration Damping', 'Tolerancing', 'Fabrication']} onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/cnc">
         <p className="text-sm text-gray-700 leading-relaxed">
-          I derived the dynamics, formulated the MPC in <span className="font-semibold">CasADi</span>, and validated it in <span className="font-semibold">MuJoCo</span> across balancing, drive-stop, slope, and circle-steering tests, using each scenario to study how the cost weights and horizon shape the controller's behaviour.
+          In a team of 5, we designed and built a fully custom CNC machine from scratch on an <span className="font-semibold">H-bot single-belt architecture</span>. We sharpened motion quality two ways: a modular pre-tensioning system that sets gantry belt tension by repositioning structural mounts, and vibration damping that adds mass to the aluminium frame to push resonant frequencies clear of the operating range. The Z-axis pairs a lead screw with dual guide bars for vertical stiffness and positioning accuracy.
+          <br />
+          <br />
+          In practice it held roughly <span className="font-semibold">±0.25 mm</span> general XY accuracy, tightening to <span className="font-semibold">~±0.13 mm</span> on critical features, with strong repeatability on well-calibrated moves.
         </p>
-        {/* Full-width case-study dropdowns */}
-        <Dropdown
-          variant="inset"
-          level={2}
-          summaryTitle="An insight into the model and control architecture"
-          trackPath="/about/projects/mpc/architecture"
-          summarySubtitle="TL;DR I reduced the robot to a 6-state model and ran a constrained MPC on a Raspberry Pi sitting above the robot's low-level board."
-          onOpenChange={onDd}
-          scrollTargetId="project-mpc"
-        >
-          <HoverMediaOverlay captionColor="text-gray-800" caption="Hardware & software architecture">
-            <MediaSlot src={'/images/hardware & code architecture.png'} label="MPC hardware and code architecture" natural compact />
-          </HoverMediaOverlay>
-          <p className="text-sm text-gray-700 leading-relaxed">
-            I modeled the robot as a coupled 6-state system, position, pitch, heading and their rates, driven by the two wheel torques, with equation of motion M(q)q̈ = Fu − C − G. To keep it solvable in real time I deliberately simplified the model: a constant yaw inertia, and neglecting the gyroscopic coupling and wheel inertia. CasADi then builds the symbolic dynamics the controller solves against.
-            <br />
-            <br />
-            The MPC minimises a quadratic cost on state error and control effort, with a terminal cost from the DARE for stability, over a 30-step horizon at a 65 ms sampling time (~15 Hz). Hard constraints keep the pitch, pitch rate and motor torque within the robot's physical limits, and a safety cutoff halts all control once the pitch passes 30°. As shown above, the solver runs on a Raspberry Pi that talks over USB to the Balboa low-level board handling the IMU, encoders and motors.
-          </p>
-          <SideBySide pic={
-            <HoverMediaOverlay captionColor="text-gray-800" caption="Optimization problem solved at each step">
-              <MediaSlot src={'/images/Optimization-problem-solved-at-every-step.png'} label="Receding-horizon optimization problem" natural compact />
-            </HoverMediaOverlay>
-          }>
-            At every control step the MPC re-solves this finite-horizon problem: minimise the tracking and control-effort cost subject to the linearized dynamics, the measured current state, and the pitch, pitch-rate and torque limits. It then applies only the first optimal input and repeats the whole optimization at the next step.
-          </SideBySide>
-          <SideBySide picLeft={false} pic={
-            <HoverMediaOverlay captionColor="text-gray-800" caption="Pitch trajectories vs. horizon length">
-              <MediaSlot src={'/images/Pitch-horizon-vs-trajectories.png'} label="Pitch trajectories vs horizon length" natural compact />
-            </HoverMediaOverlay>
-          }>
-            Picking the horizon was a direct trade-off, which I studied by sweeping it against the resulting pitch trajectory. Short horizons leave the controller too short-sighted to stabilise, so the pitch diverges and the robot falls. Intermediate horizons recover, but slowly and with oscillation. Longer horizons converge cleanly, with diminishing returns past a point. Together with a rise-time analysis (~20 samples within the 1.3 s rise), this settled my final choice: a 0.065 s sampling time and a 30-step horizon.
-          </SideBySide>
-        </Dropdown>
-        <Dropdown
-          variant="inset"
-          level={2}
-          summaryTitle="An insight into balancing on slopes and stopping"
-          trackPath="/about/projects/mpc/tests"
-          summarySubtitle="TL;DR On a slope the robot settles at a lean slightly shallower than the ground angle, in a drive-stop it stays well inside its safe pitch band, and warm-starting each solve cut the worst-case solve time by roughly two-thirds."
-          onOpenChange={onDd}
-          scrollTargetId="project-mpc"
-        >
-          <div className="flex flex-col md:flex-row gap-6 md:items-start">
-            <div className="w-full md:w-[60%] flex-shrink-0 flex flex-col sm:flex-row gap-2 items-start">
-              <HoverMediaOverlay className="flex-1 w-full" captionColor="text-gray-800" caption="Stabilization across slopes">
-                <MediaSlot src={'/images/Stabilization on different slopes.png'} label="Stabilization on different slopes" natural compact />
-              </HoverMediaOverlay>
-              <HoverMediaOverlay className="flex-1 w-full" caption="MuJoCo: slope stabilization">
-                <MediaSlot src={'/images/mujoco-sim-slope-stabilization.gif'} label="MuJoCo slope stabilization" natural compact />
-              </HoverMediaOverlay>
-            </div>
-            <p className="text-sm text-gray-700 leading-relaxed flex-1 min-w-0 md:mt-8">
-              On an incline the controller has to hold position against gravity, so I weight position and pitch rate most heavily. The robot settles at a lean slightly shallower than the slope itself while its velocity returns to zero: to stay put, the wheels must hold an uphill torque that cancels the downhill pull of gravity, which requires leaning a touch further uphill than the ground angle. This settling is clean and consistent across 5°, 10° and 15° slopes.
-            </p>
-          </div>
-          <div className="flex flex-col md:flex-row gap-6 md:items-start mt-3">
-            <p className="text-sm text-gray-700 leading-relaxed flex-1 min-w-0 md:mt-8">
-              In the drive-stop test the robot drives forward, then halts and re-balances. Here position and velocity dominate the weights, with pitch kept moderate for lean compensation. The pitch stays comfortably inside the ±10° safe zone throughout, and the prediction tracks the response well while the motion is gradual. The brief wobble at the driving-to-stopping switch (~5 s) is expected: the MPC cannot anticipate a discrete mode change and has to react to it after the fact.
-            </p>
-            <div className="w-full md:w-[60%] flex-shrink-0 flex flex-col sm:flex-row gap-2 items-start order-first md:order-last">
-              <HoverMediaOverlay className="flex-1 w-full" captionColor="text-gray-800" caption="Drive-stop pitch tracking">
-                <MediaSlot src={'/images/Drive stop test.png'} label="Drive-stop test" natural compact />
-              </HoverMediaOverlay>
-              <HoverMediaOverlay className="flex-1 w-full" caption="MuJoCo: drive-stop test">
-                <MediaSlot src={'/images/mujoco-sim-drive-stop-test.gif'} label="MuJoCo drive-stop test" natural compact />
-              </HoverMediaOverlay>
-            </div>
-          </div>
-          <SideBySide pic={
-            <HoverMediaOverlay captionColor="text-gray-800" caption="Cold vs warm-start solve times">
-              <MediaSlot src={'/images/warm start analysis.png'} label="Warm start solve-time analysis" natural compact />
-            </HoverMediaOverlay>
-          }>
-            Because this controller is meant for a real-time system, the worst-case solve time matters as much as the average. I warm-start each solve by seeding it with the previous step's shifted solution instead of starting from scratch. As the histogram shows, this <span className="font-semibold">cut the worst-case solve time by ~64%</span> and the 99th-percentile by ~20%, keeping every iteration comfortably inside the control loop's time budget.
-          </SideBySide>
-        </Dropdown>
-        <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
-        <Bullets
-          items={[
-            'Circle steering never reached a steady turn despite valid open-loop torque commands, most likely a model–simulation mismatch (unmodeled wheel slip, friction coupling, neglected pitch–yaw cross terms). This stayed unresolved.',
-            'Linearizing online about the current state actually performed worse than a fixed linearization, since the simplified model breaks down when far from upright.',
-            'On real hardware, an observer such as a Kalman filter is needed for trustworthy state estimates; tuning the MPC has limited value without it.',
-          ]}
-        />
+        <div className="flex flex-col md:flex-row gap-2">
+          <MediaItemCell m={{ src: '/images/full CNC render.jpg', label: 'CNC image 1', hoverLabel: 'CNC rendering', hoverPosition: 'top', imageAspect: 'h-[226px] md:h-[260px]', hoverTextColor: 'text-gray-800' }} />
+          <MediaItemCell m={{ src: '/images/full CNC physical.jpg', label: 'CNC image 2', hoverLabel: 'CNC fully assembled', imageAspect: 'h-[260px]' }} />
+          <MediaItemCell m={{ src: '/images/CNC video.mp4', label: 'CNC video', hoverLabel: 'The "Aron 3000" (our machine’s nickname) in action', fluid: true, videoAspect: 'aspect-[8/9]' }} />
+        </div>
       </Dropdown>
       </div>
 
@@ -1011,6 +1144,7 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
           key={item.id}
           summaryTitle={item.title}
           summaryDate={item.date}
+          tools={item.tools}
           onOpenChange={onDd}
           scrollTargetId="projects"
           closeSignal={closeSignal}
@@ -1136,8 +1270,8 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
 
   useEffect(() => {
     if (!jumpToProject?.count) return;
-    // LUCI now lives on the Honours slide; everything else on the Projects slide.
-    const targetSlideId = jumpToProject.key === 'luci' ? 'honours' : 'projects';
+    // LUCI and CNC live on the Honours slide; everything else on the Projects slide.
+    const targetSlideId = jumpToProject.key === 'luci' || jumpToProject.key === 'cnc' ? 'honours' : 'projects';
     const targetIdx = slides.findIndex(s => s.id === targetSlideId);
     setCurrentIndex(targetIdx >= 0 ? targetIdx : 0);
     if (jumpToProject.key) {
@@ -1174,7 +1308,7 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
         <T>project portfolio</T>
       </h2>
 
-      <div className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl overflow-hidden">
+      <div id="project-carousel" className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl overflow-hidden">
         {/* Nav bar */}
         <div className="flex items-center justify-between px-4 py-2">
           <button

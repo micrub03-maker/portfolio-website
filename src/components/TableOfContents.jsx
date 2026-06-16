@@ -70,24 +70,20 @@ const TableOfContents = ({ isWidget = false, onSectionNavigate }) => {
 
   const scrollToSection = (sectionId) => {
     if (sectionId === 'projects') {
-      // Scroll first with no concurrent state changes — firing the close signal
-      // simultaneously would trigger dropdown exit animations whose scroll-
-      // anchoring compensation cancels the smooth scroll. Instead, fire
-      // onSectionNavigate (which closes dropdowns) only after the scroll ends.
-      const element = document.getElementById(sectionId);
-      if (element) {
-        const y = element.getBoundingClientRect().top + window.pageYOffset + 30;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-        let notified = false;
-        const notify = () => {
-          if (notified) return;
-          notified = true;
-          window.removeEventListener('scrollend', notify);
-          onSectionNavigate?.('projects');
-        };
-        window.addEventListener('scrollend', notify, { once: true });
-        setTimeout(notify, 500); // Fix: Issue #13 — shorter fallback for browsers without 'scrollend'
-      }
+      // Close any open dropdowns first, then — once the collapse has settled —
+      // anchor the projects carousel with its bottom at the viewport bottom, so
+      // the whole projects widget ends at the bottom of the screen. Scrolling
+      // after the animation (rather than during) avoids the dropdown exit
+      // scroll-anchoring compensation cancelling the smooth scroll.
+      onSectionNavigate?.('projects');
+      setTimeout(() => {
+        const el = document.getElementById('project-carousel') || document.getElementById('projects');
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          const y = rect.bottom + window.pageYOffset - window.innerHeight + 24;
+          window.scrollTo({ top: Math.max(y, 0), behavior: 'smooth' });
+        }
+      }, 350);
       return;
     }
     onSectionNavigate?.(sectionId);

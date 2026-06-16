@@ -3,38 +3,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const slides = [
   {
-    title: " Mechanical/Control Engineer @ MPC Lab",
-    description:
-      "Contracted with UC Berkeley's MPC Lab to develop an all-terrain autonomous surveillance rover for NIWC Pacific",
-    src: "/images/ONR-LUCI.mp4",
-    projectKey: "luci",
-    link: "https://sites.google.com/berkeley.edu/mpc-lab/home",
-    cta: "Visit Lab Website",
-  },
-  {
-    title: "Driver Safety Lead @ CALSOL",
+    title: "Driver Safety Lead @ CalSol",
     description:
       "Designing, manufacturing and testing chassis parts for our gen XI solar car competing in the World Solar Challenge",
     src: "/images/calsolcar.png",
     projectKey: "calsol",
+    skills: ["SolidWorks", "FEA", "Topology Optimization"],
     link: "https://calsol.berkeley.edu/",
     cta: "Visit Team Site",
   },
   {
-    title: "Optics lead @ Axiris",
+    title: "Optics Lead @ Axiris",
     description:
       "Enabling accessible vision screening through low-cost handheld autorefraction for resource-constrained settings",
     src: "/images/Axiris-logo.png",
     projectKey: "axiris",
+    skills: ["Optical Design", "Python", "Product Design"],
   },
   {
-    title: "Design Engineer @ AdLap lab",
+    title: "Design Engineer @ AdLap Lab",
     description:
       "Developing a compact, detachable light module delivering visible and infrared illumination for a robotic surgery system",
     src: "/images/adlap-licht-in-buik.jpg",
     // Subject (light module + robotic arm) sits on the left; crop from the right.
     objectPosition: "left",
     projectKey: "adlap",
+    skills: ["Thermal Design", "Mechanism Design", "Medical Devices"],
+  },
+  {
+    title: "Mechanical/Controls Engineer @ MPC Lab",
+    description:
+      "Contracted with UC Berkeley's MPC Lab to develop an all-terrain autonomous surveillance rover for NIWC Pacific",
+    src: "/images/ONR-LUCI.mp4",
+    projectKey: "luci",
+    skills: ["CAD", "Robotics", "Systems Integration"],
+    link: "https://sites.google.com/berkeley.edu/mpc-lab/home",
+    cta: "Visit Lab Website",
   },
 ];
 
@@ -200,6 +204,18 @@ export default function ProjectOverview({ onProjectClick, onNavigate }) {
             transition={{ duration: 0.3 }}
           >
             <div className="w-full">
+              {active.skills && (
+                <div className="flex flex-wrap gap-1 mb-1.5">
+                  {active.skills.map((s) => (
+                    <span
+                      key={s}
+                      className="text-[9px] uppercase tracking-wide text-white/90 bg-white/15 ring-1 ring-white/25 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap"
+                    >
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-white/80 text-xs leading-relaxed">{active.description}</p>
               {active.link && (
                 <div className="hidden md:flex md:justify-end md:mt-1.5">
