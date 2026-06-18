@@ -548,10 +548,10 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               />
             </HoverMediaOverlay>
           }>
-            <span className="font-semibold">Hundreds of millions of people</span> live with avoidable vision loss. We started with a simple question: why?
+            <span className="font-semibold">Hundreds of millions of people</span> live with avoidable vision loss. I started with a simple question: why?
             <br />
             <br />
-            Through interviews with ophthalmologists, NGO screeners, and engineers, we realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate <span className="font-semibold">50+ concepts</span> to approach this problem at its root.
+            Through interviews with ophthalmologists, NGO screeners, and engineers, I realized this gap in care comes from current solutions being expensive and requiring clinics, power, and trained staff. This realization led us to ideate <span className="font-semibold">50+ concepts</span> to approach this problem at its root.
           </SideBySide>
           <SideBySide picLeft={false} pic={
             <HoverMediaOverlay captionColor="text-gray-600" caption={<>Optical<br />Path</>}>
@@ -563,7 +563,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               />
             </HoverMediaOverlay>
           }>
-            Using a <span className="font-semibold">Pugh chart</span> and expert feedback, we landed on a <span className="font-semibold">handheld concept based on dual pinholes</span>: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
+            Using a <span className="font-semibold">Pugh chart</span> and expert feedback, I landed on a <span className="font-semibold">handheld concept based on dual pinholes</span>: two NIR beams pass through the eye, and their spot separation encodes refractive error that we back-calculate to diopters.
             <br />
             <br />
             I then started speccing the optical design step by step: selecting an <span className="font-semibold">850 nm source</span> to maximize retinal reflectance, folding the path with <span className="font-semibold">collimating optics</span> to keep the device handheld and minimize signal loss through the optical path.
@@ -598,7 +598,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             Without a proper optics lab, I designed a <span className="font-semibold">modular model eye</span> with an <span className="font-semibold">interchangeable lens</span> and several "retina" slots where a mirror can slide in at known positions, each corresponding to a <span className="font-semibold">ground-truth refractive state</span>. This allowed us to tune the image-processing pipeline and guide mechanical changes.
             <br />
             <br />
-            We kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment.
+            I kept the Axiris housing compatible with both the model eye and a medical-grade eyecup, so we can swap between bench calibration and real-eye measurements in seconds without disturbing the internal alignment.
           </SideBySide>
           <SideBySide picLeft={false} pic={
             <HoverMediaOverlay captionColor="text-white" caption="Image Processing">
@@ -731,7 +731,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
-              'We kept the existing silicone formulation of the suction cup; exploring alternative materials could improve yield and durability.',
+              'I kept the existing silicone formulation of the suction cup; exploring alternative materials could improve yield and durability.',
             ]}
           />
         </Dropdown>
@@ -779,7 +779,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
             Only one source can face the fibre inlet at a time, so I had a servo based mechanism that rotates the LEDs in place to swap them. To automate it I adapted a <span className="font-semibold">rotational pick-and-place mechanism</span> driven by a single servo, switching sources in about <span className="font-semibold">0.8 seconds</span> mid-operation.
           </SideBySide>
           <SideBySide picWidth="w-1/2" picLeft={true} pic={
-            <HoverMediaOverlay captionColor="text-gray-800" position="top" caption="Ray-tracing and bench tests comparing connector shapes for light coupling into the endoscope" captionClassName="absolute top-0 left-1/3 right-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
+            <HoverMediaOverlay captionColor="text-gray-800" position="top" caption="Bench tests comparing connector shapes for light coupling into the endoscope" captionClassName="absolute top-0 left-1/3 right-0 p-3 -translate-y-1 group-hover:translate-y-0 transition-transform duration-300">
               <MediaSlot src={'/images/AdLap-light-testing.png'} label="connector light-coupling testing" compact natural />
             </HoverMediaOverlay>
           }>
@@ -1126,7 +1126,7 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
       <div id="project-cnc">
       <Dropdown variant="inset" summaryTitle="Sophomore Project: Building a CNC Machine" summaryDate="Sept 2022 – Nov 2022" tools={['Mechanical Design', 'Motion Systems', 'Vibration Damping', 'Tolerancing', 'Fabrication']} onOpenChange={onDd} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/cnc">
         <p className="text-sm text-gray-700 leading-relaxed">
-          In a team of 5, we designed and built a fully custom CNC machine from scratch on an <span className="font-semibold">H-bot single-belt architecture</span>. We sharpened motion quality two ways: a modular pre-tensioning system that sets gantry belt tension by repositioning structural mounts, and vibration damping that adds mass to the aluminium frame to push resonant frequencies clear of the operating range. The Z-axis pairs a lead screw with dual guide bars for vertical stiffness and positioning accuracy.
+          I designed and built a fully custom CNC machine from scratch on an <span className="font-semibold">H-bot single-belt architecture</span>. I sharpened motion quality two ways: a modular pre-tensioning system that sets gantry belt tension by repositioning structural mounts, and vibration damping that adds mass to the aluminium frame to push resonant frequencies clear of the operating range. The Z-axis pairs a lead screw with dual guide bars for vertical stiffness and positioning accuracy.
           <br />
           <br />
           In practice it held roughly <span className="font-semibold">±0.25 mm</span> general XY accuracy, tightening to <span className="font-semibold">~±0.13 mm</span> on critical features, with strong repeatability on well-calibrated moves.
@@ -1286,9 +1286,6 @@ export default function ProjectPortfolio({ initialSlideId, jumpToProject, closeA
     setCloseSignal((s) => s + 1);
   }, [closeAllSignal]);
 
-  // Report viewing the Honours slide as a virtual pageview. The Projects slide
-  // is already covered by the /about/projects section view (App.jsx), so we only
-  // need the second carousel slide here.
   useEffect(() => {
     if (slides[currentIndex].id === 'honours') trackPageview('/about/projects/honours');
   }, [currentIndex]);
