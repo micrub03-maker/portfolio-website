@@ -52,10 +52,7 @@ const mainEntries = [
       'Taught and supervised lessons for children ages 3–12 while training for and achieving CSIA Level 2 certification',
     ],
   },
-];
-
-const moreEntries = [
-    {
+  {
     key: 'cern',
     logoLabel: 'CERN logo',
     logoSrc: '/images/CERN_logo.png',
@@ -67,6 +64,8 @@ const moreEntries = [
       'Part of the Honours program at TU Delft',
     ],
   },
+];
+const moreEntries = [
   {
     key: 'lde',
     logoLabel: 'LDE logo',
