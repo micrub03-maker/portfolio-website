@@ -488,6 +488,16 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
               />
             </div>
           </HoverMediaOverlay>
+          <SideBySide picWidth="w-[45%]" picLeft={false} pic={
+            <HoverMediaOverlay position="top" caption="Finished machined inserts from the vendor">
+              <MediaSlot src={'/images/CalSol-finished-inserts.jpg'} label="finished inserts" compact imageAspect="aspect-[10/9] h-auto md:aspect-auto md:h-[288px]" />
+            </HoverMediaOverlay>
+          }>
+            I also took the part through manufacturing. After locking the design, I <span className="font-semibold">handled vendor sourcing</span> and found a machine shop that could hold the tolerances on the multi-axis geometry.
+            <br />
+            <br />
+            I put together the <span className="font-semibold">drawing package</span>, with GD&amp;T, material spec, and finish, sent it over, and received the finished inserts ready to bond into the cell.
+          </SideBySide>
           <p className="text-sm font-semibold text-gray-800 mt-2">Points of improvement:</p>
           <Bullets
             items={[
