@@ -28,7 +28,7 @@ const mainEntries = [
     bullets: [
       'Led seatbelt system design to meet ASC and World Solar Challenge safety regulations',
       'Reduced lap belt-mount weight by 15% while validating crash-load performance (FOS 1.6)',
-      'Topology optimized shoulder anchor designed for efficient in-house manufacturing',
+      'Topology optimized shoulder anchor designed for efficient in-house manufacturing and 40% weight reduction',
     ],
   },
   {

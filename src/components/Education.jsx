@@ -14,6 +14,29 @@ const entries = [
       'UC Berkeley Solar Vehicle Team',
       'Balanced leadership and entrepreneurship courses with advanced technical electives, expertise that was directly applied in a year-long Capstone project',
     ],
+    courseGroups: [
+      {
+        label: 'Technical',
+        courses: [
+          'Advanced Design for the Human Body',
+          'Product Development',
+          'Robotic Locomotion',
+          'Experiential Advanced Control (MPC)',
+          'Dynamics & Control of Unmanned Aerial Vehicles',
+        ],
+      },
+      {
+        label: 'Business and leadership',
+        courses: [
+          'Deep Tech Commercialization',
+          'Impact Startup Disco',
+          'R&D Technology & Ethics Management',
+          'Technology Strategy for Engineering Leaders',
+          'Communication for Engineering Leaders',
+          'Product Management for Engineering Leaders',
+        ],
+      },
+    ],
   },
   {
     key: 'tudelft',
@@ -26,6 +49,33 @@ const entries = [
       'Selected for Honours Program; completed 20 additional credits in nominal graduation time',
       'Drop Delft Boardsports Association',
       'Gained a strong design background, through several hands on projects and a broad technical program',
+      'Exchange semester at Norwegian University of Science and Technology (NTNU) -- GPA 3.825/4',
+    ],
+    courseGroups: [
+      {
+        label: 'Engineering',
+        courses: [
+          'Solid, Continuum & Structural Mechanics',
+          'Rigid Body Dynamics',
+          'Process Engineering',
+          'Materials',
+          'Heat Transfer',
+          'Fluid Mechanics',
+          'Integrated Mechanical Systems',
+          'Control Systems Engineering',
+          'Signal Analysis',
+        ],
+      },
+       {
+        label: 'Mathemathics',
+        courses: [
+          'Linear Algebra 1+2',
+          'Calculus  1+2+3',
+          'Differential Equations',
+          'Probability & Statistics',
+          'Numerical Methods & Analysis',
+        ],
+      },
     ],
   },
   {
@@ -71,10 +121,11 @@ export default function Education() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: i * 0.08 }}
-            className="flex flex-col sm:flex-row gap-4 rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-4 md:p-6 hover:shadow-2xl transition-shadow"
+            className="rounded-2xl bg-white/70 backdrop-blur-md ring-1 ring-black/5 shadow-xl p-4 md:p-6 hover:shadow-2xl transition-shadow"
           >
-            {/* Logo */}
-            <div className="flex-shrink-0 flex items-start justify-center sm:justify-start">
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Logo */}
+              <div className="flex-shrink-0 flex items-start justify-center sm:justify-start">
               {/* Fix: Issue #49 — smaller logos on mobile portrait */}
               <div className={`w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden flex items-center justify-center ${entry.logoPad ?? 'p-2'} ${entry.noWidget ? '' : 'bg-white border border-gray-100 shadow-sm'}`}>
                 {entry.logoSrc
@@ -82,10 +133,10 @@ export default function Education() {
                   : <span className="text-gray-300 text-xs font-mono text-center leading-tight">{entry.logoLabel}</span>
                 }
               </div>
-            </div>
+              </div>
 
-            {/* Text content */}
-            <div className="flex-1 min-w-0">
+              {/* Text content */}
+              <div className="flex-1 min-w-0">
               <p className="font-semibold text-gray-800 text-sm md:text-base leading-snug text-center sm:text-left">
                 {entry.title}
               </p>
@@ -112,7 +163,27 @@ export default function Education() {
                   </li>
                 </ul>
               )}
+
+              </div>
             </div>
+
+            {entry.courseGroups && (
+              <div className="mt-4 space-y-2 border-t border-black/10 pt-3">
+                <p className="text-sm font-semibold text-gray-800">
+                  Courses taken
+                </p>
+                {entry.courseGroups.map((group) => (
+                  <div key={group.label} className="text-sm text-gray-800">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      {group.label}
+                    </p>
+                    <p className="mt-0.5 leading-relaxed">
+                      {group.courses.join(', ')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         ))}
       </div>
