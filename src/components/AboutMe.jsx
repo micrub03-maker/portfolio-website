@@ -29,7 +29,7 @@ export default function AboutMe() {
               I'm a mechanical engineer trained at TU Delft and UC Berkeley who builds hardware that works in the real world, with projects ranging from a low-cost autorefractor to a CNC machine I designed and built end to end.
             </p>
             <p>
-              I work best at the intersection of mechanical design and controls, taking systems from analysis to functional hardware under tight timelines.
+              I work best at the intersection of mechanical design and validation, taking systems from analysis to functional hardware under tight timelines.
             </p>
             <p>
               Belgian-born and fluent in five languages, I’m comfortable in fast-paced, multidisciplinary teams across different engineering cultures. I’m looking to do that kind of work on hard problems in medical devices, energy, or other technically demanding fields.
