@@ -7,7 +7,7 @@ const entries = [
     key: 'berkeley',
     logoLabel: 'logo UC Berkeley',
     logoSrc: '/images/berkeley.png',
-    title: 'MEng mechanical engineer: biomechanics & control',
+    title: 'MEng Mechanical Engineer: Biomechanics & Control',
     period: 'Class of 2026',
     bullets: [
       'Awarded scholarship covering full tuition + stipend by the Belgian American Education Foundation',
