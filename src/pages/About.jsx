@@ -520,6 +520,12 @@ export default function About() {
                           </svg>
                           <span className="text-white text-[10px] font-medium">Resume</span>
                         </a>
+                        <a href="/Mechanical%20portfolio%20Michael%20Rubin.pdf" target="_blank" rel="noreferrer" className="flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded hover:bg-white/20 transition-all border border-white/20">
+                          <svg className="h-2.5 w-2.5 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <span className="text-white text-[10px] font-medium">Mechanical Portfolio</span>
+                        </a>
                       </div>
                       <div className="flex gap-1">
                         <button className="flex-1 text-slate-900 bg-white/75 hover:bg-white/90 border border-white/40 font-semibold rounded px-2 py-0.5 transition-all shadow text-[10px]" onClick={handleScrollAbout}>Learn More</button>
@@ -570,18 +576,31 @@ export default function About() {
                       </a>
                     </div>
 
-                    {/* Resume link */}
-                    <a
-                      href="/Michael_Rubin_Resume.pdf"
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all active:scale-95 [@media(hover:hover)]:hover:scale-105 w-full mb-3 md:mb-4 border border-white/20"
-                    >
-                      <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <span className="text-white text-xs font-medium">Resume</span>
-                    </a>
+                    {/* Document links */}
+                    <div className="flex gap-1 md:gap-2 w-full mb-3 md:mb-4">
+                      <a
+                        href="/Michael_Rubin_Resume.pdf"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all active:scale-95 [@media(hover:hover)]:hover:scale-105 border border-white/20"
+                      >
+                        <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="text-white text-xs font-medium">Resume</span>
+                      </a>
+                      <a
+                        href="/Mechanical%20portfolio%20Michael%20Rubin.pdf"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex-1 flex items-center justify-center gap-1 md:gap-2 p-1 md:p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-all active:scale-95 [@media(hover:hover)]:hover:scale-105 border border-white/20"
+                      >
+                        <svg className="h-4 w-4 flex-shrink-0 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="text-white text-xs font-medium">Portfolio PDF</span>
+                      </a>
+                    </div>
 
                     {/* Action Buttons */}
                     <div className="flex flex-col gap-1 md:gap-2 w-full">
