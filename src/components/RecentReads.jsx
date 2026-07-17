@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 
 // Fix: Issue #46 — Goodreads link per book (ids 1 & 2 are direct; 3 & 4 use search URLs)
 const GOODREADS_URLS = {
-  1: 'https://www.goodreads.com/book/show/50024187-apeirogon?ref=nav_sb_ss_1_9',
-  2: 'https://www.goodreads.com/book/show/199798179-the-ministry-of-time?ref=nav_sb_ss_1_15',
+  1: 'https://www.goodreads.com/it/book/show/98920.The_Bastard_of_Istanbul',
+  2: 'https://www.goodreads.com/book/show/50024187-apeirogon?ref=nav_sb_ss_1_9',
+  // 2: 'https://www.goodreads.com/book/show/199798179-the-ministry-of-time?ref=nav_sb_ss_1_15',
   3: 'https://www.goodreads.com/book/show/56587382-the-island-of-missing-trees?from_search=true&from_srp=true&qid=zAlbBcKGen&rank=1',
   4: 'https://www.goodreads.com/book/show/248172429-the-poppy-war-series-by-r-f-kuang-2-books-collector-s-edition-set-the?from_search=true&from_srp=true&qid=MUlCj9Hhhm&rank=1',
 };
@@ -12,19 +13,25 @@ const GOODREADS_URLS = {
 const RECENT_BOOKS = [
   {
     id: 1,
-    title: "Apeirogon",
-    author: "Colum McCann",
-    // NOTE: rename public/images/Apereigon.jpg → public/images/Apeirogon.jpg on disk
-    cover: "/images/Apeirogon.jpg", // Fix: Issue #45 — corrected filename typo
+    title: "The Bastard of Istanbul",
+    author: "Elif Shafak",
+    cover: "/images/TheBastardofIstanbul.jpg",
     status: "current"
   },
   {
     id: 2,
-    title: "The Ministry of Time",
-    author: "Kaliane Bradley",
-    cover: "/images/ministryoftime.jpg",
+    title: "Apeirogon",
+    author: "Colum McCann",
+    cover: "/images/Apeirogon.jpg",
     status: "recent"
   },
+  // {
+  //   id: 2,
+  //   title: "The Ministry of Time",
+  //   author: "Kaliane Bradley",
+  //   cover: "/images/ministryoftime.jpg",
+  //   status: "recent"
+  // },
   {
     id: 3,
     title: "Island of the Missing Trees",
