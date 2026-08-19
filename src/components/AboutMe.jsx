@@ -26,13 +26,13 @@ export default function AboutMe() {
           {/* Text */}
           <div className="order-2 lg:col-span-3 space-y-6 text-sm md:text-base text-gray-700 leading-relaxed">
             <p>
-              I'm a mechanical engineer trained at TU Delft and UC Berkeley who builds hardware that works in the real world, with projects ranging from a low-cost autorefractor to a CNC machine I designed and built end to end.
+              I'm a mechanical engineer at Intuitive Surgical, soon starting work as a product development engineer for the Ion Instruments & Accessories NPD team. Trained at TU Delft and UC Berkeley, I have a track record of hardware that works in the real world, with projects ranging from a low-cost autorefractor to a CNC machine I designed and built end to end.
             </p>
             <p>
               I work best at the intersection of mechanical design and validation, taking systems from analysis to functional hardware under tight timelines.
             </p>
             <p>
-              Belgian-born and fluent in five languages, I’m comfortable in fast-paced, multidisciplinary teams across different engineering cultures. I’m looking to do that kind of work on hard problems in medical devices, energy, or other technically demanding fields.
+              Belgian-born and fluent in five languages, I’m comfortable in fast-paced, multidisciplinary teams across different engineering cultures.
             </p>
             <p>
               When I'm not designing or debugging something, you'll find me outdoors.

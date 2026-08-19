@@ -323,7 +323,7 @@ export const Loader = ({ setIsLoaded, onBeginEnter, onEnterComplete }) => {
             </h1>
             {/* Fix: Issue #5 — smaller subtitle at 375px to avoid an awkward two-line wrap */}
             <p className="text-[18px] sm:text-lg md:text-xl tracking-wide text-cyan-300/90">
-              Mechanical/Controls Engineer @ MPC lab Berkeley
+              Incoming Product Development Engineer @ Intuitive Surgical
             </p>
             <p className="text-md md:text-lg text-white/70 tracking-wide">
               UC Berkeley MEng &apos;26 · TU Delft BSc &apos;24
