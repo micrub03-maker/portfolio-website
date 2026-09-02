@@ -347,7 +347,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── CALSOL ── */}
       <div id="project-calsol">
-      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Present" tools={['SolidWorks', 'Topology Optimization', 'FEA', 'Hand Calculations', 'DFM', 'Physical Testing']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/calsol">
+      <Dropdown variant="flat" summaryTitle="Seatbelts Development @ CalSol" summaryDate="Sept 2025 – Aug 2026" tools={['SolidWorks', 'Topology Optimization', 'FEA', 'Hand Calculations', 'DFM', 'Physical Testing']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'calsol' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/calsol">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="relative group">
@@ -517,7 +517,7 @@ function FeaturedProjectsSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── AXIRIS ── */}
       <div id="project-axiris">
-      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – Present" tools={['Optical Design', 'NIR Imaging', 'Python', 'Image Processing', 'Product Design', 'Rapid Prototyping']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/axiris">
+      <Dropdown variant="stacked" summaryTitle="Handheld Autorefractor @ Axiris Technologies" summaryDate="Jan 2026 – June 2026" tools={['Optical Design', 'NIR Imaging', 'Python', 'Image Processing', 'Product Design', 'Rapid Prototyping']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'axiris' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/axiris">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-[53fr_47fr] gap-6 items-start">
           <HoverMediaOverlay align="right" caption={<>Axiris current<br />design</>}>
@@ -1049,7 +1049,7 @@ function HonoursSlide({ onDd, autoOpen, closeSignal }) {
 
       {/* ── LUCI ── */}
       <div id="project-luci">
-      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="June 2026 – Present" tools={['CAD', '3D Printing', 'Robotics', 'Systems Integration', 'Technical Documentation']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/luci">
+      <Dropdown variant="inset" summaryTitle="All-Terrain Autonomous Vehicle @ Model Predictive Control Lab" summaryDate="June 2026 – Aug 2026" tools={['CAD', '3D Printing', 'Robotics', 'Systems Integration', 'Technical Documentation']} onOpenChange={onDd} forceOpenTrigger={autoOpen?.key === 'luci' ? autoOpen.count : 0} scrollTargetId="projects" closeSignal={closeSignal} trackPath="/about/projects/luci">
         {/* Two-column intro */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           <HoverMediaOverlay caption="Full vehicle CAD">

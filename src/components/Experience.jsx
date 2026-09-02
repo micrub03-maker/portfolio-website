@@ -12,11 +12,11 @@ const mainEntries = [
     logoSrc: '/images/MPC-logo.png',
     logoHeight: 'h-[80px]',
     logoFit: 'object-contain',
-    role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2026 – Present',
+    role: 'Mechanical / Controls Engineer – Project LUCI (UC Berkeley MPC Lab) · May 2026 – Aug 2026',
     bullets: [
       'Developing an all-terrain autonomous surveillance rover in collaboration with NIWC Pacific',
       'Redesigning 3D-printed chassis for improved structural integrity, manufacturability, and field usability',
-      'Building and executing validation tests for control architecture; integrating NTRIP GPS and vSLAM navigation',
+      'Designing a custom 2-axis pan-tilt camera mount'
     ],
   },
   {
@@ -24,7 +24,7 @@ const mainEntries = [
     logoLabel: 'calsol logo',
     logoSrc: '/images/calsol.png',
     logoFit: 'object-contain',
-    role: 'Chassis Engineer – Driver Safety Lead (CALSOL Solar Vehicle Team) · Sept 2025 – Present',
+    role: 'Chassis Engineer – Driver Safety Lead (CALSOL Solar Vehicle Team) · Sept 2025 – Aug 2026',
     bullets: [
       'Led seatbelt system design to meet ASC and World Solar Challenge safety regulations',
       'Reduced lap belt-mount weight by 15% while validating crash-load performance (FOS 1.6)',
